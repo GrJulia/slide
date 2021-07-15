@@ -1,0 +1,7 @@
+name = "Slide"
+uuid = "02e32e52-8d4a-4ccb-95ff-01a61e618720"
+authors = ["Casey Haaland, Maxence Gélard, Konstanty Subbotko, Jan Koscisz"]
+version = "0.1.0"
+
+[compat]
+julia = "1.6"
