@@ -18,7 +18,7 @@ function build_network(
             current_input_dim = n_neurons_per_layer[i-1]
         end
         for j = 1:n_neurons_per_layer[i]
-            push!(neurons, Neuron(j, rand(current_input_dim), rand(), zeros(batch_size), zeros(batch_size)))
+            push!(neurons, Neuron(j, rand(current_input_dim), rand(), zeros(batch_size), zeros(batch_size), zeros(current_input_dim, batch_size), zeros(batch_size)))
         end
         layer = Layer(
             i,
