@@ -16,7 +16,7 @@ function main(
         network_params["layer_activations"],
         network_params["input_dim"],
         network_params["hash_tables"],
-        batch_size
+        batch_size,
     )
     batches = batch_input(x, batch_size, drop_last)
     output = nothing
@@ -55,10 +55,7 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
         config = NamedTuple{Tuple(Symbol.(keys(config_dict)))}(values(config_dict))
     end
 
-    hash_tables = [
-        HashTable([[] for _ = 1:config.n_buckets]) for
-        _ = 1:config.n_layers
-    ]
+    hash_tables = [HashTable([[] for _ = 1:config.n_buckets]) for _ = 1:config.n_layers]
     network_params = Dict(
         "n_layers" => config.n_layers,
         "n_neurons_per_layer" => Vector{Int64}(config.n_neurons_per_layer),

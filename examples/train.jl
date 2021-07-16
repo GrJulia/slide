@@ -14,14 +14,14 @@ Usage:
 julia --threads <n_of_threads> src/flux/train.jl flux_config.json
 """
 
-MA_WEIGHT=0.9
+MA_WEIGHT = 0.9
 
 ma(total, curr) = MA_WEIGHT * total + (1 - MA_WEIGHT) * curr
 
 function accuracy(out, labels, top_k)
     batch_size, acc = size(out, 2), 0
-    for b in 1:batch_size
-        top_k_classes = partialsortperm((@view out[:, b]), 1:top_k, rev=true)
+    for b = 1:batch_size
+        top_k_classes = partialsortperm((@view out[:, b]), 1:top_k, rev = true)
         acc += sum(labels[top_k_classes, b]) / top_k
     end
     return acc / batch_size
@@ -43,8 +43,8 @@ function train_epoch(model, train_loader, opt, config)
         losses = isnothing(losses) ? loss : ma(losses, loss)
         acc = accuracy(out, y, config["top_k_classes"])
         total_acc = isnothing(total_acc) ? acc : ma(total_acc, acc)
-        @info "train_loss" train_loss=losses
-        @info "train_acc" train_acc=total_acc log_step_increment=0
+        @info "train_loss" train_loss = losses
+        @info "train_acc" train_acc = total_acc log_step_increment = 0
         update!(opt, params, grads)
     end
 end
@@ -58,8 +58,8 @@ function test_epoch(model, test_loader, config)
         losses += loss
     end
 
-    @info "test_loss" test_loss=losses/length(test_loader) log_step_increment=0
-    @info "test_acc" test_acc=acc/length(test_loader) log_step_increment=0
+    @info "test_loss" test_loss = losses / length(test_loader) log_step_increment = 0
+    @info "test_acc" test_acc = acc / length(test_loader) log_step_increment = 0
     @save "$(joinpath(config["logging_path"], config["name"], "last_checkpoint.bson"))" model
 end
 
@@ -74,13 +74,13 @@ train_loader, test_loader = get_dataloaders(config)
 model = Chain(
     Dense(config["n_features"], config["hidden_dim"]),
     Dense(config["hidden_dim"], config["n_classes"]),
-    softmax
+    softmax,
 )
 
 opt = ADAM(config["lr"])
 
 n_epochs = config["n_epochs"]
-for ep in 1:n_epochs
+for ep = 1:n_epochs
     println("\nEpoch $ep")
     train_epoch(model, train_loader, opt, config)
     test_epoch(model, test_loader, config)

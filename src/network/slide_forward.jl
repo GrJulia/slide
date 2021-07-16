@@ -11,12 +11,12 @@ function build_network(
     batch_size::Int64,
 )::SlideNetwork
     network_layers = Vector{Layer}()
-    for i in 1:n_layers
+    for i = 1:n_layers
         neurons = Vector{Neuron}()
         if i == 1
             current_input_dim = input_dim
         else
-            current_input_dim = n_neurons_per_layer[i - 1]
+            current_input_dim = n_neurons_per_layer[i-1]
         end
         for j = 1:n_neurons_per_layer[i]
             push!(neurons, Neuron(j, rand(current_input_dim), rand(), zeros(batch_size)))
@@ -28,7 +28,7 @@ function build_network(
             activation_name_to_function[layer_activations[i]],
         )
         store_neurons_in_bucket(layer.hash_table, layer.neurons)
-        push!(network_layers , layer)
+        push!(network_layers, layer)
     end
     network = SlideNetwork(network_layers)
     return network
@@ -38,7 +38,7 @@ function build_activated_neurons_single_sample(
     x::Vector{Float32},
     network::SlideNetwork,
 )::Vector{Vector{Int64}}
-activated_neuron_ids = []
+    activated_neuron_ids = []
     for layer in network.layers
         current_hash_table = layer.hash_table
         input_hash = get_hash(current_hash_table, x)
@@ -72,7 +72,7 @@ end
 
 function handle_batch(x, network, i)
     activated_neuron_ids = build_activated_neurons_single_sample(x, network)
-    for j in 1:length(activated_neuron_ids)
+    for j = 1:length(activated_neuron_ids)
         for neuron_id in activated_neuron_ids[j]
             network.layers[j].neurons[neuron_id].activation_input[i] = 1
         end
