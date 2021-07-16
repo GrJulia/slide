@@ -45,9 +45,9 @@ select(x::T, flag::Bool) where {T<:Number} = flag ? x : -x
 Computes the signature of the data. Throws an error if the `data` size is incompatible with `SimHasher`.
 
 The ith bit of the signature is computed as follows,
-the `data` vector is permutated (defined by `simHasher.samples[:, i]`).
-Then jth element of the permutated vector is multiplied by -1 if `sim_hasher.hashes[j, i]`
-is equal to 0. Finally the sum of the transformed vector is sumed to produce
+the `data` vector is sampled (defined by `simHasher.samples[:, i]`).
+Then jth element of the subvector is multiplied by -1 if `sim_hasher.hashes[j, i]`
+is equal to 0. Finally the sum of the transformed subvector is sumed to produce
 the ith bit of the signature.
 """
 function signature(

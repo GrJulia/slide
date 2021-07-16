@@ -57,7 +57,7 @@ end
             @test test_routine(rng, 1000, 1232, 1400)
         end
 
-        @testset "No throw" begin
+        @testset "Throw" begin
             @test_throws AssertionError test_routine(rng, 10, 15, 14)
             @test_throws AssertionError test_routine(rng, 11, 7, 5)
             @test_throws AssertionError test_routine(rng, 1000, 1232, 1100)
