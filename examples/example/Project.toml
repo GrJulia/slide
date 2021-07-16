@@ -1,0 +1,9 @@
+[deps]
+BSON = "fbb218c0-5317-5bc6-957e-2ee96dd4b1f0"
+BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
+JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
+Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
+Slide = "02e32e52-8d4a-4ccb-95ff-01a61e618720"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+TensorBoardLogger = "899adc3e-224a-11e9-021f-63837185c80f"

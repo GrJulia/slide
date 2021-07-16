@@ -1,0 +1,16 @@
+{
+    "name": "flux_default_delicious",
+    "dataset": {
+        "train_path": "datasets/DeliciousLarge/deliciousLarge_train.txt",
+        "test_path": "datasets/DeliciousLarge/deliciousLarge_test.txt"
+    },
+    "logging_path": "logs",
+    "n_features": 782585,
+    "hidden_dim": 128,
+    "n_classes": 205443,
+    "batch_size": 128,
+    "lr": 1e-3,
+    "n_epochs": 10,
+    "use_gpu": false,
+    "top_k_classes": 1
+}
