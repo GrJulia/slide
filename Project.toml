@@ -3,5 +3,8 @@ uuid = "02e32e52-8d4a-4ccb-95ff-01a61e618720"
 authors = ["Casey Haaland, Maxence Gélard, Konstanty Subbotko, Jan Koscisz"]
 version = "0.1.0"
 
+[deps]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
 [compat]
 julia = "1.6"
