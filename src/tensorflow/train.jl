@@ -1,7 +1,11 @@
 using PyCall
 using JSON
+using Random
 
 include("data.jl")
+
+# os = pyimport("os")
+# os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 keras = pyimport("tensorflow.keras")
 
@@ -38,13 +42,15 @@ class SparseDataset(keras.utils.Sequence):
     def __preprocess_dataset(self, dataset_path):
         f = open(dataset_path, "r")
         x_indices, x_vals, ys = [], [], []
-        for line in f.readlines()[1:]:
+        for cnt, line in enumerate(f.readlines()[1:]):
             line_split = line.split()
             x = list(map(lambda ftr: (int(ftr.split(':')[0]), float(ftr.split(':')[1])), line_split[1:]))
             y = [int(yi) for yi in line_split[0].split(',')]
             x_indices.append(np.array([xi[0] for xi in x]))
             x_vals.append(np.array([xi[1] for xi in x]))
             ys.append(np.array(y))
+            # if cnt == 2000:
+            #     break
     
         perm = np.random.permutation(len(ys))
         p_x_indices = [x_indices[idx] for idx in perm]
@@ -70,6 +76,32 @@ class SparseDataset(keras.utils.Sequence):
             y[idx, ys] = 1
         
         return x, y
+
+class TestAccCallback(keras.callbacks.Callback):
+    def __init__(self, test_dataloader, freq, n_batches):
+        super().__init__()
+        self.test_dataloader = test_dataloader
+        self.freq = freq
+        self.n_batches = n_batches
+        self.cnt = 0
+
+    def on_train_batch_end(self, i, batch_logs):
+        self.cnt += 1
+        if self.cnt % self.freq == 0:
+            self.cnt = 0
+            self.test_epoch()
+
+    def test_epoch(self):
+        rand_indices = np.random.randint(0, self.test_dataloader.__len__(), self.n_batches)
+        batch_size = self.test_dataloader.batch_size
+        acc = 0
+        for idx in rand_indices:
+            x, y = self.test_dataloader.__getitem__(idx)
+            out = self.model(x)
+            for b in range(batch_size):
+                top_class = np.argmax(out[b])
+                acc += y[b, top_class]
+        print("Accuracy=", acc/(self.n_batches*batch_size)*100)
 
 # def train():
 #     model = Model(config["n_features"], config["hidden_dim"], config["n_classes"])
@@ -102,10 +134,49 @@ class SparseDataset(keras.utils.Sequence):
 #     keras.layers.Softmax()
 # ])
 
+
+# @pydef mutable struct TestAccCallback <: keras.callbacks.Callback
+#     function __init__(self, test_dataloader, freq, n_batches)
+#         __init__(self) = pybuiltin(:super)()[:__init__]()
+#         self.test_dataloader = test_dataloader
+#         self.freq = freq
+#         self.n_batches = n_batches
+#         self.cnt = 0
+#     end
+
+#     function on_train_batch_end(self, i, batch_logs)
+#         self.cnt += 1
+#         if self.cnt % self.freq == 0
+#             self.cnt = 0
+#             self.test_epoch()
+#         end
+#     end
+
+#     function test_epoch(self)
+#         rand_indices = randperm(self.n_batches)
+#         acc = 0
+#         for idx in rand_indices
+#             x, y = self.test_dataloader.__getitem__(idx)
+#             println(size(x), size(y))
+#             out = self.model(x)
+#             println(out[1:5])
+#             for b in 1:128
+#                 top_k_classes = argmax(out[b, :])
+#                 acc += y[b, top_k_classes]
+#             end
+#         end
+#         println("Accuracy=$(acc/self.n_batches*128)")
+#     end
+# end
+
 model = py"Model"(config["n_features"], config["hidden_dim"], config["n_classes"])
 
 model.compile(optimizer=keras.optimizers.Adam(config["lr"]), loss=keras.losses.CategoricalCrossentropy(), run_eagerly=true)
 
-ds = py"SparseDataset"(config["dataset"]["train_path"], 128, config["n_features"], config["n_classes"])
+trainset = py"SparseDataset"(config["dataset"]["train_path"], 128, config["n_features"], config["n_classes"])
+testset = py"SparseDataset"(config["dataset"]["test_path"], 128, config["n_features"], config["n_classes"])
 
-model.fit(ds, epochs=config["n_epochs"])
+test_cb = py"TestAccCallback"(testset, 50, 40)
+tensorboard_cb = keras.callbacks.TensorBoard(log_dir=joinpath(config["logging_path"], config["name"]))
+
+model.fit(trainset, epochs=config["n_epochs"], callbacks=[test_cb, tensorboard_cb])
