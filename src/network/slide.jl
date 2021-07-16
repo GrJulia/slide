@@ -2,8 +2,9 @@
 mutable struct Neuron
     id::Id
     weight::Vector{Float32}
-    bias::Float64
-    activation_input::Array{Int64}
+    bias::Float32
+    active_inputs::Array{Id}
+    activation_inputs::Array{Float32}
 end
 
 mutable struct Layer{F<:Function}

@@ -5,8 +5,9 @@ using Slide.Network
 
 function main(
     x::Matrix{Float32},
-    n_iters::Int64,
-    batch_size::Int64,
+    y::Vector{Int},
+    n_iters::Int,
+    batch_size::Int,
     drop_last::Bool,
     network_params::Dict,
 )::Matrix{Float32}
@@ -18,12 +19,16 @@ function main(
         network_params["hash_tables"],
         batch_size,
     )
-    batches = batch_input(x, batch_size, drop_last)
+    y_cat = one_hot(y)
+    batches = batch_input(x, y_cat, batch_size, drop_last)
     output = nothing
     for _ = 1:n_iters
         output = Array{typeof(x[1])}(undef, length(network.layers[end].neurons), 0)
-        for batch in batches
-            output = hcat(output, forward(batch, network))
+        for (x_batch, y_batch) in batches
+            y_batch_pred = forward(x_batch, network)
+            output = hcat(output, y_batch_pred)
+            loss = cross_entropy(y_batch_pred, y_batch)
+            backward!(x_batch, y_batch_pred, y_batch, loss, network)
         end
     end
     output
@@ -51,31 +56,22 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
     if random_config
         config = build_random_configuration()
     else
-        config_dict = JSON.parsefile("slide_config.json")
+        config_dict = JSON.parsefile("examples/slide_config.json")
         config = NamedTuple{Tuple(Symbol.(keys(config_dict)))}(values(config_dict))
     end
 
     hash_tables = [HashTable([[] for _ = 1:config.n_buckets]) for _ = 1:config.n_layers]
     network_params = Dict(
         "n_layers" => config.n_layers,
-        "n_neurons_per_layer" => Vector{Int64}(config.n_neurons_per_layer),
+        "n_neurons_per_layer" => Vector{Int}(config.n_neurons_per_layer),
         "layer_activations" => Vector{String}(config.layer_activations),
         "input_dim" => config.input_dim,
         "hash_tables" => hash_tables,
     )
+    output_dim = config.n_neurons_per_layer[end]
 
-    if benchmark
-        rows_values = [64, 128, 256, 1024, 2048, 4096, 8192, 16384, 32768]
-        timings = []
-        for _ = 1:2
-            main(rand(Float32, config.input_dim, 64), 1, 32, false, network_params)
-        end
-        for i = 1:length(rows_values)
-            x = rand(Float32, config.input_dim, rows_values[i])
-            append!(timings, @elapsed main(x, 1, 32, false, network_params))
-        end
-    else
-        output = main(rand(Float32, config.input_dim, 4096), 1, 256, false, network_params)
-    end
+    x = rand(Float32, config.input_dim, 4096)
+    y = rand(1:output_dim, 4096)
+    output = main(x, y, 1, 256, false, network_params)
     println("DONE \n")
 end

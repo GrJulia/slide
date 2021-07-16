@@ -1,14 +1,13 @@
-using Base: Int64
 using LinearAlgebra
 
 
 function build_network(
-    n_layers::Int64,
-    n_neurons_per_layer::Vector{Int64},
+    n_layers::Int,
+    n_neurons_per_layer::Vector{Int},
     layer_activations::Vector{String},
-    input_dim::Int64,
+    input_dim::Int,
     hash_tables::Vector,
-    batch_size::Int64,
+    batch_size::Int,
 )::SlideNetwork
     network_layers = Vector{Layer}()
     for i = 1:n_layers
@@ -19,7 +18,7 @@ function build_network(
             current_input_dim = n_neurons_per_layer[i-1]
         end
         for j = 1:n_neurons_per_layer[i]
-            push!(neurons, Neuron(j, rand(current_input_dim), rand(), zeros(batch_size)))
+            push!(neurons, Neuron(j, rand(current_input_dim), rand(), zeros(batch_size), zeros(batch_size)))
         end
         layer = Layer(
             i,
@@ -37,7 +36,7 @@ end
 function build_activated_neurons_single_sample(
     x::Vector{Float32},
     network::SlideNetwork,
-)::Vector{Vector{Int64}}
+)::Vector{Vector{Int}}
     activated_neuron_ids = []
     for layer in network.layers
         current_hash_table = layer.hash_table
@@ -52,6 +51,7 @@ function forward_single_sample(
     x::Vector{Float32},
     network::SlideNetwork,
     activated_neuron_ids::Vector,
+    x_index::Int
 )::Vector{Float32}
     n_layers = length(network.layers)
     current_input = x
@@ -66,6 +66,9 @@ function forward_single_sample(
                 dot(current_input, current_neuron.weight) + current_neuron.bias
         end
         current_input = layer_activation(layer_output)
+        for (k, neuron) in enumerate(layer.neurons)
+            neuron.activation_inputs[x_index] = current_input[k]
+        end
     end
     return current_input
 end
@@ -74,10 +77,10 @@ function handle_batch(x, network, i)
     activated_neuron_ids = build_activated_neurons_single_sample(x, network)
     for j = 1:length(activated_neuron_ids)
         for neuron_id in activated_neuron_ids[j]
-            network.layers[j].neurons[neuron_id].activation_input[i] = 1
+            network.layers[j].neurons[neuron_id].active_inputs[i] = 1
         end
     end
-    return forward_single_sample(x, network, activated_neuron_ids)
+    return forward_single_sample(x, network, activated_neuron_ids, i)
 end
 
 function forward(x::Matrix{Float32}, network::SlideNetwork)::Matrix{Float32}
@@ -87,18 +90,4 @@ function forward(x::Matrix{Float32}, network::SlideNetwork)::Matrix{Float32}
         output[:, i] = handle_batch(x[:, i], network, i)
     end
     output
-end
-
-function batch_input(
-    x::Matrix{Float32},
-    batch_size::Int64,
-    drop_last::Bool,
-)::Vector{Matrix{Float32}}
-    batches = map(Iterators.partition(axes(x, 2), batch_size)) do columns
-        x[:, columns]
-    end
-    if drop_last && size(batches[end])[1] < batch_size
-        return batches[1:end-1]
-    end
-    return batches
 end
