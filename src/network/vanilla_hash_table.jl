@@ -1,4 +1,4 @@
-const Id = Int64
+const Id = Int
 
 mutable struct HashTable
     buckets::Vector{Vector{Id}}
