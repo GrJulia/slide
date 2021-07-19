@@ -2,6 +2,7 @@ module SimHash
 
 export SimHasher, Signature, initialize!, signature
 
+using LinearAlgebra: dot
 using Random: AbstractRNG, bitrand
 using StatsBase: sample
 
@@ -9,35 +10,44 @@ using StatsBase: sample
 const Signature = BitArray
 
 struct SimHasher
-    hashes::BitMatrix
+    hashes::Matrix{Int8}
     samples::Matrix{Int}
 
-    SimHasher(hashes::BitMatrix, samples::Matrix{Int}) =
+    SimHasher(hashes::Matrix{Int8}, samples::Matrix{Int}) =
         size(hashes) == size(samples) ? new(hashes, samples) :
-        error("Dimensions of matrices must match")
+        error(
+            "Expected that `size(samples)` should match `size(hashes)`. Got $(size(samples)) and $(size(hashes))",
+        )
 end
 
 """
-    initialize!(r, n_hashes, sample_size, data_size)
+    initialize!(r, n_hashes, subvector_length, data_length)
 
-Initialize SimHasher which can hash vector of dimension of `data_size`
+Initialize SimHasher which can hash vector of dimension of `data_length`
 into signature of `n_hashes` bits. Mutates the `r` argument.
 """
 function initialize!(
-    r::Rand,
+    rng::Rand,
     n_hashes::Int,
-    sample_size::Int,
-    data_size::Int,
+    subvector_length::Int,
+    data_length::Int,
 )::SimHasher where {Rand<:AbstractRNG}
-    @assert sample_size <= data_size "`sample_size` can't be larger than `data_size`"
+    @assert subvector_length <= data_length "`subvector_length` can't be larger than `data_length`"
 
-    hashes = bitrand(r, (sample_size, n_hashes))
-    samples = hcat([sample(1:data_size, sample_size, ordered = true) for _ = 1:n_hashes]...)
+    hashes = sample(rng, Vector{Int8}([1, -1]), (subvector_length, n_hashes))
+    samples = hcat(
+        [sample(1:data_length, subvector_length, ordered = true) for _ = 1:n_hashes]...,
+    )
 
     SimHasher(hashes, samples)
 end
 
-select(x::T, flag::Bool) where {T<:Number} = flag ? x : -x
+
+function compute_hash(data, sampled_indices, hashes)
+    subvector = getindex(data, sampled_indices)
+
+    dot(subvector, hashes)
+end
 
 """
     signature(sim_hasher, data)
@@ -45,22 +55,28 @@ select(x::T, flag::Bool) where {T<:Number} = flag ? x : -x
 Computes the signature of the data. Throws an error if the `data` size is incompatible with `SimHasher`.
 
 The ith bit of the signature is computed as follows,
-the `data` vector is sampled (defined by `simHasher.samples[:, i]`).
-Then jth element of the subvector is multiplied by -1 if `sim_hasher.hashes[j, i]`
-is equal to 0. Finally the sum of the transformed subvector is sumed to produce
-the ith bit of the signature.
+the `data` vector is sampled (defined by `sim_hasher.samples[:, i]`).
+Then jth element of the subvector is multiplied by `sim_hasher.hashes[j, i]`.
+If the simhash is initialized by the `initialize!` function the values
+of `sim_hasher.hashes` are drawn from (1, -1) values. Finally the sum
+of the transformed subvector is sumed to produce the ith bit of the signature.
+
+See paragraph for SimHash from section 3.2 from the paper
+`SLIDE: in Defense of Smart Algorithms over Hardware Acceleration for Large-Scale Deep Learning Systems`.
 """
 function signature(
     sim_hasher::SimHasher,
     data::A,
 )::Signature where {A<:AbstractVector{<:Number}}
-    sample_size, n_hashes = size(sim_hasher.hashes)
-    @assert sample_size <= length(data) "`sample_size` can't be larger than `length(data_size)`"
+    subvector_length, n_hashes = size(sim_hasher.hashes)
+    @assert subvector_length <= length(data) "`subvector_length` can't be larger than `length(data_length)`"
 
-    raw_signature = [
-        sum(select.(getindex(data, sim_hasher.samples[:, i]), sim_hasher.hashes[:, i]))
-        for i = 1:n_hashes
-    ]
+    raw_signature::Vector{Float32} = Vector{Float32}(undef, n_hashes)
+
+    for i = 1:n_hashes
+        raw_signature[i] =
+            compute_hash(data, sim_hasher.samples[:, i], sim_hasher.hashes[:, i])
+    end
 
     map(x -> x >= 0, raw_signature)
 end
