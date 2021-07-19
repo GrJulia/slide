@@ -84,7 +84,7 @@ function forward_single_sample(
     return current_input
 end
 
-function handle_batch(x, network, i)
+function handle_batch(x::Vector{Float}, network::SlideNetwork, i::Int)::Vector{Float}
     activated_neuron_ids = build_activated_neurons_single_sample(x, network)
     for j = 1:length(activated_neuron_ids)
         for neuron_id in activated_neuron_ids[j]
