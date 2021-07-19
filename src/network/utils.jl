@@ -42,7 +42,8 @@ end
 function numerical_gradient(network, layer_id, neuron_id, weight_index, x, y, epsilon)
     y = forward(x, network)
     backward!(x, y, network)
-    backprop_gradient = mean(network.layers[layer_id].neurons[neuron_id].weight_gradients, dims = 2)
+    backprop_gradient =
+        mean(network.layers[layer_id].neurons[neuron_id].weight_gradients, dims = 2)
     network.layers[layer_id].neurons[neuron_id].weight[weight_index] += epsilon
     loss_1 = cross_entropy(forward(x, network), y)
     network.layers[layer_id].neurons[neuron_id].weight[weight_index] -= 2 * epsilon
