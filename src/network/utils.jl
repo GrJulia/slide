@@ -39,15 +39,18 @@ function empty_neurons_attributes!(network)
     end
 end
 
-function numerical_gradient(network, layer_id, neuron_id, weight_index, x, y, epsilon)
+function numerical_gradient(network, layer_id, neuron_id, weight_index, x, y_true, epsilon)
     y = forward(x, network)
     backward!(x, y, network)
     backprop_gradient =
         mean(network.layers[layer_id].neurons[neuron_id].weight_gradients, dims = 2)
+    empty_neurons_attributes!(network)
     network.layers[layer_id].neurons[neuron_id].weight[weight_index] += epsilon
-    loss_1 = cross_entropy(forward(x, network), y)
+    loss_1 = cross_entropy(forward(x, network), y_true)
+    empty_neurons_attributes!(network)
     network.layers[layer_id].neurons[neuron_id].weight[weight_index] -= 2 * epsilon
-    loss_2 = cross_entropy(forward(x, network), y)
+    loss_2 = cross_entropy(forward(x, network), y_true)
+    empty_neurons_attributes!(network)
     numerical_grad = (loss_1 - loss_2) / (2 * epsilon)
     println("Numerical gradient: $numerical_grad")
     println("Manual gradient: $(backprop_gradient[weight_index])")

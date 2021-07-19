@@ -41,6 +41,13 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
     x = rand(Float, config.input_dim, 4096)
     y = rand(1:output_dim, 4096)
-    output = build_and_train(x, y, 5, 256, false, network_params, learning_rate)
+    output, network = build_and_train(x, y, 5, 256, false, network_params, learning_rate)
     println("DONE \n")
+
+    layer_id = 1
+    neuron_id = 1
+    weight_index = 1
+    x_check = x[:, 1:256]
+    y_check = one_hot(y)[:, 1:256]
+    numerical_gradient(network, layer_id, neuron_id, weight_index, x_check, y_check, 0.01)
 end

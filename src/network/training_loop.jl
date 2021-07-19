@@ -50,7 +50,7 @@ function build_and_train(
     drop_last::Bool,
     network_params::Dict,
     learning_rate::Float,
-)::Matrix{Float}
+)
     network = build_network(
         network_params["n_layers"],
         network_params["n_neurons_per_layer"],
@@ -75,5 +75,5 @@ function build_and_train(
         end
         println("Iteration $i, Loss $(loss / length(batches))")
     end
-    return output
+    return output, network
 end
