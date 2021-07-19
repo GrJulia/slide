@@ -2,18 +2,15 @@ using PyCall
 using JSON
 using Random
 
-include("data.jl")
+# using Slide.TensorFlowTraining
 
-# os = pyimport("os")
-# os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-
+nn = pyimport("tensorflow.nn")
 keras = pyimport("tensorflow.keras")
 
 
 config = JSON.parsefile(ARGS[1])
 
 py"""
-import tensorflow as tf
 import tensorflow.keras as keras
 import numpy as np
 
@@ -24,7 +21,6 @@ class Model(keras.Model):
             keras.layers.InputLayer(n_features),
             keras.layers.Dense(hidden_dim),
             keras.layers.Dense(n_classes),
-            keras.layers.Softmax()
         ])
 
     def call(self, x):
@@ -42,15 +38,13 @@ class SparseDataset(keras.utils.Sequence):
     def __preprocess_dataset(self, dataset_path):
         f = open(dataset_path, "r")
         x_indices, x_vals, ys = [], [], []
-        for cnt, line in enumerate(f.readlines()[1:]):
+        for line in f.readlines()[1:]:
             line_split = line.split()
             x = list(map(lambda ftr: (int(ftr.split(':')[0]), float(ftr.split(':')[1])), line_split[1:]))
             y = [int(yi) for yi in line_split[0].split(',')]
             x_indices.append(np.array([xi[0] for xi in x]))
             x_vals.append(np.array([xi[1] for xi in x]))
             ys.append(np.array(y))
-            # if cnt == 2000:
-            #     break
     
         perm = np.random.permutation(len(ys))
         p_x_indices = [x_indices[idx] for idx in perm]
@@ -78,11 +72,12 @@ class SparseDataset(keras.utils.Sequence):
         return x, y
 
 class TestAccCallback(keras.callbacks.Callback):
-    def __init__(self, test_dataloader, freq, n_batches):
+    def __init__(self, test_dataloader, config):
         super().__init__()
         self.test_dataloader = test_dataloader
-        self.freq = freq
-        self.n_batches = n_batches
+        self.freq = config["test_freq"]
+        self.n_batches = config["n_batches"]
+        self.use_random_indices = config["use_random_indices"]
         self.cnt = 0
 
     def on_train_batch_end(self, i, batch_logs):
@@ -92,7 +87,10 @@ class TestAccCallback(keras.callbacks.Callback):
             self.test_epoch()
 
     def test_epoch(self):
-        rand_indices = np.random.randint(0, self.test_dataloader.__len__(), self.n_batches)
+        if self.use_random_indices:
+            rand_indices = np.random.randint(0, self.test_dataloader.__len__(), self.n_batches)
+        else:
+            rand_indices = list(range(0, self.n_batches))
         batch_size = self.test_dataloader.batch_size
         acc = 0
         for idx in rand_indices:
@@ -171,12 +169,12 @@ class TestAccCallback(keras.callbacks.Callback):
 
 model = py"Model"(config["n_features"], config["hidden_dim"], config["n_classes"])
 
-model.compile(optimizer=keras.optimizers.Adam(config["lr"]), loss=keras.losses.CategoricalCrossentropy(), run_eagerly=true)
+model.compile(optimizer=keras.optimizers.Adam(config["lr"]), loss=(x, y) -> nn.softmax_cross_entropy_with_logits(x, y), run_eagerly=true)
 
 trainset = py"SparseDataset"(config["dataset"]["train_path"], 128, config["n_features"], config["n_classes"])
 testset = py"SparseDataset"(config["dataset"]["test_path"], 128, config["n_features"], config["n_classes"])
 
-test_cb = py"TestAccCallback"(testset, 50, 40)
+test_cb = py"TestAccCallback"(testset, config["testing"])
 tensorboard_cb = keras.callbacks.TensorBoard(log_dir=joinpath(config["logging_path"], config["name"]))
 
 model.fit(trainset, epochs=config["n_epochs"], callbacks=[test_cb, tensorboard_cb])

@@ -1,3 +1,7 @@
+module TensorFlowTraining
+
+export SparseDataset
+
 using PyCall
 using Random
 
@@ -56,4 +60,6 @@ np = pyimport("numpy")
 
         return PyReverseDims(x), PyReverseDims(y)
     end
+end
+
 end
