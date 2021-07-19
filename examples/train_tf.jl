@@ -12,7 +12,9 @@ config = JSON.parsefile(ARGS[1])
 
 py"""
 import tensorflow.keras as keras
+import tensorflow.nn as nn
 import numpy as np
+import os
 
 class Model(keras.Model):
     def __init__(self, n_features, hidden_dim, n_classes):
@@ -101,11 +103,14 @@ class TestAccCallback(keras.callbacks.Callback):
                 acc += y[b, top_class]
         print("Accuracy=", acc/(self.n_batches*batch_size)*100)
 
-# def train():
+# def train(config):
 #     model = Model(config["n_features"], config["hidden_dim"], config["n_classes"])
-#     model.compile(optimizer="Adam", loss="mse")
-#     ds = SparseDataset(config["dataset"]["train_path"], 128, config["n_features"], config["n_classes"])
-#     model.fit(ds, epochs=config["n_epochs"], verbose=2)
+#     model.compile(optimizer=keras.optimizers.Adam(config["lr"]), loss=lambda y, x: nn.softmax_cross_entropy_with_logits(logits=x, labels=y), run_eagerly=True)
+#     train_set = SparseDataset(config["dataset"]["train_path"], 128, config["n_features"], config["n_classes"])
+#     test_set = SparseDataset(config["dataset"]["test_path"], 128, config["n_features"], config["n_classes"])
+#     test_cb = TestAccCallback(test_set, config["testing"])
+#     tensorboard_cb = keras.callbacks.TensorBoard(log_dir=os.path.join(config["logging_path"], config["name"]))
+#     model.fit(train_set, epochs=config["n_epochs"], callbacks=[test_cb, tensorboard_cb])
 """
 
 # @pydef mutable struct Model <: keras.Model
@@ -167,14 +172,16 @@ class TestAccCallback(keras.callbacks.Callback):
 #     end
 # end
 
+# py"train"(config)
+
 model = py"Model"(config["n_features"], config["hidden_dim"], config["n_classes"])
 
-model.compile(optimizer=keras.optimizers.Adam(config["lr"]), loss=(y, x) -> nn.softmax_cross_entropy_with_logits(logits=x, labels=y), run_eagerly=true)
+model.compile(optimizer=keras.optimizers.Adam(config["lr"]), loss=(y, x) -> nn.softmax_cross_entropy_with_logits(y, x), run_eagerly=true)
 
-trainset = py"SparseDataset"(config["dataset"]["train_path"], 128, config["n_features"], config["n_classes"])
-testset = py"SparseDataset"(config["dataset"]["test_path"], 128, config["n_features"], config["n_classes"])
+train_set = py"SparseDataset"(config["dataset"]["train_path"], 128, config["n_features"], config["n_classes"])
+test_set = py"SparseDataset"(config["dataset"]["test_path"], 128, config["n_features"], config["n_classes"])
 
-test_cb = py"TestAccCallback"(testset, config["testing"])
+test_cb = py"TestAccCallback"(test_set, config["testing"])
 tensorboard_cb = keras.callbacks.TensorBoard(log_dir=joinpath(config["logging_path"], config["name"]))
 
-model.fit(trainset, epochs=config["n_epochs"], callbacks=[test_cb, tensorboard_cb])
+model.fit(train_set, epochs=config["n_epochs"], callbacks=[test_cb, tensorboard_cb])
