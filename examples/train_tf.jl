@@ -169,7 +169,7 @@ class TestAccCallback(keras.callbacks.Callback):
 
 model = py"Model"(config["n_features"], config["hidden_dim"], config["n_classes"])
 
-model.compile(optimizer=keras.optimizers.Adam(config["lr"]), loss=(x, y) -> nn.softmax_cross_entropy_with_logits(x, y), run_eagerly=true)
+model.compile(optimizer=keras.optimizers.Adam(config["lr"]), loss=(y, x) -> nn.softmax_cross_entropy_with_logits(logits=x, labels=y), run_eagerly=true)
 
 trainset = py"SparseDataset"(config["dataset"]["train_path"], 128, config["n_features"], config["n_classes"])
 testset = py"SparseDataset"(config["dataset"]["test_path"], 128, config["n_features"], config["n_classes"])
