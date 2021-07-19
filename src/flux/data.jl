@@ -1,7 +1,3 @@
-module FluxTraining
-
-export SparseDataset, preprocess_dataset, get_dataloaders
-
 using Flux
 using Random
 using DataLoaders
@@ -41,6 +37,7 @@ function preprocess_dataset(dataset_path)
         push!(x_indices, first.(x))
         push!(x_vals, last.(x))
         push!(ys, y)
+        break
     end
 
     perm = randperm(length(ys))
@@ -62,5 +59,3 @@ function get_dataloaders(config::Dict{String,Any})
     test_loader = DataLoader(testset, config["batch_size"], partial = true)
     return train_loader, test_loader
 end
-
-end # FluxTraining
