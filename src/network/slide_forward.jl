@@ -1,49 +1,5 @@
 using LinearAlgebra
 
-
-function build_network(
-    n_layers::Int,
-    n_neurons_per_layer::Vector{Int},
-    layer_activations::Vector{String},
-    input_dim::Int,
-    hash_tables::Vector,
-    batch_size::Int,
-)::SlideNetwork
-    network_layers = Vector{Layer}()
-    for i = 1:n_layers
-        neurons = Vector{Neuron}()
-        if i == 1
-            current_input_dim = input_dim
-        else
-            current_input_dim = n_neurons_per_layer[i-1]
-        end
-        for j = 1:n_neurons_per_layer[i]
-            push!(
-                neurons,
-                Neuron(
-                    j,
-                    rand(current_input_dim),
-                    rand(),
-                    zeros(batch_size),
-                    zeros(batch_size),
-                    zeros(current_input_dim, batch_size),
-                    zeros(batch_size),
-                ),
-            )
-        end
-        layer = Layer(
-            i,
-            neurons,
-            hash_tables[i],
-            activation_name_to_function[layer_activations[i]],
-        )
-        store_neurons_in_bucket(layer.hash_table, layer.neurons)
-        push!(network_layers, layer)
-    end
-    network = SlideNetwork(network_layers)
-    return network
-end
-
 function build_activated_neurons_single_sample(
     x::Vector{Float},
     network::SlideNetwork,
