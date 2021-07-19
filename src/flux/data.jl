@@ -27,7 +27,7 @@ LearnBase.nobs(ds::SparseDataset) = length(ds.ys)
 function preprocess_dataset(dataset_path)
     f = open(dataset_path, "r")
     x_indices, x_vals, ys = [], [], []
-    for line in readlines(f)[2:end]
+    for (cnt, line) in enumerate(readlines(f)[2:end])
         line_split = split(line)
         x = map(
             ftr -> (parse(Int, split(ftr, ':')[1]) + 1, parse(Float32, split(ftr, ':')[2])),
@@ -37,7 +37,9 @@ function preprocess_dataset(dataset_path)
         push!(x_indices, first.(x))
         push!(x_vals, last.(x))
         push!(ys, y)
-        break
+        # if cnt == 300
+        #     break
+        # end
     end
 
     perm = randperm(length(ys))

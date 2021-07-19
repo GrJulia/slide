@@ -40,13 +40,13 @@ end
 function train_epoch(model, train_loader, opt, config, logger)
     n_iters, losses = length(train_loader), nothing
     for (it, (x, y)) in enumerate(train_loader)
-        logger.step()
+        FluxTraining.step(logger)
         if it % 5 == 0
             println("Iteration $it/$n_iters, loss=", losses)
         end
         loss = train_step(model, x, y)
         losses = isnothing(losses) ? loss : ma(losses, loss)
-        logger.log("train_loss", losses, log_to_tb=true)
+        log_scalar(logger, "train_loss", losses, true)
         # @info "train_acc" train_acc = total_acc log_step_increment = 0
     end
 end
