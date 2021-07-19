@@ -6,7 +6,6 @@ function handle_batch_backward(
     network::SlideNetwork,
     i::Int,
 )
-    println(Threads.threadid())
     for l = length(network.layers):-1:1
         layer = network.layers[l]
         active_neurons =

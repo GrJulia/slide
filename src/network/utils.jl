@@ -28,7 +28,7 @@ function cross_entropy(y_pred, y_true)
     -mean(sum(y_true .* log.(y_pred .+ eps()), dims = 1))
 end
 
-function empty_neurons_attributes!(network)
+function empty_neurons_attributes!(network::SlideNetwork)
     for layer in network.layers
         for neuron in layer.neurons
             neuron.weight_gradients = zeros(size(neuron.weight_gradients))
@@ -39,7 +39,15 @@ function empty_neurons_attributes!(network)
     end
 end
 
-function numerical_gradient(network, layer_id, neuron_id, weight_index, x, y_true, epsilon)
+function numerical_gradient(
+    network::SlideNetwork,
+    layer_id::Int,
+    neuron_id::Int,
+    weight_index::Int,
+    x::Matrix{Float},
+    y_true::Matrix{Float},
+    epsilon::Float,
+)
     y = forward(x, network)
     backward!(x, y, network)
     backprop_gradient =
