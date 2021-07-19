@@ -1,4 +1,5 @@
 using Statistics
+using Slide.Network
 
 function batch_input(
     x::Matrix{Float32},
@@ -25,4 +26,28 @@ end
 
 function cross_entropy(y_pred, y_true)
     -mean(sum(y_true .* log.(y_pred .+ eps()), dims = 1))
+end
+
+function empty_neurons_attributes!(network)
+    for layer in network.layers
+        for neuron in layer.neurons
+            neuron.weight_gradients = zeros(size(neuron.weight_gradients))
+            neuron.bias_gradients = zeros(size(neuron.bias_gradients))
+            neuron.active_inputs = zeros(size(neuron.active_inputs))
+            neuron.activation_inputs = zeros(size(neuron.activation_inputs))
+        end
+    end
+end
+
+function numerical_gradient(network, layer_id, neuron_id, weight_index, x, y, epsilon)
+    y = forward(x, network)
+    backward!(x, y, network)
+    backprop_gradient = mean(network.layers[layer_id].neurons[neuron_id].weight_gradients, dims = 2)
+    network.layers[layer_id].neurons[neuron_id].weight[weight_index] += epsilon
+    loss_1 = cross_entropy(forward(x, network), y)
+    network.layers[layer_id].neurons[neuron_id].weight[weight_index] -= 2 * epsilon
+    loss_2 = cross_entropy(forward(x, network), y)
+    numerical_grad = (loss_1 - loss_2) / (2 * epsilon)
+    println("Numerical gradient: $numerical_grad")
+    println("Manual gradient: $(backprop_gradient[weight_index])")
 end

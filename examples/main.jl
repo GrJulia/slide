@@ -11,7 +11,7 @@ function main(
     drop_last::Bool,
     network_params::Dict,
     learning_rate::Float64,
-)::Matrix{Float32}
+)
     network = build_network(
         network_params["n_layers"],
         network_params["n_neurons_per_layer"],
@@ -31,11 +31,12 @@ function main(
             output = hcat(output, y_batch_pred)
             loss += cross_entropy(y_batch_pred, y_batch)
             backward!(x_batch, y_batch_pred, network)
+            update_weight!(network, learning_rate)
+            empty_neurons_attributes!(network)
         end
-        update_weight!(network, learning_rate)
-        println("Iteration $i, Loss $(mean(loss))")
+        println("Iteration $i, Loss $(loss / length(batches))")
     end
-    output
+    return output, network
 end
 
 function build_random_configuration()
@@ -73,10 +74,10 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
         "hash_tables" => hash_tables,
     )
     output_dim = config.n_neurons_per_layer[end]
-    learning_rate = 0.1
+    learning_rate = 0.01
 
     x = rand(Float32, config.input_dim, 4096)
     y = rand(1:output_dim, 4096)
-    output = main(x, y, 5, 256, false, network_params, learning_rate)
+    output, network = main(x, y, 20, 256, false, network_params, learning_rate)
     println("DONE \n")
 end

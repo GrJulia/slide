@@ -10,7 +10,9 @@ export Neuron,
     one_hot,
     cross_entropy,
     backward!,
-    update_weight!
+    update_weight!,
+    numerical_gradient,
+    empty_neurons_attributes!
 
 include("utils.jl")
 include("vanilla_hash_table.jl")
