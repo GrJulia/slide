@@ -1,12 +1,12 @@
 function build_and_train(
-    x::Matrix{Float32},
+    x::Matrix{Float},
     y::Vector{Int},
     n_iters::Int,
     batch_size::Int,
     drop_last::Bool,
     network_params::Dict,
-    learning_rate::Float64,
-)::Matrix{Float64}
+    learning_rate::Float,
+)::Matrix{Float}
     network = build_network(
         network_params["n_layers"],
         network_params["n_neurons_per_layer"],

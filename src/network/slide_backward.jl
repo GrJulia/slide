@@ -1,6 +1,11 @@
 using Statistics: mean
 
-function handle_batch_backward(x, y, network, i)
+function handle_batch_backward(
+    x::Vector{Float},
+    y::Vector{Float},
+    network::SlideNetwork,
+    i::Int,
+)
     for l = length(network.layers):-1:1
         layer = network.layers[l]
         active_neurons =
@@ -29,7 +34,7 @@ function handle_batch_backward(x, y, network, i)
     end
 end
 
-function update_weight!(network, learning_rate)
+function update_weight!(network::SlideNetwork, learning_rate::Float)
     for layer in network.layers
         for neuron in layer.neurons
             neuron.weight .-= learning_rate * mean(neuron.weight_gradients, dims = 2)[:, 1]
@@ -38,7 +43,7 @@ function update_weight!(network, learning_rate)
     end
 end
 
-function backward!(x, y_pred, network)
+function backward!(x::Matrix{Float}, y_pred::Matrix{Float}, network::SlideNetwork)
     n_samples = size(x)[2]
     Threads.@threads for i = 1:n_samples
         handle_batch_backward(x[:, i], y_pred[:, i], network, i)

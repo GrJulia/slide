@@ -1,5 +1,7 @@
 module Network
 
+const Float = typeof(1.0)
+
 export Neuron,
     Layer,
     SlideNetwork,
@@ -13,7 +15,8 @@ export Neuron,
     update_weight!,
     numerical_gradient,
     empty_neurons_attributes!,
-    build_and_train
+    build_and_train,
+    Float
 
 include("training_loop.jl")
 include("utils.jl")

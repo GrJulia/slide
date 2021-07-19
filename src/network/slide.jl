@@ -4,7 +4,7 @@ mutable struct Neuron
     weight::Vector{Float32}
     bias::Float32
     active_inputs::Array{Id}
-    activation_inputs::Array{Float32}
+    activation_inputs::Array{Float}
     weight_gradients::Matrix{Float32}
     bias_gradients::Vector{Float32}
 end

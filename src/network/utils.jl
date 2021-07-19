@@ -2,11 +2,11 @@ using Statistics
 using Slide.Network
 
 function batch_input(
-    x::Matrix{Float32},
+    x::Matrix{Float},
     y::Matrix{Int},
     batch_size::Int64,
     drop_last::Bool,
-)::Vector{Tuple{Matrix{Float32},Matrix{Int}}}
+)::Vector{Tuple{Matrix{Float},Matrix{Int}}}
     batches = map(Iterators.partition(axes(x, 2), batch_size)) do columns
         x[:, columns], y[:, columns]
     end
