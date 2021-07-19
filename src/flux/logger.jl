@@ -19,7 +19,7 @@ mutable struct Logger
 
     function log_scalar(key, val, log_to_tb=false)
         push!(logs[key], (curr_it, val))
-        if log_to_tensorboard:
+        if log_to_tensorboard
             if !incr_tb
                 @info key key = val
                 incr_tb = true
