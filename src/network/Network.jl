@@ -1,6 +1,16 @@
 module Network
 
-export Neuron, Layer, SlideNetwork, HashTable, build_network, forward, batch_input, one_hot, cross_entropy, backward!
+export Neuron,
+    Layer,
+    SlideNetwork,
+    HashTable,
+    build_network,
+    forward,
+    batch_input,
+    one_hot,
+    cross_entropy,
+    backward!,
+    update_weight!
 
 include("utils.jl")
 include("vanilla_hash_table.jl")
