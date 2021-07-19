@@ -7,3 +7,7 @@ end
 @testset "Network" begin
     include("test_slide_forward.jl")
 end
+
+@testset "LSH" begin
+    include("lsh.jl")
+end
