@@ -12,8 +12,10 @@ export Neuron,
     backward!,
     update_weight!,
     numerical_gradient,
-    empty_neurons_attributes!
+    empty_neurons_attributes!,
+    build_and_train
 
+include("training_loop.jl")
 include("utils.jl")
 include("vanilla_hash_table.jl")
 include("activations.jl")
