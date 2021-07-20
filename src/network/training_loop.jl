@@ -25,6 +25,10 @@ function build_network(
                     zeros(batch_size),
                     zeros(current_input_dim, batch_size),
                     zeros(batch_size),
+                    zeros(current_input_dim),
+                    0,
+                    zeros(current_input_dim),
+                    0
                 ),
             )
         end
@@ -59,6 +63,7 @@ function build_and_train(
         network_params["hash_tables"],
         batch_size,
     )
+    optimizer = AdamOptimizer(eta=learning_rate)
     y_cat = one_hot(y)
     batches = batch_input(x, y_cat, batch_size, drop_last)
     output = nothing
@@ -70,7 +75,7 @@ function build_and_train(
             output = hcat(output, y_batch_pred)
             loss += cross_entropy(y_batch_pred, y_batch)
             backward!(x_batch, y_batch_pred, network)
-            update_weight!(network, learning_rate)
+            update_weight!(network, optimizer, i)
             empty_neurons_attributes!(network)
         end
         println("Iteration $i, Loss $(loss / length(batches))")

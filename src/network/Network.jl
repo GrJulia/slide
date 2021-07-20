@@ -16,14 +16,17 @@ export Neuron,
     numerical_gradient,
     empty_neurons_attributes!,
     build_and_train,
-    Float
+    Float,
+    AdamOptimizer,
+    adam_step
 
-include("training_loop.jl")
-include("utils.jl")
 include("vanilla_hash_table.jl")
 include("activations.jl")
 include("slide.jl")
+include("utils.jl")
+include("optimizer.jl")
 include("slide_forward.jl")
 include("slide_backward.jl")
+include("training_loop.jl")
 
 end

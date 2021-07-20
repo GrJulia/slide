@@ -45,7 +45,7 @@ function numerical_gradient(
     neuron_id::Int,
     weight_index::Int,
     x::Matrix{Float},
-    y_true::Matrix{Float},
+    y_true::Matrix{Int},
     epsilon::Float,
 )
     y = forward(x, network)

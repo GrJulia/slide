@@ -7,6 +7,10 @@ mutable struct Neuron
     activation_inputs::Array{Float}
     weight_gradients::Matrix{Float32}
     bias_gradients::Vector{Float32}
+    m_dw::Vector{Float32}
+    m_db::Float32
+    v_dw::Vector{Float32}
+    v_db::Float32
 end
 
 mutable struct Layer{F<:Function}

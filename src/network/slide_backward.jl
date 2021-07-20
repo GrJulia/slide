@@ -34,11 +34,10 @@ function handle_batch_backward(
     end
 end
 
-function update_weight!(network::SlideNetwork, learning_rate::Float)
+function update_weight!(network::SlideNetwork, optimizer::AdamOptimizer, t::Int)
     for layer in network.layers
         for neuron in layer.neurons
-            neuron.weight .-= learning_rate * mean(neuron.weight_gradients, dims = 2)[:, 1]
-            neuron.bias -= learning_rate * mean(neuron.bias_gradients)
+            adam_step(optimizer, t, neuron)
         end
     end
 end
