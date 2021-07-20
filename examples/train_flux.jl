@@ -3,6 +3,7 @@ using Flux.Optimise: update!
 using Flux.Losses: logitcrossentropy
 using JSON
 using Statistics
+using Random
 using BSON: @save
 using LearnBase
 
@@ -45,6 +46,9 @@ function train_epoch(model, train_loader, test_set, opt, config, logger)
 
         train_stats = @timed train_step(model, x, y)
 
+        t1 = time_ns()
+        log_scalar(logger, "train_step + data loading time", (t1-t0)/1.0e9)
+
         loss = train_stats[1]
         losses = isnothing(losses) ? loss : ma(losses, loss)
 
@@ -52,15 +56,12 @@ function train_epoch(model, train_loader, test_set, opt, config, logger)
         log_scalar(logger, "train_step gc time", train_stats[4])
         log_scalar(logger, "train_loss", losses, true)
 
-        t1 = time_ns()
-        log_scalar(logger, "train_step + data loading time", (t1-t0)/1.0e9)
-
         if it % config["testing"]["test_freq"] == 0
             println("Iteration $it/$n_iters, loss=", losses)
             test_epoch(model, test_set, logger, config["testing"])
         end
 
-        t0 = t1
+        t0 = time_ns()
     end
 end
 
@@ -90,6 +91,8 @@ end
 
 
 config = JSON.parsefile(ARGS[1])
+config["name"] *= "_" * randstring(8)
+println("Name: $(config["name"])")
 
 logger = get_logger(config)
 train_loader, test_set = get_dataloaders(config)
