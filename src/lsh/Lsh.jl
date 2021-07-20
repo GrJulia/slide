@@ -104,12 +104,13 @@ From each table similar elements to the `elem` are retrieved.
 function retrieve(lsh::Lsh{T,Hasher}, elem::T)::Set{T} where {T,Hasher<:AbstractHasher{T}}
     signatures = compute_query_signatures(lsh.hash, elem)
 
-    function _helper(acc, (signature, hash_table))
-        retrieved = retrieve(hash_table, signature)
+    reduce(
+        zip(signatures, lsh.hash_tables),
+        init = T[],
+    ) do acc::Vector{T}, (signature, ht)::Tuple{Int,HashTable{T}}
+        retrieved = retrieve(ht, signature)
         vcat(acc, retrieved)
-    end
-
-    reduce(_helper, zip(signatures, lsh.hash_tables), init = []) |> Set
+    end |> Set{T}
 end
 
 end # LSH
