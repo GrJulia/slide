@@ -1,6 +1,14 @@
 # slide
 Julia implementation of Sublinear Deep Learning Engine
 
+## Running tests
+
+```
+julia # opens julia repl
+]     # opens pkg mode
+activate .
+test
+```
 
 ## Running examples
 Go into the `examples` directory and run example with julia command with added project argument like so:
