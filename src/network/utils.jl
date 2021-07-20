@@ -31,10 +31,10 @@ end
 function empty_neurons_attributes!(network::SlideNetwork)
     for layer in network.layers
         for neuron in layer.neurons
-            neuron.weight_gradients = zeros(size(neuron.weight_gradients))
-            neuron.bias_gradients = zeros(size(neuron.bias_gradients))
-            neuron.active_inputs = zeros(size(neuron.active_inputs))
-            neuron.activation_inputs = zeros(size(neuron.activation_inputs))
+            neuron.neuron.weight_gradients = zeros(size(neuron.neuron.weight_gradients))
+            neuron.neuron.bias_gradients = zeros(size(neuron.neuron.bias_gradients))
+            neuron.neuron.active_inputs = zeros(size(neuron.neuron.active_inputs))
+            neuron.neuron.activation_inputs = zeros(size(neuron.neuron.activation_inputs))
         end
     end
 end
@@ -52,12 +52,12 @@ function numerical_gradient_weights(
     y_check_pred = handle_batch(x_check, network, 1, false)
     handle_batch_backward(x_check, y_check_pred, network, 1)
     backprop_gradient =
-        sum(network.layers[layer_id].neurons[neuron_id].weight_gradients, dims = 2)
+        sum(network.layers[layer_id].neurons[neuron_id].neuron.weight_gradients, dims = 2)
     empty_neurons_attributes!(network)
-    network.layers[layer_id].neurons[neuron_id].weight[weight_index] += epsilon
+    network.layers[layer_id].neurons[neuron_id].neuron.weight[weight_index] += epsilon
     loss_1 = cross_entropy(handle_batch(x_check, network, 1, false), y_check)
     empty_neurons_attributes!(network)
-    network.layers[layer_id].neurons[neuron_id].weight[weight_index] -= 2 * epsilon
+    network.layers[layer_id].neurons[neuron_id].neuron.weight[weight_index] -= 2 * epsilon
     loss_2 = cross_entropy(handle_batch(x_check, network, 1, false), y_check)
     empty_neurons_attributes!(network)
     numerical_grad = (loss_1 - loss_2) / (2 * epsilon)
@@ -77,12 +77,12 @@ function numerical_gradient_bias(
     empty_neurons_attributes!(network)
     y_check_pred = handle_batch(x_check, network, 1, false)
     handle_batch_backward(x_check, y_check_pred, network, 1)
-    backprop_gradient = sum(network.layers[layer_id].neurons[neuron_id].bias_gradients)
+    backprop_gradient = sum(network.layers[layer_id].neurons[neuron_id].neuron.bias_gradients)
     empty_neurons_attributes!(network)
-    network.layers[layer_id].neurons[neuron_id].bias += epsilon
+    network.layers[layer_id].neurons[neuron_id].neuron.bias += epsilon
     loss_1 = cross_entropy(handle_batch(x_check, network, 1, false), y_check)
     empty_neurons_attributes!(network)
-    network.layers[layer_id].neurons[neuron_id].bias -= 2 * epsilon
+    network.layers[layer_id].neurons[neuron_id].neuron.bias -= 2 * epsilon
     loss_2 = cross_entropy(handle_batch(x_check, network, 1, false), y_check)
     empty_neurons_attributes!(network)
     numerical_grad = (loss_1 - loss_2) / (2 * epsilon)

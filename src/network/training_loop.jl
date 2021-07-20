@@ -8,7 +8,7 @@ function build_network(
 )::SlideNetwork
     network_layers = Vector{Layer}()
     for i = 1:n_layers
-        neurons = Vector{Neuron}()
+        neurons = Vector{OptimizerNeuron}()
         if i == 1
             current_input_dim = input_dim
         else
@@ -17,7 +17,8 @@ function build_network(
         for j = 1:n_neurons_per_layer[i]
             push!(
                 neurons,
-                Neuron(
+                OptimizerNeuron(
+                    Neuron(
                     j,
                     rand(current_input_dim),
                     rand(),
@@ -25,11 +26,15 @@ function build_network(
                     zeros(batch_size),
                     zeros(current_input_dim, batch_size),
                     zeros(batch_size),
-                    zeros(current_input_dim),
-                    0,
-                    zeros(current_input_dim),
-                    0,
+                    
                 ),
+                AdamAttributes(
+                    zeros(current_input_dim),
+                    0,
+                    zeros(current_input_dim),
+                    0,
+                )
+            )
             )
         end
         layer = Layer(

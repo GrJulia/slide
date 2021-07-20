@@ -41,7 +41,7 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
     x = rand(Float, config.input_dim, 4096) / 10
     y = rand(1:output_dim, 4096)
-    output, network = build_and_train(x, y, 5, 256, false, network_params, learning_rate)
+    @btime output, network = build_and_train(x, y, 5, 256, false, network_params, learning_rate)
     println("DONE \n")
 
     layer_id = 1
@@ -49,12 +49,12 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
     weight_index = 1
     x_check = x[:, 1]
     y_check = one_hot(y)[:, 1]
-    for neuron_id in 1:128
+    for neuron_id in 1:12
         println("Neuron $neuron_id, weight grad")
         numerical_gradient_weights(network, layer_id, neuron_id, weight_index, x_check, y_check, 0.01)
     end
 
-    for neuron_id in 1:128
+    for neuron_id in 1:12
         println("Neuron $neuron_id, bias grad")
         numerical_gradient_bias(network, layer_id, neuron_id, x_check, y_check, 0.01)
     end

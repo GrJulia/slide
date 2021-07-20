@@ -10,3 +10,7 @@ end
 
 activation_name_to_function =
     Dict("identity" => identity, "sparse_softmax" => sparse_softmax, "sigmoid" => sigmoid)
+
+@inline function gradient(::Type{typeof(sigmoid)}, x)
+    return x * (1 - x) 
+end

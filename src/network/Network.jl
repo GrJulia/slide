@@ -3,6 +3,8 @@ module Network
 const Float = typeof(1.0)
 
 export Neuron,
+    OptimizerAttributes,
+    OptimizerNeuron,
     Layer,
     SlideNetwork,
     HashTable,
@@ -20,7 +22,8 @@ export Neuron,
     Float,
     Optimizer,
     AdamOptimizer,
-    optimizer_step
+    optimizer_step,
+    gradient
 
 include("vanilla_hash_table.jl")
 include("activations.jl")

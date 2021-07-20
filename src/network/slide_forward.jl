@@ -33,13 +33,13 @@ function forward_single_sample(
         layer_activation = layer.layer_activation
         layer_output = zeros(current_n_neurons)
         for neuron_id in activated_neuron_ids[i]
-            current_neuron = layer.neurons[neuron_id]
+            current_neuron = layer.neurons[neuron_id].neuron
             layer_output[neuron_id] =
                 dot(current_input, current_neuron.weight) + current_neuron.bias
         end
         current_input = layer_activation(layer_output)
-        for (k, neuron) in enumerate(layer.neurons)
-            neuron.activation_inputs[x_index] = current_input[k]
+        for (k, opt_neuron) in enumerate(layer.neurons)
+            opt_neuron.neuron.activation_inputs[x_index] = current_input[k]
         end
     end
     return current_input
@@ -54,7 +54,7 @@ function handle_batch(
     activated_neuron_ids = build_activated_neurons_single_sample(x, network, random)
     for j = 1:length(activated_neuron_ids)
         for neuron_id in activated_neuron_ids[j]
-            network.layers[j].neurons[neuron_id].active_inputs[i] = 1
+            network.layers[j].neurons[neuron_id].neuron.active_inputs[i] = 1
         end
     end
     return forward_single_sample(x, network, activated_neuron_ids, i)
