@@ -34,10 +34,10 @@ function handle_batch_backward(
     end
 end
 
-function update_weight!(network::SlideNetwork, optimizer::AdamOptimizer, t::Int)
+function update_weight!(network::SlideNetwork, optimizer::Optimizer)
     for layer in network.layers
         for neuron in layer.neurons
-            adam_step(optimizer, t, neuron)
+            optimizer_step(optimizer, neuron)
         end
     end
 end

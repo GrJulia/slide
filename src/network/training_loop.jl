@@ -75,7 +75,7 @@ function build_and_train(
             output = hcat(output, y_batch_pred)
             loss += cross_entropy(y_batch_pred, y_batch)
             backward!(x_batch, y_batch_pred, network)
-            update_weight!(network, optimizer, i)
+            update_weight!(network, optimizer)
             empty_neurons_attributes!(network)
         end
         println("Iteration $i, Loss $(loss / length(batches))")

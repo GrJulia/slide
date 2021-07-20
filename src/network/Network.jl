@@ -17,8 +17,9 @@ export Neuron,
     empty_neurons_attributes!,
     build_and_train,
     Float,
+    Optimizer,
     AdamOptimizer,
-    adam_step
+    optimizer_step
 
 include("vanilla_hash_table.jl")
 include("activations.jl")
