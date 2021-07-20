@@ -77,7 +77,8 @@ function numerical_gradient_bias(
     empty_neurons_attributes!(network)
     y_check_pred = handle_batch(x_check, network, 1, false)
     handle_batch_backward(x_check, y_check_pred, network, 1)
-    backprop_gradient = sum(network.layers[layer_id].neurons[neuron_id].neuron.bias_gradients)
+    backprop_gradient =
+        sum(network.layers[layer_id].neurons[neuron_id].neuron.bias_gradients)
     empty_neurons_attributes!(network)
     network.layers[layer_id].neurons[neuron_id].neuron.bias += epsilon
     loss_1 = cross_entropy(handle_batch(x_check, network, 1, false), y_check)

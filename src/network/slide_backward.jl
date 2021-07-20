@@ -8,8 +8,10 @@ function handle_batch_backward(
 )
     for l = length(network.layers):-1:1
         layer = network.layers[l]
-        active_neurons =
-            [opt_neuron.neuron for opt_neuron in layer.neurons if opt_neuron.neuron.active_inputs[i] == 1]
+        active_neurons = [
+            opt_neuron.neuron for
+            opt_neuron in layer.neurons if opt_neuron.neuron.active_inputs[i] == 1
+        ]
         if l == 1
             previous_activation = x
         else
@@ -21,12 +23,15 @@ function handle_batch_backward(
         for (k, neuron) in enumerate(active_neurons) # refactor
             if l == length(network.layers)
                 dz = neuron.activation_inputs[i] - y[k]
+                #dz = gradient(typeof(layer.layer_activation), neuron.activation_inputs[i],  y[k])
             else
                 da = sum(
                     neuron.neuron.bias_gradients[i] * neuron.neuron.weight[k] for
                     neuron in network.layers[l+1].neurons
                 )
-                dz = da * gradient(typeof(layer.layer_activation), neuron.activation_inputs[i])
+                dz =
+                    da *
+                    gradient(typeof(layer.layer_activation), neuron.activation_inputs[i])
             end
             neuron.bias_gradients[i] = dz
             neuron.weight_gradients[:, i] = dz .* previous_activation

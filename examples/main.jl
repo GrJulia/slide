@@ -41,7 +41,7 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
     x = rand(Float, config.input_dim, 4096) / 10
     y = rand(1:output_dim, 4096)
-    @btime output, network = build_and_train(x, y, 5, 256, false, network_params, learning_rate)
+    output, network = build_and_train(x, y, 5, 256, false, network_params, learning_rate)
     println("DONE \n")
 
     layer_id = 1

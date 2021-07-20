@@ -18,11 +18,15 @@ function optimizer_step(optimizer::AdamOptimizer, neuron::OptimizerNeuron)
     dw = sum(neuron.neuron.weight_gradients, dims = 2)[:, 1]
     db = sum(neuron.neuron.bias_gradients)
     adam_attributes = neuron.optimizer_attributes
-    adam_attributes.m_dw = optimizer.beta_1 .* adam_attributes.m_dw .+ (1 - optimizer.beta_1) .* dw
-    adam_attributes.m_db = optimizer.beta_1 * adam_attributes.m_db + (1 - optimizer.beta_1) * db
+    adam_attributes.m_dw =
+        optimizer.beta_1 .* adam_attributes.m_dw .+ (1 - optimizer.beta_1) .* dw
+    adam_attributes.m_db =
+        optimizer.beta_1 * adam_attributes.m_db + (1 - optimizer.beta_1) * db
 
-    adam_attributes.v_dw = optimizer.beta_2 .* adam_attributes.v_dw .+ (1 - optimizer.beta_2) .* (dw .^ 2)
-    adam_attributes.v_db = optimizer.beta_2 * adam_attributes.v_db + (1 - optimizer.beta_2) * (db^2)
+    adam_attributes.v_dw =
+        optimizer.beta_2 .* adam_attributes.v_dw .+ (1 - optimizer.beta_2) .* (dw .^ 2)
+    adam_attributes.v_db =
+        optimizer.beta_2 * adam_attributes.v_db + (1 - optimizer.beta_2) * (db^2)
 
     corr_momemntum_dw = adam_attributes.m_dw ./ (1 - optimizer.beta_1^optimizer.t)
     corr_momemntum_db = adam_attributes.m_db / (1 - optimizer.beta_1^optimizer.t)
