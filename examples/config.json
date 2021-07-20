@@ -9,13 +9,13 @@
     "hidden_dim": 128,
     "n_classes": 205443,
     "batch_size": 128,
-    "lr": 1e-4,
-    "n_epochs": 2,
+    "lr": 1e-3,
+    "n_epochs": 10,
     "use_gpu": false,
     "testing": {
-        "n_batches": 20,
-        "test_freq": 2,
-        "use_random_indices": false,
+        "n_batches": 40,
+        "test_freq": 20,
+        "use_random_indices": true,
         "top_k_classes": 1
     }
 }

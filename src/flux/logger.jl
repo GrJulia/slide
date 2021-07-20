@@ -16,13 +16,12 @@ end
 function step(logger::Logger)
     logger.curr_it += 1
     logger.incr_tb = false
-    if logger.curr_it % 10 == 0
+    if logger.curr_it % 20 == 0
         save(logger)
     end
 end
 
 function log_scalar(logger::Logger, key::String, val::Any, log_to_tb=false)
-    println("logger.logs[$key] = ($(logger.curr_it), $val)")
     push!(logger.logs[key], (logger.curr_it, val))
     if log_to_tb
         if !logger.incr_tb

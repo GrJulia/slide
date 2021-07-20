@@ -6,23 +6,28 @@ using LearnBase
 struct SparseDataset
     xs::Tuple{Vector{Vector{Int}},Vector{Vector{Float32}}}
     ys::Vector{Vector{Int}}
+    batch_size::Int
     n_features::Int
     n_classes::Int
 end
 
-function LearnBase.getobs(ds::SparseDataset, idx::Int)
+function LearnBase.getobs(ds::SparseDataset, raw_batch_idx)
+    batch_idx = convert(Int, raw_batch_idx)
+    batch = ds.batch_size
     (xs_indices, xs_vals) = ds.xs
-    x = zeros(Float32, ds.n_features)
-    x[xs_indices[idx]] = xs_vals[idx]
+    x = zeros(Float32, ds.n_features, batch)
+    y = zeros(Float32, ds.n_classes, batch)
 
-    ys = ds.ys[idx]
-    y = zeros(Int, ds.n_classes)
-    y[ys] .= 1
+    for b in 1:batch
+        idx = (batch_idx-1) * batch + b
+        x[xs_indices[idx], b] = xs_vals[idx]
+        y[ds.ys[idx], b] .= 1
+    end
 
     return x, y
 end
 
-LearnBase.nobs(ds::SparseDataset) = length(ds.ys)
+LearnBase.nobs(ds::SparseDataset) = floor(length(ds.ys) / ds.batch_size)
 
 function preprocess_dataset(dataset_path)
     f = open(dataset_path, "r")
@@ -50,11 +55,11 @@ function get_dataloaders(config::Dict{String,Any})
     test_data, test_labels = preprocess_dataset(config["dataset"]["test_path"])
 
     train_set =
-        SparseDataset(train_data, train_labels, config["n_features"], config["n_classes"])
+        SparseDataset(train_data, train_labels, config["batch_size"], config["n_features"], config["n_classes"])
     test_set =
-        SparseDataset(test_data, test_labels, config["n_features"], config["n_classes"])
+        SparseDataset(test_data, test_labels, config["batch_size"], config["n_features"], config["n_classes"])
 
-    train_loader = DataLoader(train_set, config["batch_size"], partial = false)
-    # test_loader = DataLoader(test_set, config["batch_size"], partial = true)
+    train_loader = DataLoader(train_set, 1, partial = false)
+    # test_loader = DataLoader(test_set, 1, partial = true)
     return train_loader, test_set
 end
