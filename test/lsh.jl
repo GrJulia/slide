@@ -6,8 +6,9 @@ struct MockHasher <: AbstractHasher{Int}
     signature::Function
 end
 
-LSH.signature(m::MockHasher, elem::Int)::Vector{Int} = m.signature(elem)
-LSH.query_signature(m::MockHasher, elem::Int)::Vector{Int} = m.query_signature(elem)
+LSH.compute_signatures(m::MockHasher, elem::Int)::Vector{Int} = m.signature(elem)
+LSH.compute_query_signatures(m::MockHasher, elem::Int)::Vector{Int} =
+    m.query_signature(elem)
 
 
 @testset "Adding to the LSH" begin
@@ -23,33 +24,33 @@ LSH.query_signature(m::MockHasher, elem::Int)::Vector{Int} = m.query_signature(e
         l = lsh()
         add!(l, 10)
 
-        @test test_table(l.hash_tables[1], 1, [10])
-        @test test_table(l.hash_tables[2], 2, [10])
-        @test test_table(l.hash_tables[3], 3, [10])
-        @test test_table(l.hash_tables[4], 4, [10])
-        @test test_table(l.hash_tables[5], 1, [10])
+        @test test_table(l.hash_tables[1], 2, [10])
+        @test test_table(l.hash_tables[2], 3, [10])
+        @test test_table(l.hash_tables[3], 4, [10])
+        @test test_table(l.hash_tables[4], 1, [10])
+        @test test_table(l.hash_tables[5], 2, [10])
 
         add!(l, 15)
 
-        @test test_table(l.hash_tables[1], 1, [10, 15])
-        @test test_table(l.hash_tables[2], 2, [10, 15])
-        @test test_table(l.hash_tables[3], 3, [10, 15])
-        @test test_table(l.hash_tables[4], 4, [10, 15])
-        @test test_table(l.hash_tables[5], 1, [10, 15])
+        @test test_table(l.hash_tables[1], 2, [10, 15])
+        @test test_table(l.hash_tables[2], 3, [10, 15])
+        @test test_table(l.hash_tables[3], 4, [10, 15])
+        @test test_table(l.hash_tables[4], 1, [10, 15])
+        @test test_table(l.hash_tables[5], 2, [10, 15])
 
         add!(l, 13)
 
-        @test test_table(l.hash_tables[1], 1, [10, 15])
-        @test test_table(l.hash_tables[2], 2, [10, 15])
-        @test test_table(l.hash_tables[3], 3, [10, 15])
-        @test test_table(l.hash_tables[4], 4, [10, 15])
-        @test test_table(l.hash_tables[5], 1, [10, 15])
+        @test test_table(l.hash_tables[1], 2, [10, 15])
+        @test test_table(l.hash_tables[2], 3, [10, 15])
+        @test test_table(l.hash_tables[3], 4, [10, 15])
+        @test test_table(l.hash_tables[4], 1, [10, 15])
+        @test test_table(l.hash_tables[5], 2, [10, 15])
 
-        @test test_table(l.hash_tables[1], 4, [13])
-        @test test_table(l.hash_tables[2], 1, [13])
-        @test test_table(l.hash_tables[3], 1, [13])
-        @test test_table(l.hash_tables[4], 2, [13])
-        @test test_table(l.hash_tables[5], 3, [13])
+        @test test_table(l.hash_tables[1], 1, [13])
+        @test test_table(l.hash_tables[2], 2, [13])
+        @test test_table(l.hash_tables[3], 2, [13])
+        @test test_table(l.hash_tables[4], 3, [13])
+        @test test_table(l.hash_tables[5], 4, [13])
     end
 
     @testset "Adding more than bucket_size to bucket" begin
@@ -61,11 +62,11 @@ LSH.query_signature(m::MockHasher, elem::Int)::Vector{Int} = m.query_signature(e
         add!(l, 25)
         add!(l, 30)
 
-        @test test_table(l.hash_tables[1], 1, [10, 15, 20, 25, 30])
+        @test test_table(l.hash_tables[1], 2, [10, 15, 20, 25, 30])
 
         add!(l, 35)
 
-        @test test_table(l.hash_tables[1], 1, [15, 20, 25, 30, 35])
+        @test test_table(l.hash_tables[1], 2, [15, 20, 25, 30, 35])
     end
 end
 
