@@ -10,12 +10,12 @@
     "n_classes": 205443,
     "batch_size": 128,
     "lr": 1e-4,
-    "n_epochs": 1,
+    "n_epochs": 2,
     "use_gpu": false,
-    "top_k_classes": 1,
     "testing": {
         "n_batches": 20,
-        "test_freq": 20,
-        "use_random_indices": false
+        "test_freq": 2,
+        "use_random_indices": false,
+        "top_k_classes": 1
     }
 }
