@@ -5,6 +5,9 @@ const Float = typeof(1.0)
 export Neuron,
     OptimizerAttributes,
     OptimizerNeuron,
+    AdamAttributes,
+    build_activated_neurons_single_sample,
+    forward_single_sample,
     Layer,
     SlideNetwork,
     HashTable,
@@ -23,7 +26,8 @@ export Neuron,
     Optimizer,
     AdamOptimizer,
     optimizer_step,
-    gradient
+    gradient,
+    sparse_softmax
 
 include("vanilla_hash_table.jl")
 include("activations.jl")

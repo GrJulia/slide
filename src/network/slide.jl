@@ -23,9 +23,9 @@ struct OptimizerNeuron{W<:OptimizerAttributes}
     optimizer_attributes::W
 end
 
-struct Layer{F<:Function}
+struct Layer{T, F<:Function}
     id::Id
-    neurons::Vector{OptimizerNeuron}
+    neurons::Vector{OptimizerNeuron{T}}
     hash_table::HashTable
     layer_activation::F
 end

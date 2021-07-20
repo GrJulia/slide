@@ -8,7 +8,7 @@ function build_network(
 )::SlideNetwork
     network_layers = Vector{Layer}()
     for i = 1:n_layers
-        neurons = Vector{OptimizerNeuron}()
+        neurons = Vector{OptimizerNeuron{AdamAttributes}}()
         if i == 1
             current_input_dim = input_dim
         else
