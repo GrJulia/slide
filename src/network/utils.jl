@@ -26,6 +26,18 @@ function one_hot(y::Vector, n_labels::Int64 = Int(maximum(y)))
     y_categorical
 end
 
+function one_hot(y::Vector{Vector{Float}}, n_labels::Int64 = Int(maximum(maximum.(y))))
+    # One hot encoding for datasets used by Slide
+    # which turns out to be a mutlilabels classification problem
+    y_categorical = zeros(Float, n_labels, length(y))
+    for (i, label_vector) in enumerate(y)
+        for label in label_vector
+            y_categorical[Int(label), i] = 1
+        end
+    end
+    y_categorical
+end
+
 function cross_entropy(y_pred::Array{Float}, y_true::Array{Float})
     -mean(sum(y_true .* log.(y_pred .+ eps()), dims = 1))
 end
