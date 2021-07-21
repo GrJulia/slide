@@ -9,6 +9,16 @@ mutable struct Neuron
     bias_gradients::Vector{Float32}
 end
 
+Neuron(id::Id, batch_size::Int, input_dim::Int) = Neuron(
+    id,
+    rand(input_dim),
+    rand(),
+    zeros(batch_size),
+    zeros(batch_size),
+    zeros(input_dim, batch_size),
+    zeros(batch_size),
+)
+
 abstract type OptimizerAttributes end
 
 mutable struct AdamAttributes <: OptimizerAttributes
@@ -18,12 +28,14 @@ mutable struct AdamAttributes <: OptimizerAttributes
     v_db::Float32
 end
 
+AdamAttributes(input_dim::Int) = AdamAttributes(zeros(input_dim), 0, zeros(input_dim), 0)
+
 struct OptimizerNeuron{W<:OptimizerAttributes}
     neuron::Neuron
     optimizer_attributes::W
 end
 
-struct Layer{T<:OptimizerAttributes, F<:Function}
+struct Layer{T<:OptimizerAttributes,F<:Function}
     id::Id
     neurons::Vector{OptimizerNeuron{T}}
     hash_table::HashTable

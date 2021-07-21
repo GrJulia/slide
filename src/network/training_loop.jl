@@ -18,21 +18,8 @@ function build_network(
             push!(
                 neurons,
                 OptimizerNeuron(
-                    Neuron(
-                        j,
-                        rand(current_input_dim),
-                        rand(),
-                        zeros(batch_size),
-                        zeros(batch_size),
-                        zeros(current_input_dim, batch_size),
-                        zeros(batch_size),
-                    ),
-                    AdamAttributes(
-                        zeros(current_input_dim),
-                        0,
-                        zeros(current_input_dim),
-                        0,
-                    ),
+                    Neuron(j, batch_size, current_input_dim),
+                    AdamAttributes(current_input_dim),
                 ),
             )
         end
