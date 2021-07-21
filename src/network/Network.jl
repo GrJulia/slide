@@ -27,7 +27,8 @@ export Neuron,
     AdamOptimizer,
     optimizer_step,
     gradient,
-    sparse_softmax
+    sparse_softmax,
+    relu
 
 include("vanilla_hash_table.jl")
 include("activations.jl")

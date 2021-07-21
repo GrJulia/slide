@@ -11,8 +11,8 @@ end
 
 Neuron(id::Id, batch_size::Int, input_dim::Int) = Neuron(
     id,
-    rand(input_dim),
-    rand(),
+    rand(input_dim) * 10,
+    rand() * 10,
     zeros(batch_size),
     zeros(batch_size),
     zeros(input_dim, batch_size),

@@ -63,7 +63,7 @@ function numerical_gradient_weights(
     numerical_grad = (loss_1 - loss_2) / (2 * epsilon)
     println("Numerical gradient: $numerical_grad")
     println("Manual gradient: $(backprop_gradient[weight_index])")
-    println("Absolute grad diff: $(numerical_grad - backprop_gradient[weight_index])")
+    println("Absolute grad diff: $(abs(numerical_grad - backprop_gradient[weight_index]))")
 end
 
 function numerical_gradient_bias(
@@ -89,5 +89,5 @@ function numerical_gradient_bias(
     numerical_grad = (loss_1 - loss_2) / (2 * epsilon)
     println("Numerical gradient: $numerical_grad")
     println("Manual gradient: $backprop_gradient")
-    println("Absolute grad diff: $(numerical_grad - backprop_gradient)")
+    println("Absolute grad diff: $(abs(numerical_grad - backprop_gradient))")
 end
