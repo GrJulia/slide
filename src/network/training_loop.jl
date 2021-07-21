@@ -38,7 +38,7 @@ end
 
 function build_and_train(
     x::Matrix{Float},
-    y::Vector{Int},
+    y::Vector{Float},
     n_iters::Int,
     batch_size::Int,
     drop_last::Bool,
@@ -55,12 +55,12 @@ function build_and_train(
     )
     optimizer = AdamOptimizer(eta = learning_rate)
     y_cat = one_hot(y)
-    batches = batch_input(x, y_cat, batch_size, drop_last)
+    training_batches = batch_input(x, y_cat, batch_size, drop_last)
     output = nothing
     for i = 1:n_iters
         loss = 0
         output = Array{typeof(x[1])}(undef, length(network.layers[end].neurons), 0)
-        for (x_batch, y_batch) in batches
+        for (x_batch, y_batch) in training_batches
             y_batch_pred = forward!(x_batch, network)
             output = hcat(output, y_batch_pred)
             loss += cross_entropy(y_batch_pred, y_batch)
@@ -68,7 +68,7 @@ function build_and_train(
             update_weight!(network, optimizer)
             empty_neurons_attributes!(network)
         end
-        println("Iteration $i, Loss $(loss / length(batches))")
+        println("Iteration $i, Loss $(loss / length(training_batches))")
     end
     return output, network
 end

@@ -1,8 +1,8 @@
 using Statistics: mean, Threads
 
 function handle_batch_backward(
-    x::Vector{Float},
-    y::Vector{Float},
+    x::SubArray{Float},
+    y::SubArray{Float},
     network::SlideNetwork,
     i::Int,
 )
@@ -26,8 +26,9 @@ function handle_batch_backward(
                 #dz = gradient(typeof(layer.layer_activation), neuron.activation_inputs[i],  y[k])
             else
                 da = sum(
-                    neuron.neuron.bias_gradients[i] * neuron.neuron.weight[neuron.neuron.id] for
-                    neuron in network.layers[l+1].neurons
+                    opt_neuron.neuron.bias_gradients[i] *
+                    opt_neuron.neuron.weight[opt_neuron.neuron.id] for
+                    opt_neuron in network.layers[l+1].neurons
                 )
                 dz =
                     da *
@@ -50,6 +51,6 @@ end
 function backward!(x::Matrix{Float}, y_pred::Matrix{Float}, network::SlideNetwork)
     n_samples = size(x)[2]
     Threads.@threads for i = 1:n_samples
-        handle_batch_backward(x[:, i], y_pred[:, i], network, i)
+        handle_batch_backward((@view x[:, i]), (@view y_pred[:, i]), network, i)
     end
 end

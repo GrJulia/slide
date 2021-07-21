@@ -6,7 +6,7 @@ function build_random_configuration()
     n_layers = rand(1:10)
     input_dim = rand(8:32)
     n_neurons_per_layer = [rand(1:10) for _ = 1:n_layers]
-    layer_activations = ["sigmoid" for _ = 1:n_layers-1]
+    layer_activations = ["relu" for _ = 1:n_layers-1]
     push!(layers_activations, "sparse_softmax")
     n_buckets = 2
     return (
@@ -40,7 +40,7 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
     learning_rate = 0.01
 
     x = rand(Float, config.input_dim, 4096) * 10
-    y = rand(1:output_dim, 4096)
+    y = Vector{Float}(rand(1:output_dim, 4096))
     output, network = build_and_train(x, y, 5, 256, false, network_params, learning_rate)
     println("DONE \n")
 

@@ -1,14 +1,16 @@
 using LinearAlgebra
 
 function build_activated_neurons_single_sample(
-    x::Vector{Float},
+    x::SubArray{Float},
     network::SlideNetwork,
     random,
 )::Vector{Vector{Int}}
     activated_neuron_ids = []
     for layer in network.layers
         current_hash_table = layer.hash_table
-        input_hash = random ? get_random_hash(current_hash_table, x) : get_deterministic_hash(current_hash_table, x)
+        input_hash =
+            random ? get_random_hash(current_hash_table, x) :
+            get_deterministic_hash(current_hash_table, x)
         neuron_ids = retrieve_ids_from_bucket(current_hash_table, input_hash)
         push!(activated_neuron_ids, neuron_ids)
     end
@@ -16,7 +18,7 @@ function build_activated_neurons_single_sample(
 end
 
 function forward_single_sample(
-    x::Vector{Float},
+    x::SubArray{Float},
     network::SlideNetwork,
     activated_neuron_ids::Vector,
     x_index::Int,
@@ -42,7 +44,7 @@ function forward_single_sample(
 end
 
 function handle_batch(
-    x::Vector{Float},
+    x::SubArray{Float},
     network::SlideNetwork,
     i::Int,
     random,
@@ -60,7 +62,7 @@ function forward!(x::Matrix{Float}, network::SlideNetwork, random = true)::Matri
     n_samples = size(x)[2]
     output = zeros(length(network.layers[end].neurons), n_samples)
     Threads.@threads for i = 1:n_samples
-        output[:, i] = handle_batch(x[:, i], network, i, random)
+        output[:, i] = handle_batch((@view x[:, i]), network, i, random)
     end
     output
 end

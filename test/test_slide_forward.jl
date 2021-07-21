@@ -33,10 +33,10 @@ using Slide.Network
         SlideNetwork([Layer(1, [neuron_1, neuron_2], HashTable([[1], [2]]), identity)])
 
     @test length(network.layers) == 1
-    @test forward_single_sample(x[:, 1], network, [[1, 2]], 1) == [6.0; 1.0]
-    @test build_activated_neurons_single_sample(x[1, :], network, true) in [[[1]], [[2]]]
+    @test forward_single_sample((@view x[:, 1]), network, [[1, 2]], 1) == [6.0; 1.0]
+    @test build_activated_neurons_single_sample((@view x[1, :]), network, true) in [[[1]], [[2]]]
 
     network.layers[1] =
         Layer(1, [neuron_1, neuron_2], HashTable([[1], [2]]), sparse_softmax)
-    @test sum(forward_single_sample(x[:, 1], network, [[1, 2]], 1)) ≈ 1.0
+    @test sum(forward_single_sample((@view x[:, 1]), network, [[1, 2]], 1)) ≈ 1.0
 end
