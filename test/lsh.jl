@@ -13,7 +13,7 @@ LSH.compute_query_signatures(m::MockHasher, elem::Int)::Vector{Int} =
 
 @testset "Adding to the LSH" begin
     signature(elem) = [(elem + i - 1) % 5 + 1 for i = 1:5]
-    lsh() = Lsh(5, 4, 5, MockHasher(signature, signature), Int)
+    lsh() = Lsh(5, 4, 5, MockHasher(signature, signature), Int, Int)
 
     function test_table(table, bucket_id, expected)
         bucket = table.buckets[bucket_id]
@@ -22,7 +22,7 @@ LSH.compute_query_signatures(m::MockHasher, elem::Int)::Vector{Int} =
 
     @testset "Simple add" begin
         l = lsh()
-        add!(l, 10)
+        add!(l, 10, 10)
 
         @test test_table(l.hash_tables[1], 2, [10])
         @test test_table(l.hash_tables[2], 3, [10])
@@ -30,7 +30,7 @@ LSH.compute_query_signatures(m::MockHasher, elem::Int)::Vector{Int} =
         @test test_table(l.hash_tables[4], 1, [10])
         @test test_table(l.hash_tables[5], 2, [10])
 
-        add!(l, 15)
+        add!(l, 15, 15)
 
         @test test_table(l.hash_tables[1], 2, [10, 15])
         @test test_table(l.hash_tables[2], 3, [10, 15])
@@ -38,7 +38,7 @@ LSH.compute_query_signatures(m::MockHasher, elem::Int)::Vector{Int} =
         @test test_table(l.hash_tables[4], 1, [10, 15])
         @test test_table(l.hash_tables[5], 2, [10, 15])
 
-        add!(l, 13)
+        add!(l, 13, 13)
 
         @test test_table(l.hash_tables[1], 2, [10, 15])
         @test test_table(l.hash_tables[2], 3, [10, 15])
@@ -56,15 +56,15 @@ LSH.compute_query_signatures(m::MockHasher, elem::Int)::Vector{Int} =
     @testset "Adding more than bucket_size to bucket" begin
         l = lsh()
 
-        add!(l, 10)
-        add!(l, 15)
-        add!(l, 20)
-        add!(l, 25)
-        add!(l, 30)
+        add!(l, 10, 10)
+        add!(l, 15, 15)
+        add!(l, 20, 20)
+        add!(l, 25, 25)
+        add!(l, 30, 30)
 
         @test test_table(l.hash_tables[1], 2, [10, 15, 20, 25, 30])
 
-        add!(l, 35)
+        add!(l, 35, 35)
 
         @test test_table(l.hash_tables[1], 2, [15, 20, 25, 30, 35])
     end
@@ -72,10 +72,10 @@ end
 
 @testset "Retrieving elements from lsh" begin
     signature(elem) = [(elem + i - 1) % 5 + 1 for i = 1:5]
-    lsh() = Lsh(5, 5, 5, MockHasher(signature, signature), Int)
+    lsh() = Lsh(5, 5, 5, MockHasher(signature, signature), Int, Int)
 
     l = lsh()
-    add!(l, 10)
+    add!(l, 10, 10)
 
     @test retrieve(l, 1) == Set{Int}()
     @test retrieve(l, 2) == Set{Int}()
@@ -83,8 +83,8 @@ end
     @test retrieve(l, 4) == Set{Int}()
     @test retrieve(l, 5) == Set(10)
 
-    add!(l, 15)
-    add!(l, 11)
+    add!(l, 15, 15)
+    add!(l, 11, 11)
 
     @test retrieve(l, 1) == Set(11)
     @test retrieve(l, 2) == Set{Int}()
@@ -92,8 +92,8 @@ end
     @test retrieve(l, 4) == Set{Int}()
     @test retrieve(l, 5) == Set([10, 15])
 
-    add!(l, 14)
-    add!(l, 16)
+    add!(l, 14, 14)
+    add!(l, 16, 16)
 
     @test retrieve(l, 1) == Set([11, 16])
     @test retrieve(l, 2) == Set{Int}()
