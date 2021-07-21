@@ -51,7 +51,7 @@ Lsh(
     hasher::Hasher,
     ::Type{K},
     ::Type{V},
-) where {K, V,Hasher<:AbstractHasher{K}} =
+) where {K,V,Hasher<:AbstractHasher{K}} =
     Lsh{K,V,Hasher}(hasher, [HashTable(max_len, n_buckets, V) for _ = 1:n_tables])
 
 
@@ -79,10 +79,10 @@ Computes the signatures of the `elem` and for each pair of table & signature
 insert element into the table to the bucket selected by signature.
 """
 function add!(lsh::Lsh{K,V,Hasher}, key::K, elem::V) where {K,V,Hasher<:AbstractHasher{K}}
-    compute_signaturess = compute_signatures(lsh.hash, key)
+    signatures = compute_signatures(lsh.hash, key)
 
-    for (compute_signatures, ht) in zip(compute_signaturess, lsh.hash_tables)
-        add!(ht, compute_signatures, elem)
+    for (signature, ht) in zip(signatures, lsh.hash_tables)
+        add!(ht, signature, elem)
     end
 end
 
@@ -101,11 +101,14 @@ end
     retrieve(lsh, elem)
 
 From each table similar elements to the `elem` are retrieved.
+Possible inconsistency in the SLIDE paper: Union vs Intersecion.
 """
-function retrieve(lsh::Lsh{K,V,Hasher}, key::K)::Set{V} where {K,V,Hasher<:AbstractHasher{K}}
+function retrieve(
+    lsh::Lsh{K,V,Hasher},
+    key::K,
+)::Set{V} where {K,V,Hasher<:AbstractHasher{K}}
     signatures = compute_query_signatures(lsh.hash, key)
 
-    # Possible inconsistency in the SLIDE paper: Union vs Intersecion.
     reduce(
         zip(signatures, lsh.hash_tables),
         init = V[],
