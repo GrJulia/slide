@@ -5,10 +5,15 @@ module Hash
 
 export LshParams, init_lsh, init_lsh!
 
-struct LshParams
-    n_buckets::Int
-    max_bucket_len::Int
-    n_tables::Int
+using Base: @kwdef
+
+"""
+Default values are just for convience.
+"""
+@kwdef struct LshParams
+    n_buckets::Int = 10
+    max_bucket_len::Int = 100
+    n_tables::Int = 100
 end
 
 init_lsh() = error("unimplemented")

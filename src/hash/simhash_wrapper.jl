@@ -1,6 +1,8 @@
 
 module LshSimHashWrapp
 
+export LshSimHashParams
+
 using Base.Iterators: partition
 using Random: AbstractRNG
 
@@ -71,7 +73,7 @@ function Hash.init_lsh!(
     lsh_params = sim_params.lsh_params
     hasher = initialize!(
         rng,
-        lsh_params.n_tables * sim_params.sample_size,
+        lsh_params.n_tables * sim_params.sign_len,
         sim_params.sample_size,
         sim_params.vector_len,
     )

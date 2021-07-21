@@ -11,3 +11,7 @@ end
 @testset "LSH" begin
     include("lsh.jl")
 end
+
+@testset "Lsh-Simhash" begin
+    include("simhasher_wrapper.jl")
+end
