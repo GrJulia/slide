@@ -8,11 +8,7 @@ function build_activated_neurons_single_sample(
     activated_neuron_ids = []
     for layer in network.layers
         current_hash_table = layer.hash_table
-        if random
-            input_hash = get_random_hash(current_hash_table, x)
-        else
-            input_hash = get_deterministic_hash(current_hash_table, x)
-        end
+        input_hash = random ? get_random_hash(current_hash_table, x) : get_deterministic_hash(current_hash_table, x)
         neuron_ids = retrieve_ids_from_bucket(current_hash_table, input_hash)
         push!(activated_neuron_ids, neuron_ids)
     end

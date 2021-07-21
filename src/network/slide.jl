@@ -19,9 +19,9 @@ Neuron(id::Id, batch_size::Int, input_dim::Int) = Neuron(
     zeros(batch_size),
 )
 
-abstract type OptimizerAttributes end
+abstract type AbstractOptimizerAttributes end
 
-mutable struct AdamAttributes <: OptimizerAttributes
+mutable struct AdamAttributes <: AbstractOptimizerAttributes
     m_dw::Vector{Float32}
     m_db::Float32
     v_dw::Vector{Float32}
@@ -30,12 +30,12 @@ end
 
 AdamAttributes(input_dim::Int) = AdamAttributes(zeros(input_dim), 0, zeros(input_dim), 0)
 
-struct OptimizerNeuron{W<:OptimizerAttributes}
+struct OptimizerNeuron{W<:AbstractOptimizerAttributes}
     neuron::Neuron
     optimizer_attributes::W
 end
 
-struct Layer{T<:OptimizerAttributes,F<:Function}
+struct Layer{T<:AbstractOptimizerAttributes,F<:Function}
     id::Id
     neurons::Vector{OptimizerNeuron{T}}
     hash_table::HashTable

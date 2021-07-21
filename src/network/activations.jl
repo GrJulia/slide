@@ -1,5 +1,3 @@
-using Slide.Network
-
 sigmoid(x) = 1 ./ (1 .+ exp.(.-x))
 
 identity(x) = x

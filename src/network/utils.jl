@@ -1,12 +1,14 @@
 using Statistics
 using Slide.Network
 
+const Batch = Tuple{Matrix{Float},Matrix{Int}}
+
 function batch_input(
     x::Matrix{Float},
     y::Matrix{Int},
     batch_size::Int64,
     drop_last::Bool,
-)::Vector{Tuple{Matrix{Float},Matrix{Int}}}
+)::Vector{Batch}
     batches = map(Iterators.partition(axes(x, 2), batch_size)) do columns
         x[:, columns], y[:, columns]
     end
