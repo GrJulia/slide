@@ -57,10 +57,10 @@ function preprocess_dataset(dataset_path, shuffle)
         push!(ys, y)
     end
 
-    if shuffle
-        perm = randperm(length(ys))
+    perm = if shuffle
+        randperm(length(ys))
     else
-        perm = 1:length(ys)
+        1:length(ys)
     end
     data, labels = (x_indices[perm], x_vals[perm]), ys[perm]
 
