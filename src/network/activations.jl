@@ -12,8 +12,12 @@ end
 
 relu(x) = max.(0, x)
 
-activation_name_to_function =
-    Dict("identity" => identity, "sparse_softmax" => sparse_softmax, "sigmoid" => sigmoid, "relu" => relu)
+activation_name_to_function = Dict(
+    "identity" => identity,
+    "sparse_softmax" => sparse_softmax,
+    "sigmoid" => sigmoid,
+    "relu" => relu,
+)
 
 @inline function gradient(::Type{typeof(sigmoid)}, x)
     return x * (1 - x)
