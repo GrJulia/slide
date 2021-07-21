@@ -10,10 +10,11 @@ mutable struct Logger
     log_path::String
     incr_tb::Bool
 
-    Logger(tb_logger, log_dir) = new(0, DefaultDict(()->[]), tb_logger, joinpath(log_dir, "logs.json"), false)
+    Logger(tb_logger, log_dir) =
+        new(0, DefaultDict(() -> []), tb_logger, joinpath(log_dir, "logs.json"), false)
 end
 
-function step(logger::Logger)
+function step!(logger::Logger)
     logger.curr_it += 1
     logger.incr_tb = false
     if logger.curr_it % 20 == 0
@@ -21,15 +22,15 @@ function step(logger::Logger)
     end
 end
 
-function log_scalar(logger::Logger, key::String, val::Any, log_to_tb=false)
+function log_scalar!(logger::Logger, key::String, val::Any, log_to_tb = false)
     push!(logger.logs[key], (logger.curr_it, val))
     if log_to_tb
         if !logger.incr_tb
             @info key key = val
             logger.incr_tb = true
         else
-            @info key key = val log_step_increment=0
-        end 
+            @info key key = val log_step_increment = 0
+        end
     end
 end
 
