@@ -1,19 +1,20 @@
 {
-    "name": "default_delicious",
+    "name": "default_amazon",
     "dataset": {
-        "train_path": "examples/datasets/DeliciousLarge/deliciousLarge_train.txt",
-        "test_path": "examples/datasets/DeliciousLarge/deliciousLarge_test.txt"
+        "train_path": "examples/datasets/Amazon/train.txt",
+        "test_path": "examples/datasets/Amazon/test.txt",
+        "shuffle": false
     },
     "logging_path": "examples/logs",
-    "n_features": 782585,
+    "n_features": 135909,
     "hidden_dim": 128,
-    "n_classes": 205443,
+    "n_classes": 670091,
     "batch_size": 128,
     "lr": 1e-4,
     "n_epochs": 10,
     "use_gpu": false,
     "testing": {
-        "n_batches": 40,
+        "n_batches": 20,
         "test_freq": 20,
         "use_random_indices": false,
         "top_k_classes": 1

@@ -14,9 +14,7 @@ Usage:
 julia --threads <n_of_threads> src/flux/train.jl flux_config.json
 """
 
-MA_WEIGHT = 0
-
-ma(total, curr) = MA_WEIGHT * total + (1 - MA_WEIGHT) * curr
+ma(total, curr, weight = 0) = weight * total + (1 - weight) * curr
 
 function accuracy(out, labels, top_k)
     batch_size, acc = size(out, 2), 0
@@ -40,24 +38,24 @@ function train_step(model, x, y)
 end
 
 function train_epoch(model, train_loader, test_set, opt, config, logger)
-    n_iters, losses, t0 = length(train_loader), nothing, time_ns()
+    n_iters, avg_loss, t0 = convert(Int, length(train_loader)), nothing, time_ns()
     for (it, (x, y)) in enumerate(train_loader)
-        FluxTraining.step(logger)
+        FluxTraining.step!(logger)
 
         train_stats = @timed train_step(model, x, y)
 
         t1 = time_ns()
-        log_scalar(logger, "train_step + data loading time", (t1-t0)/1.0e9)
+        log_scalar!(logger, "train_step + data loading time", (t1 - t0) / 1.0e9)
 
         loss = train_stats[1]
-        losses = isnothing(losses) ? loss : ma(losses, loss)
+        avg_loss = isnothing(avg_loss) ? loss : ma(avg_loss, loss)
 
-        log_scalar(logger, "train_step time", train_stats[2])
-        log_scalar(logger, "train_step gc time", train_stats[4])
-        log_scalar(logger, "train_loss", losses, true)
+        log_scalar!(logger, "train_step time", train_stats[2])
+        log_scalar!(logger, "train_step gc time", train_stats[4])
+        log_scalar!(logger, "train_loss", avg_loss, true)
 
         if it % config["testing"]["test_freq"] == 0
-            println("Iteration $it/$n_iters, loss=", losses)
+            println("Iteration $it/$n_iters, loss=", avg_loss)
             test_epoch(model, test_set, logger, config["testing"])
         end
 
@@ -66,27 +64,27 @@ function train_epoch(model, train_loader, test_set, opt, config, logger)
 end
 
 function test_epoch(model, test_set, logger, config)
-    n_batches = config["n_batches"]
+    n_batches = min(config["n_batches"], LearnBase.nobs(test_set))
     if config["use_random_indices"]
         rand_indices = rand(1:LearnBase.nobs(test_set), n_batches)
     else
         rand_indices = 1:n_batches
     end
 
-    losses, acc = 0, 0
+    total_loss, acc = 0, 0
     for idx in rand_indices
         x, y = LearnBase.getobs(test_set, idx)
         out = model(x)
         loss = logitcrossentropy(out, y)
         acc += accuracy(out, y, config["top_k_classes"])
-        losses += loss
+        total_loss += loss
     end
 
-    test_loss = losses / n_batches
+    test_loss = total_loss / n_batches
     test_acc = acc / n_batches
 
-    log_scalar(logger, "test_loss", test_loss, true)
-    log_scalar(logger, "test_acc", test_acc, true)
+    log_scalar!(logger, "test_loss", test_loss, true)
+    log_scalar!(logger, "test_acc", test_acc, true)
 end
 
 
