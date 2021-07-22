@@ -45,10 +45,22 @@ end
 function empty_neurons_attributes!(network::SlideNetwork)
     for layer in network.layers
         for neuron in layer.neurons
-            neuron.neuron.weight_gradients = zeros(size(neuron.neuron.weight_gradients))
-            neuron.neuron.bias_gradients = zeros(size(neuron.neuron.bias_gradients))
-            neuron.neuron.active_inputs = zeros(size(neuron.neuron.active_inputs))
-            neuron.neuron.activation_inputs = zeros(size(neuron.neuron.activation_inputs))
+            neuron.neuron.weight_gradients = fill!(
+                neuron.neuron.weight_gradients,
+                zero(eltype(neuron.neuron.weight_gradients)),
+            )
+            neuron.neuron.bias_gradients = fill!(
+                neuron.neuron.bias_gradients,
+                zero(eltype(neuron.neuron.bias_gradients)),
+            )
+            neuron.neuron.active_inputs = fill!(
+                neuron.neuron.active_inputs,
+                zero(eltype(neuron.neuron.active_inputs)),
+            )
+            neuron.neuron.activation_inputs = fill!(
+                neuron.neuron.activation_inputs,
+                zero(eltype(neuron.neuron.activation_inputs)),
+            )
         end
     end
 end
