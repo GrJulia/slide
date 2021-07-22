@@ -11,7 +11,7 @@ using Slide.FluxTraining
 
 """
 Usage:
-julia --threads <n_of_threads> src/flux/train.jl flux_config.json
+julia --project=. -t <n_of_threads> examples/train_flux.jl examples/configs/<config_name>
 """
 
 ma(total, curr, weight = 0) = weight * total + (1 - weight) * curr
