@@ -28,7 +28,10 @@ export Neuron,
     optimizer_step,
     gradient,
     sparse_softmax,
-    relu
+    relu,
+    get_deterministic_hash,
+    handle_batch,
+    handle_batch_backward
 
 include("vanilla_hash_table.jl")
 include("activations.jl")

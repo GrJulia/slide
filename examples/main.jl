@@ -39,7 +39,7 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
     output_dim = config.n_neurons_per_layer[end]
     learning_rate = 0.01
 
-    x = rand(Float, config.input_dim, 4096) * 10
+    x = rand(Float, config.input_dim, 4096)
     y = Vector{Float}(rand(1:output_dim, 4096))
     output, network = build_and_train(x, y, 5, 256, false, network_params, learning_rate)
     println("DONE \n")
