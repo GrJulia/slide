@@ -37,7 +37,8 @@ function train_step(model, params, opt, x::Matrix{Float32}, y::Matrix{Float32})
 end
 
 function train_epoch(model, train_loader, test_set, opt, config, logger)
-    n_iters, avg_loss, t0, params = convert(Int, length(train_loader)), nothing, time_ns(), Flux.params(model)
+    n_iters, avg_loss, t0, params =
+        convert(Int, length(train_loader)), nothing, time_ns(), Flux.params(model)
     for (it, (x, y)) in enumerate(train_loader)
         FluxTraining.step!(logger)
 
@@ -54,7 +55,7 @@ function train_epoch(model, train_loader, test_set, opt, config, logger)
         log_scalar!(logger, "train_loss", avg_loss, true)
 
         if it % config["testing"]["test_freq"] == 0
-            println("Iteration $it/$n_iters, loss=", avg_loss)
+            @info "Iteration $it/$n_iters, train loss=$avg_loss"
             test_epoch(model, test_set, logger, config["testing"])
         end
 
@@ -102,4 +103,11 @@ model = Chain(
 
 opt = ADAM(config["lr"])
 
-Flux.@epochs config["n_epochs"] train_epoch(model, train_loader, test_set, opt, config, logger)
+Flux.@epochs config["n_epochs"] train_epoch(
+    model,
+    train_loader,
+    test_set,
+    opt,
+    config,
+    logger,
+)
