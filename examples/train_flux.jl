@@ -37,11 +37,11 @@ function train_step(model, params, opt, x::Matrix{Float32}, y::Matrix{Float32})
 end
 
 function train_epoch(model, train_loader, test_set, opt, config, logger)
-    n_iters, avg_loss, t0 = convert(Int, length(train_loader)), nothing, time_ns()
+    n_iters, avg_loss, t0, params = convert(Int, length(train_loader)), nothing, time_ns(), Flux.params(model)
     for (it, (x, y)) in enumerate(train_loader)
         FluxTraining.step!(logger)
 
-        train_stats = @timed train_step(model, Flux.params(model), opt, x, y)
+        train_stats = @timed train_step(model, params, opt, x, y)
 
         t1 = time_ns()
         log_scalar!(logger, "train_step + data loading time", (t1 - t0) / 1.0e9)
@@ -60,6 +60,7 @@ function train_epoch(model, train_loader, test_set, opt, config, logger)
 
         t0 = time_ns()
     end
+    @save "$(joinpath(config["logging_path"], config["name"], "last_checkpoint.bson"))" model
 end
 
 function test_epoch(model, test_set, logger, config)
@@ -101,10 +102,4 @@ model = Chain(
 
 opt = ADAM(config["lr"])
 
-n_epochs = config["n_epochs"]
-for ep = 1:n_epochs
-    println("\nEpoch $ep")
-    train_epoch(model, train_loader, test_set, opt, config, logger)
-
-    @save "$(joinpath(config["logging_path"], config["name"], "last_checkpoint.bson"))" model
-end
+Flux.@epochs config["n_epochs"] train_epoch(model, train_loader, test_set, opt, config, logger)

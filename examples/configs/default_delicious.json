@@ -14,7 +14,7 @@
     "n_epochs": 10,
     "use_gpu": false,
     "testing": {
-        "n_batches": 20,
+        "n_batches": 40,
         "test_freq": 20,
         "use_random_indices": false,
         "top_k_classes": 1

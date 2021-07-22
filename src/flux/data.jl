@@ -125,6 +125,5 @@ function get_dataloaders(config::Dict{String,Any})
     )
 
     train_loader = eachobsparallel(train_set)
-    println(typeof(train_loader))
     return train_loader, test_set
 end
