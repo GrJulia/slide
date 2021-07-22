@@ -2,7 +2,7 @@ using Test
 using Random: default_rng
 
 using Slide.Hash: LshParams, init_lsh!
-using Slide.LshSimHashWrapp: LshSimHashParams
+using Slide.LshSimHashWrapper: LshSimHashParams
 using Slide.LSH: add!, retrieve
 
 

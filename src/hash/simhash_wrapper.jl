@@ -1,5 +1,5 @@
 
-module LshSimHashWrapp
+module LshSimHashWrapper
 
 export LshSimHashParams
 
@@ -22,7 +22,7 @@ struct SimhasherWrapper{A<:AbstractVector{<:Number}} <: AbstractHasher{A}
         signature_length::UInt8,
         hasher::SimHasher,
     ) where {A<:AbstractVector{<:Number}}
-        signature_length >= 64 &&
+        signature_length >= 8 * sizeof(Int) &&
             error("Signature length can't be greater than 64, got $signature_length")
         new(signature_length, hasher)
     end
@@ -53,7 +53,7 @@ const LshSimHash{Id} = Lsh{Vector{Float32},Id,SimhasherWrapper{Vector{Float32}}}
 struct LshSimHashParams
     lsh_params::LshParams
     vector_len::Int
-    sign_len::Int
+    signature_length::Int
     sample_size::Int
 end
 
@@ -73,7 +73,7 @@ function Hash.init_lsh!(
     lsh_params = sim_params.lsh_params
     hasher = initialize!(
         rng,
-        lsh_params.n_tables * sim_params.sign_len,
+        lsh_params.n_tables * sim_params.signature_length,
         sim_params.sample_size,
         sim_params.vector_len,
     )
@@ -82,10 +82,10 @@ function Hash.init_lsh!(
         lsh_params.n_tables,
         lsh_params.n_buckets,
         lsh_params.max_bucket_len,
-        SimhasherWrapper{Vector{Float32}}(UInt8(sim_params.sign_len), hasher),
+        SimhasherWrapper{Vector{Float32}}(UInt8(sim_params.signature_length), hasher),
         Vector{Float32},
         Id,
     )
 end
 
-end # LshSimHashWrapp
+end # LshSimHashWrapper
