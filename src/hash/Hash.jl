@@ -8,7 +8,7 @@ export LshParams, init_lsh, init_lsh!
 using Base: @kwdef
 
 """
-Default values are just for convience.
+Default values are just for convenience.
 """
 @kwdef struct LshParams
     n_buckets::Int = 10

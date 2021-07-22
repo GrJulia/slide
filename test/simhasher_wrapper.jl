@@ -12,7 +12,7 @@ using Slide.LSH: add!, retrieve
 
     lsh_with_simhash = init_lsh!(simhash_params, default_rng(), Int)
 
-    @testset "SimHasher is initialize properly for number of tables" begin
+    @testset "SimHasher is initialized properly for number of tables" begin
         @test size(lsh_with_simhash.hash.hasher.hashes) == (3, 100 * 4)
         @test size(lsh_with_simhash.hash.hasher.samples) == (3, 100 * 4)
     end

@@ -61,8 +61,8 @@ end
 """
     Hash.init_lsh!(::LshSimHashParams, rng, IdType)
 
-Initiliaze the LSH instance with SimHash. Ensures that all parameters
-of the LSH and SimHash are properly glued together. Ensures that the nr
+Initialize the LSH instance with SimHash. Ensures that all parameters
+of the LSH and SimHash are properly glued together. Ensures that the number
 of signatures produced by SimHash will match the number of hash tables in the LSH.
 """
 function Hash.init_lsh!(
