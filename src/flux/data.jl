@@ -13,10 +13,21 @@ struct SparseDataset
     keep_last::Bool
 end
 
-LearnBase.getobs(ds::SparseDataset, raw_batch_idx) =
-    LearnBase.getobs(ds, convert(Int, raw_batch_idx))
+LearnBase.getobs!(
+    buffer::Tuple{Matrix{Float32},Matrix{Float32}},
+    ds::SparseDataset,
+    raw_batch_idx,
+) = LearnBase.getobs!(
+    buffer::Tuple{Matrix{Float32},Matrix{Float32}},
+    ds,
+    convert(Int, raw_batch_idx),
+)
 
-function LearnBase.getobs!(buffer::Tuple{Matrix{Float32}, Matrix{Float32}}, ds::SparseDataset, batch_idx::Float64)
+function LearnBase.getobs!(
+    buffer::Tuple{Matrix{Float32},Matrix{Float32}},
+    ds::SparseDataset,
+    batch_idx::Int,
+)
     batch = ds.batch_size
     if ds.keep_last
         batch = min(batch, length(ds.ys) - batch * (batch_idx - 1))
@@ -24,20 +35,22 @@ function LearnBase.getobs!(buffer::Tuple{Matrix{Float32}, Matrix{Float32}}, ds::
 
     xs_indices, xs_vals = ds.xs
     x, y = buffer
-    println(Threads.threadid())
+    x .= zero(Float32)
+    y .= zero(Float32)
 
     for b = 1:batch
         idx = (batch_idx - 1) * batch + b
-        # x[xs_indices[idx], b] = xs_vals[idx]
-        y[1, b] = 1.0
+        x[xs_indices[idx], b] = xs_vals[idx]
+        y[ds.ys[idx], b] .= one(Float32)
     end
 
-    println(Threads.threadid())
-    return x, y
+    return buffer
 end
 
+LearnBase.getobs(ds::SparseDataset, raw_batch_idx) =
+    LearnBase.getobs(ds, convert(Int, raw_batch_idx))
+
 function LearnBase.getobs(ds::SparseDataset, batch_idx::Int)
-    println("get_obs ", Threads.threadid())
     batch = ds.batch_size
     if ds.keep_last
         batch = min(batch, length(ds.ys) - batch * (batch_idx - 1))
@@ -67,7 +80,7 @@ end
 function preprocess_dataset(dataset_path, shuffle)
     f = open(dataset_path, "r")
     x_indices, x_vals, ys = [], [], []
-    for (cnt, line) in enumerate(readlines(f)[2:end])
+    for line in readlines(f)[2:end]
         line_split = split(line)
         x = map(
             ftr -> (parse(Int, split(ftr, ':')[1]) + 1, parse(Float32, split(ftr, ':')[2])),
@@ -77,9 +90,6 @@ function preprocess_dataset(dataset_path, shuffle)
         push!(x_indices, first.(x))
         push!(x_vals, last.(x))
         push!(ys, y)
-        if cnt == 3000
-            break
-        end
     end
 
     perm = if shuffle
@@ -93,8 +103,7 @@ function preprocess_dataset(dataset_path, shuffle)
 end
 
 function get_dataloaders(config::Dict{String,Any})
-    train_data, train_labels =
-        preprocess_dataset(config["dataset"]["train_path"], true)
+    train_data, train_labels = preprocess_dataset(config["dataset"]["train_path"], true)
     test_data, test_labels =
         preprocess_dataset(config["dataset"]["test_path"], config["dataset"]["shuffle"])
 
@@ -115,7 +124,7 @@ function get_dataloaders(config::Dict{String,Any})
         false,
     )
 
-    train_loader = eachobsparallel(train_set; buffered=true)
+    train_loader = eachobsparallel(train_set)
     println(typeof(train_loader))
     return train_loader, test_set
 end

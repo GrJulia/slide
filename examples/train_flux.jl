@@ -25,8 +25,7 @@ function accuracy(out, labels, top_k)
     return acc / batch_size
 end
 
-function train_step(model, x::Matrix{Float32}, y::Matrix{Float32})
-    params = Flux.params(model)
+function train_step(model, params, opt, x::Matrix{Float32}, y::Matrix{Float32})
     loss = nothing
     grads = gradient(params) do
         out = model(x)
@@ -39,12 +38,10 @@ end
 
 function train_epoch(model, train_loader, test_set, opt, config, logger)
     n_iters, avg_loss, t0 = convert(Int, length(train_loader)), nothing, time_ns()
-    println(typeof(train_loader))
     for (it, (x, y)) in enumerate(train_loader)
         FluxTraining.step!(logger)
 
-        train_stats = @timed train_step(model, x, y)
-        println(train_stats)
+        train_stats = @timed train_step(model, Flux.params(model), opt, x, y)
 
         t1 = time_ns()
         log_scalar!(logger, "train_step + data loading time", (t1 - t0) / 1.0e9)
