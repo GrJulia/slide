@@ -2,17 +2,26 @@ sigmoid(x::Vector{Float}) = 1 ./ (1 .+ exp.(.-x))
 
 identity(x::Any) = x
 
-function sparse_softmax(x::Vector{Float})
-    λ = maximum(filter(a -> a != 0, x))
-    sparse_exp_x = map(a -> Int(a != 0) * exp(a - λ), x)
-    return sparse_exp_x ./ sum(sparse_exp_x)
+relu(x::Vector{Float}) = max.(0, x)
+
+function negative_sparse_logit_cross_entropy(output::Array{Float}, y_true::Array{Float}, last_layer_activated_neuron_ids) # activated neurons + refactor (cancel log / exp)
+    return -mean([negative_sparse_logit_cross_entropy_sample(
+        output[:, i][last_layer_activated_neuron_ids[i]], 
+        y_true[:, i][last_layer_activated_neuron_ids[i]], 
+        )
+        for i = 1:size(output)[end]]
+        )
 end
 
-relu(x::Vector{Float}) = max.(0, x)
+function negative_sparse_logit_cross_entropy_sample(output::Vector{Float}, y_true::Vector{Float})
+    λ = maximum(output)
+    sparse_exp_output = map(a -> exp(a - λ), output)
+    output_softmax = sparse_exp_output ./ sum(sparse_exp_output)
+    return sum(y_true .* log.(output_softmax .+ eps()))
+end
 
 activation_name_to_function = Dict(
     "identity" => identity,
-    "sparse_softmax" => sparse_softmax,
     "sigmoid" => sigmoid,
     "relu" => relu,
 )
@@ -21,7 +30,7 @@ activation_name_to_function = Dict(
     return x * (1 - x)
 end
 
-@inline function gradient(::Type{typeof(sparse_softmax)}, x::Float, output::Float)
+@inline function gradient(::Type{typeof(negative_sparse_logit_cross_entropy)}, x::Float, output::Float)
     return x - output
 end
 

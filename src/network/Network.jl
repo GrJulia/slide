@@ -15,7 +15,6 @@ export Neuron,
     forward!,
     batch_input,
     one_hot,
-    cross_entropy,
     backward!,
     update_weight!,
     numerical_gradient_weights,
@@ -27,11 +26,11 @@ export Neuron,
     AdamOptimizer,
     optimizer_step,
     gradient,
-    sparse_softmax,
     relu,
     get_deterministic_hash,
     handle_batch,
-    handle_batch_backward
+    handle_batch_backward,
+    sparse_logit_cross_entropy
 
 include("vanilla_hash_table.jl")
 include("activations.jl")

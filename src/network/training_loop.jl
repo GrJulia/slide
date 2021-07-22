@@ -61,9 +61,9 @@ function build_and_train(
         loss = 0
         output = Array{typeof(x[1])}(undef, length(network.layers[end].neurons), 0)
         for (x_batch, y_batch) in training_batches
-            y_batch_pred = forward!(x_batch, network)
+            y_batch_pred, last_layer_activated_neuron_ids = forward!(x_batch, network)
             output = hcat(output, y_batch_pred)
-            loss += cross_entropy(y_batch_pred, y_batch)
+            loss += negative_sparse_logit_cross_entropy(y_batch_pred, y_batch, last_layer_activated_neuron_ids)
             backward!(x_batch, y_batch_pred, network)
             update_weight!(network, optimizer)
             empty_neurons_attributes!(network)

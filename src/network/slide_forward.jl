@@ -48,21 +48,23 @@ function handle_batch(
     network::SlideNetwork,
     i::Int,
     random,
-)::Vector{Float}
+)
     activated_neuron_ids = build_activated_neurons_single_sample(x, network, random)
     for j = 1:length(activated_neuron_ids)
         for neuron_id in activated_neuron_ids[j]
             network.layers[j].neurons[neuron_id].neuron.active_inputs[i] = 1
         end
     end
-    return forward_single_sample(x, network, activated_neuron_ids, i)
+    return forward_single_sample(x, network, activated_neuron_ids, i), activated_neuron_ids[end]
 end
 
-function forward!(x::Matrix{Float}, network::SlideNetwork, random = true)::Matrix{Float}
+function forward!(x::Matrix{Float}, network::SlideNetwork, random = true)
     n_samples = size(x)[2]
     output = zeros(length(network.layers[end].neurons), n_samples)
+    last_layer_activated_neuron_ids = []
     Threads.@threads for i = 1:n_samples
-        output[:, i] = handle_batch((@view x[:, i]), network, i, random)
+        output[:, i], last_layer_activated_neuron_ids_batch = handle_batch((@view x[:, i]), network, i, random)
+        push!(last_layer_activated_neuron_ids, last_layer_activated_neuron_ids_batch)
     end
-    output
+    output, last_layer_activated_neuron_ids
 end

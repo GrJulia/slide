@@ -47,15 +47,15 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
     layer_id = 1
     neuron_id = 1
     weight_index = 1
-    x_check = x[:, 1]
-    y_check = one_hot(y)[:, 1]
+    x_check = x[:, 1:256]
+    y_check = one_hot(y)[:, 1:256]
     for neuron_id in 1:12
         println("Neuron $neuron_id, weight grad")
-        numerical_gradient_weights(network, layer_id, neuron_id, weight_index, x_check, y_check, 0.001)
+        numerical_gradient_weights(network, layer_id, neuron_id, weight_index, x_check, y_check, 0.00001)
     end
 
     for neuron_id in 1:12
         println("Neuron $neuron_id, bias grad")
-        numerical_gradient_bias(network, layer_id, neuron_id, x_check, y_check, 0.001)
+        numerical_gradient_bias(network, layer_id, neuron_id, x_check, y_check, 0.00001)
     end
 end

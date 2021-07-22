@@ -1,7 +1,7 @@
 {
     "n_layers": 2,
     "n_neurons_per_layer": [128, 128],
-    "layer_activations": ["relu", "sparse_softmax"],
+    "layer_activations": ["relu", "identity"],
     "input_dim": 16,
     "n_buckets": 2
 }

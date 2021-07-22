@@ -70,21 +70,23 @@ function numerical_gradient_weights(
     layer_id::Int,
     neuron_id::Int,
     weight_index::Int,
-    x_check::Vector{Float},
-    y_check::Vector{Float},
+    x_check,
+    y_check,
     epsilon::Float,
 )
     empty_neurons_attributes!(network)
-    y_check_pred = handle_batch((@view x_check[:]), network, 1, false)
-    handle_batch_backward((@view x_check[:]), (@view y_check_pred[:]), network, 1)
+    y_check_pred, activated_neurons = forward!(x_check, network, false)
+    backward!(x_check, y_check_pred, network)
     backprop_gradient =
         sum(network.layers[layer_id].neurons[neuron_id].neuron.weight_gradients, dims = 2)
     empty_neurons_attributes!(network)
     network.layers[layer_id].neurons[neuron_id].neuron.weight[weight_index] += epsilon
-    loss_1 = cross_entropy(handle_batch((@view x_check[:]), network, 1, false), y_check)
+    y_check_pred_1, activated_neurons_1 = forward!(x_check, network, false)
+    loss_1 = negative_sparse_logit_cross_entropy(y_check_pred_1, y_check, activated_neurons_1)
     empty_neurons_attributes!(network)
     network.layers[layer_id].neurons[neuron_id].neuron.weight[weight_index] -= 2 * epsilon
-    loss_2 = cross_entropy(handle_batch((@view x_check[:]), network, 1, false), y_check)
+    y_check_pred_2, activated_neurons_2 = forward!(x_check, network, false)
+    loss_2 = negative_sparse_logit_cross_entropy(y_check_pred_2, y_check, activated_neurons_2)
     empty_neurons_attributes!(network)
     numerical_grad = (loss_1 - loss_2) / (2 * epsilon)
     println("Numerical gradient: $numerical_grad")
@@ -96,21 +98,23 @@ function numerical_gradient_bias(
     network::SlideNetwork,
     layer_id::Int,
     neuron_id::Int,
-    x_check::Vector{Float},
-    y_check::Vector{Float},
+    x_check,
+    y_check,
     epsilon::Float,
 )
     empty_neurons_attributes!(network)
-    y_check_pred = handle_batch((@view x_check[:]), network, 1, false)
-    handle_batch_backward((@view x_check[:]), (@view y_check_pred[:]), network, 1)
+    y_check_pred, activated_neurons  = forward!(x_check, network, false)
+    backward!(x_check, y_check_pred, network)
     backprop_gradient =
         sum(network.layers[layer_id].neurons[neuron_id].neuron.bias_gradients)
     empty_neurons_attributes!(network)
     network.layers[layer_id].neurons[neuron_id].neuron.bias += epsilon
-    loss_1 = cross_entropy(handle_batch((@view x_check[:]), network, 1, false), y_check)
+    y_check_pred_1, activated_neurons_1 = forward!(x_check, network, false)
+    loss_1 = negative_sparse_logit_cross_entropy(y_check_pred_1, y_check, activated_neurons_1)
     empty_neurons_attributes!(network)
     network.layers[layer_id].neurons[neuron_id].neuron.bias -= 2 * epsilon
-    loss_2 = cross_entropy(handle_batch((@view x_check[:]), network, 1, false), y_check)
+    y_check_pred_2, activated_neurons_2 = forward!(x_check, network, false)
+    loss_2 = negative_sparse_logit_cross_entropy(y_check_pred_2, y_check, activated_neurons_2)
     empty_neurons_attributes!(network)
     numerical_grad = (loss_1 - loss_2) / (2 * epsilon)
     println("Numerical gradient: $numerical_grad")
