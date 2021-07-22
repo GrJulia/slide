@@ -6,6 +6,7 @@ using Statistics
 using Random
 using BSON: @save
 using LearnBase
+using NNlib
 
 using Slide.FluxTraining
 
@@ -14,10 +15,8 @@ Usage:
 julia --project=. -t <n_of_threads> examples/train_flux.jl examples/configs/<config_name>
 """
 
-ma(total, curr, weight = 0) = weight * total + (1 - weight) * curr
-
-function accuracy(out, labels, top_k)
-    batch_size, acc = size(out, 2), 0
+function accuracy(out::Matrix{Float32}, labels::Matrix{Float32}, top_k::Int)
+    batch_size, acc = size(out, 2), zero(Float32)
     for b = 1:batch_size
         top_k_classes = partialsortperm((@view out[:, b]), 1:top_k, rev = true)
         acc += sum(labels[top_k_classes, b]) / top_k
@@ -25,8 +24,8 @@ function accuracy(out, labels, top_k)
     return acc / batch_size
 end
 
-function train_step(model, params, opt, x::Matrix{Float32}, y::Matrix{Float32})
-    loss = nothing
+function train_step!(model, params, opt, x::Matrix{Float32}, y::Matrix{Float32})
+    loss = zero(Float32)
     grads = gradient(params) do
         out = model(x)
         loss = logitcrossentropy(out, y)
@@ -36,32 +35,32 @@ function train_step(model, params, opt, x::Matrix{Float32}, y::Matrix{Float32})
     return loss
 end
 
-function train_epoch(model, train_loader, test_set, opt, config, logger)
-    n_iters, avg_loss, t0, params =
-        convert(Int, length(train_loader)), nothing, time_ns(), Flux.params(model)
+function train_epoch!(model, train_loader, test_set, opt, config, logger)
+    n_iters, total_loss, t0, params =
+        convert(Int, length(train_loader)), zero(Float32), time_ns(), Flux.params(model)
     for (it, (x, y)) in enumerate(train_loader)
         FluxTraining.step!(logger)
 
-        train_stats = @timed train_step(model, params, opt, x, y)
+        train_stats = @timed train_step!(model, params, opt, x, y)
 
         t1 = time_ns()
         log_scalar!(logger, "train_step + data loading time", (t1 - t0) / 1.0e9)
 
         loss = train_stats[1]
-        avg_loss = isnothing(avg_loss) ? loss : ma(avg_loss, loss)
+        total_loss += loss
 
         log_scalar!(logger, "train_step time", train_stats[2])
         log_scalar!(logger, "train_step gc time", train_stats[4])
-        log_scalar!(logger, "train_loss", avg_loss, true)
+        log_scalar!(logger, "train_loss", loss, true)
 
         if it % config["testing"]["test_freq"] == 0
-            @info "Iteration $it/$n_iters, train loss=$avg_loss"
+            @info "Iteration $it/$n_iters, train loss=$(total_loss/it)"
             test_epoch(model, test_set, logger, config["testing"])
         end
 
         t0 = time_ns()
     end
-    @save "$(joinpath(config["logging_path"], config["name"], "last_checkpoint.bson"))" model
+    # @save "$(joinpath(config["logging_path"], config["name"], "last_checkpoint.bson"))" model
 end
 
 function test_epoch(model, test_set, logger, config)
@@ -72,7 +71,7 @@ function test_epoch(model, test_set, logger, config)
         rand_indices = 1:n_batches
     end
 
-    total_loss, acc = 0, 0
+    total_loss, acc = zero(Float32), zero(Float32)
     for idx in rand_indices
         x, y = LearnBase.getobs(test_set, idx)
         out = model(x)
@@ -97,13 +96,13 @@ logger = get_logger(config)
 train_loader, test_set = get_dataloaders(config)
 
 model = Chain(
-    Dense(config["n_features"], config["hidden_dim"]),
+    Dense(config["n_features"], config["hidden_dim"], relu),
     Dense(config["hidden_dim"], config["n_classes"]),
 )
 
 opt = ADAM(config["lr"])
 
-Flux.@epochs config["n_epochs"] train_epoch(
+Flux.@epochs config["n_epochs"] train_epoch!(
     model,
     train_loader,
     test_set,
