@@ -7,7 +7,7 @@ using Base.Iterators: partition
 using Random: AbstractRNG
 
 using ..LSH: AbstractHasher, Lsh, add!, retrieve
-using ..SimHash: SimHasher, Signature, initialize!, signature
+using ..SimHash: SimHasher, Signature, initialize!, signature, signature_len
 using ..Hash: LshParams
 
 import ..Hash
@@ -29,16 +29,30 @@ struct SimhasherWrapper{A<:AbstractVector{<:Number}} <: AbstractHasher{A}
     end
 end
 
+function LSH.compute_signatures!(
+    h::SimhasherWrapper{A},
+    elem::A,
+    signatures::T,
+) where {A<:AbstractVector{<:Number},T<:AbstractArray{Int}}
+
+    raw_signature = signature(h.hasher, elem)
+    raw_signature_chunks = partition(raw_signature, h.signature_len)
+
+    @inbounds for (i, boolarray) in enumerate(raw_signature_chunks)
+        signatures[i] = BitArray(boolarray).chunks[1]
+    end
+end
 
 function LSH.compute_signatures(
     h::SimhasherWrapper{A},
     elem::A,
 )::Vector{Int} where {A<:AbstractVector{<:Number}}
-    raw_signature = signature(h.hasher, elem)
-    raw_signature_chunks = partition(raw_signature, h.signature_len)
-    map(raw_signature_chunks) do boolarray
-        BitArray(boolarray).chunks[1]
-    end
+    n_signatures = signature_len(h.hasher) ÷ h.signature_len
+    signatures = Vector{Int}(undef, n_signatures)
+
+    LSH.compute_signatures!(h, elem, signatures)
+
+    signatures
 end
 
 @inline function LSH.compute_query_signatures(
@@ -46,6 +60,14 @@ end
     elem::A,
 )::Vector{Int} where {A<:AbstractVector{<:Number}}
     LSH.compute_signatures(h, elem)
+end
+
+@inline function LSH.compute_query_signatures!(
+    h::SimhasherWrapper{A},
+    elem::A,
+    signatures::T,
+) where {A<:AbstractVector{<:Number},T<:AbstractArray{Int}}
+    LSH.compute_signatures!(h, elem, signatures)
 end
 
 

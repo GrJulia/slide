@@ -1,6 +1,6 @@
 module SimHash
 
-export SimHasher, Signature, initialize!, signature
+export SimHasher, Signature, initialize!, signature, signature_len
 
 using LinearAlgebra: dot
 using Random: AbstractRNG, bitrand
@@ -19,6 +19,9 @@ struct SimHasher
             "Expected that `size(samples)` should match `size(hashes)`. Got $(size(samples)) and $(size(hashes))",
         )
 end
+
+
+@inline signature_len(sim_hasher::SimHasher)::Int = size(sim_hasher.hashes)[2]
 
 """
     initialize!(r, n_hashes, subvector_length, data_length)
@@ -43,7 +46,7 @@ function initialize!(
 end
 
 
-function compute_hash(data, sampled_indices, hashes)
+@inline function compute_hash(data, sampled_indices, hashes)
     subvector = getindex(data, sampled_indices)
 
     dot(subvector, hashes)
@@ -73,7 +76,7 @@ function signature(
 
     raw_signature::Vector{Float32} = Vector{Float32}(undef, n_hashes)
 
-    for i = 1:n_hashes
+    @inbounds for i = 1:n_hashes
         raw_signature[i] =
             compute_hash(data, sim_hasher.samples[:, i], sim_hasher.hashes[:, i])
     end
