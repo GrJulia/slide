@@ -29,6 +29,12 @@ struct SimhasherWrapper{A<:AbstractVector{<:Number}} <: AbstractHasher{A}
     end
 end
 
+@inline function compute_integer_from_bin(bin_repr::A)::Int where {T<:Number, A<:AbstractVector{T}}
+    foldl(bin_repr, init=zero(T)) do acc, n
+        2 * acc + n
+    end |> Int
+end
+
 function LSH.compute_signatures!(
     h::SimhasherWrapper{A},
     elem::A,
@@ -38,8 +44,8 @@ function LSH.compute_signatures!(
     raw_signature = signature(h.hasher, elem)
     raw_signature_chunks = partition(raw_signature, h.signature_len)
 
-    @inbounds for (i, boolarray) in enumerate(raw_signature_chunks)
-        signatures[i] = BitArray(boolarray).chunks[1]
+    @inbounds for (i, array) in enumerate(raw_signature_chunks)
+        signatures[i] = compute_integer_from_bin(array)
     end
 end
 

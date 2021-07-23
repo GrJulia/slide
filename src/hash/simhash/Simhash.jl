@@ -7,7 +7,7 @@ using Random: AbstractRNG, bitrand
 using StatsBase: sample
 
 
-const Signature = BitArray
+const Signature = Vector{Int8}
 
 struct SimHasher
     hashes::Matrix{Int8}
@@ -74,14 +74,14 @@ function signature(
     subvector_length, n_hashes = size(sim_hasher.hashes)
     @assert subvector_length <= length(data) "`subvector_length` can't be larger than `length(data_length)`"
 
-    raw_signature::Vector{Float32} = Vector{Float32}(undef, n_hashes)
+    signature::Signature = Signature(undef, n_hashes)
 
     @inbounds for i = 1:n_hashes
-        raw_signature[i] =
-            compute_hash(data, sim_hasher.samples[:, i], sim_hasher.hashes[:, i])
+        signature[i] =
+            Int8(compute_hash(data, sim_hasher.samples[:, i], sim_hasher.hashes[:, i]) >= 0)
     end
 
-    map(x -> x >= 0, raw_signature)
+    signature
 end
 
 end # SimHash
