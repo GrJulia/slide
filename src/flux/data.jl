@@ -2,6 +2,7 @@ using Flux
 using Random
 using DataLoaders
 using LearnBase
+using DataSets
 
 
 struct SparseDataset
@@ -71,16 +72,19 @@ end
 
 function LearnBase.nobs(ds::SparseDataset)
     n_of_batches = length(ds.ys) / ds.batch_size
-    if ds.keep_last
-        return ceil(n_of_batches)
+    round_fn = if ds.keep_last
+        ceil
+    else
+        floor
     end
-    return floor(n_of_batches)
+    convert(Int, round_fn(n_of_batches))
 end
 
 function preprocess_dataset(dataset_path, shuffle)
-    f = open(dataset_path, "r")
+    f = open(String, dataset(dataset_path))
+    lines = split(f, '\n')
     x_indices, x_vals, ys = [], [], []
-    for line in readlines(f)[2:end]
+    for line in lines[2:end-1]
         line_split = split(line)
         x = map(
             ftr -> (parse(Int, split(ftr, ':')[1]) + 1, parse(Float32, split(ftr, ':')[2])),

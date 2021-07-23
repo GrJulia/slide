@@ -44,7 +44,7 @@ function save(logger::Logger)
 end
 
 function get_logger(config)
-    log_dir = joinpath(config["logging_path"], config["name"])
+    log_dir = config["logging_path"] * "/" * config["name"]
     tb_logger = TBLogger(log_dir)
 
     logger = Logger(tb_logger, log_dir)

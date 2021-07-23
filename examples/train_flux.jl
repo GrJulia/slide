@@ -4,7 +4,6 @@ using Flux.Losses: logitcrossentropy
 using JSON
 using Statistics
 using Random
-using BSON: @save
 using LearnBase
 using NNlib
 
@@ -54,13 +53,12 @@ function train_epoch!(model, train_loader, test_set, opt, config, logger)
         log_scalar!(logger, "train_loss", loss, true)
 
         if it % config["testing"]["test_freq"] == 0
-            @info "Iteration $it/$n_iters, train loss=$(total_loss/it)"
-            test_epoch(model, test_set, logger, config["testing"])
+            test_acc = test_epoch(model, test_set, logger, config["testing"])
+            @info "Iteration $it/$n_iters, test_acc=$test_acc"
         end
 
         t0 = time_ns()
     end
-    # @save "$(joinpath(config["logging_path"], config["name"], "last_checkpoint.bson"))" model
 end
 
 function test_epoch(model, test_set, logger, config)
@@ -85,6 +83,8 @@ function test_epoch(model, test_set, logger, config)
 
     log_scalar!(logger, "test_loss", test_loss, true)
     log_scalar!(logger, "test_acc", test_acc, true)
+    
+    return test_acc
 end
 
 
