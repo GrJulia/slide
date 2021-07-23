@@ -4,10 +4,13 @@ authors = ["Casey Haaland, Maxence Gélard, Konstanty Subbotko, Jan Koscisz"]
 version = "0.1.0"
 
 [deps]
+Conda = "8f4d0f93-b110-5947-807f-2305c1781a2d"
 DataLoaders = "2e981812-ef13-4a9c-bfa0-ab13047b12a9"
+DataSets = "c9661210-8a83-48f0-b833-72e62abce419"
 Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
 LearnBase = "7f8f8fb0-2700-5f03-b4bd-41f8cfc144b6"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 

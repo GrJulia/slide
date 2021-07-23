@@ -1,4 +1,5 @@
 using PyCall
+using JSON
 using Random
 using DataSets
 using Conda
@@ -101,7 +102,6 @@ class TestAccCallback(keras.callbacks.Callback):
                 top_class = np.argmax(out[b])
                 total_acc += y[b, top_class]
         test_acc = total_acc / (self.n_batches * batch_size)
-        print("test_acc=", test_acc)
         return test_acc
 
 
@@ -140,7 +140,7 @@ class LoggerCallback(keras.callbacks.Callback):
             json.dump(self.logs, f, indent=4)
 
 
-def train(config):
+def train(config, train_f, test_f):
     model = Model(config["n_features"], config["hidden_dim"], config["n_classes"])
     model.compile(optimizer=keras.optimizers.Adam(config["lr"]), loss=nn.softmax_cross_entropy_with_logits, run_eagerly=True)
 
@@ -159,8 +159,8 @@ def train(config):
 """
 
 
-config = JSON.parsefile(ARGS[1])
-config["name"] *= "_" * randstring(8)
+config = JSON.parsefile("configs/default_delicious.json")
+config["name"] *= "_tf_" * randstring(8)
 println("Name: $(config["name"])")
 
 train_f = open(String, dataset(config["dataset"]["train_path"]))
