@@ -11,16 +11,16 @@ function negative_sparse_logit_cross_entropy(
 ) # activated neurons + refactor (cancel log / exp)
     return -mean([
         negative_sparse_logit_cross_entropy_sample(
-            output[:, i][last_layer_activated_neuron_ids[i]],
-            y_true[:, i][last_layer_activated_neuron_ids[i]],
+            (@view output[:, i][last_layer_activated_neuron_ids[i]]),
+            (@view y_true[:, i][last_layer_activated_neuron_ids[i]]),
         ) for i = 1:size(output)[end]
     ])
 end
 
 function negative_sparse_logit_cross_entropy_sample(
-    output::Vector{Float},
-    y_true::Vector{Float},
-)
+    output::A,
+    y_true::A,
+) where {A<:AbstractArray{Float}}
     λ = maximum(output)
     sparse_exp_output = map(a -> exp(a - λ), output)
     return sum(y_true .* ((output .- λ) .- log(sum(sparse_exp_output) + eps())))
