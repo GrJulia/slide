@@ -2,7 +2,7 @@ using Base: @kwdef
 
 abstract type Optimizer end
 
-function optimizer_step(optimizer::Optimizer, neuron::OptimizerNeuron)
+function optimizer_step!(optimizer::Optimizer, neuron::OptimizerNeuron)
     error("unimplemented")
 end
 
@@ -14,7 +14,7 @@ end
     t::Int = 1
 end
 
-function optimizer_step(optimizer::AdamOptimizer, neuron::OptimizerNeuron)
+function optimizer_step!(optimizer::AdamOptimizer, neuron::OptimizerNeuron)
     dw = sum(neuron.neuron.weight_gradients, dims = 2)[:, 1]
     db = sum(neuron.neuron.bias_gradients)
     adam_attributes = neuron.optimizer_attributes
@@ -28,16 +28,14 @@ function optimizer_step(optimizer::AdamOptimizer, neuron::OptimizerNeuron)
     adam_attributes.v_db =
         optimizer.beta_2 * adam_attributes.v_db + (1 - optimizer.beta_2) * (db^2)
 
-    corr_momemntum_dw = adam_attributes.m_dw ./ (1 - optimizer.beta_1^optimizer.t)
-    corr_momemntum_db = adam_attributes.m_db / (1 - optimizer.beta_1^optimizer.t)
+    corr_momentum_dw = adam_attributes.m_dw ./ (1 - optimizer.beta_1^optimizer.t)
+    corr_momentum_db = adam_attributes.m_db / (1 - optimizer.beta_1^optimizer.t)
     corr_velocity_dw = adam_attributes.v_dw ./ (1 - optimizer.beta_2^optimizer.t)
     corr_velocity_db = adam_attributes.v_db / (1 - optimizer.beta_2^optimizer.t)
 
     neuron.neuron.weight .-=
         optimizer.eta .*
-        (corr_momemntum_dw ./ (sqrt.(corr_velocity_dw) .+ optimizer.epsilon))
+        (corr_momentum_dw ./ (sqrt.(corr_velocity_dw) .+ optimizer.epsilon))
     neuron.neuron.bias -=
-        optimizer.eta * (corr_momemntum_db / (sqrt(corr_velocity_db) + optimizer.epsilon))
-
-    optimizer.t += 1
+        optimizer.eta * (corr_momentum_db / (sqrt(corr_velocity_db) + optimizer.epsilon))
 end

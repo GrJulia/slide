@@ -38,11 +38,7 @@ function one_hot(y::Vector{Vector{Float}}, n_labels::Int64 = Int(maximum(maximum
     y_categorical
 end
 
-function cross_entropy(y_pred::Array{Float}, y_true::Array{Float})
-    -mean(sum(y_true .* log.(y_pred .+ eps()), dims = 1))
-end
-
-function empty_neurons_attributes!(network::SlideNetwork)
+function zero_neuron_attributes!(network::SlideNetwork)
     for layer in network.layers
         for neuron in layer.neurons
             neuron.neuron.weight_gradients = fill!(
@@ -70,27 +66,38 @@ function numerical_gradient_weights(
     layer_id::Int,
     neuron_id::Int,
     weight_index::Int,
-    x_check,
-    y_check,
+    x_check::Array{Float},
+    y_check::Array{Float},
     epsilon::Float,
 )
-    empty_neurons_attributes!(network)
+    # Computing weight gradient from backpropagation
+    zero_neuron_attributes!(network)
     y_check_pred, activated_neurons = forward!(x_check, network, false)
-    backward!(x_check, y_check_pred, network)
+    loss, softmax =
+        negative_sparse_logit_cross_entropy(y_check_pred, y_check, activated_neurons)
+    backward!(x_check, y_check_pred, network, softmax)
     backprop_gradient =
         sum(network.layers[layer_id].neurons[neuron_id].neuron.weight_gradients, dims = 2)
-    empty_neurons_attributes!(network)
+
+    zero_neuron_attributes!(network)
+
+    # Computing numerical weight gradient
+
     network.layers[layer_id].neurons[neuron_id].neuron.weight[weight_index] += epsilon
     y_check_pred_1, activated_neurons_1 = forward!(x_check, network, false)
-    loss_1 =
+    loss_1, softmax_1 =
         negative_sparse_logit_cross_entropy(y_check_pred_1, y_check, activated_neurons_1)
-    empty_neurons_attributes!(network)
+
+    zero_neuron_attributes!(network)
+
     network.layers[layer_id].neurons[neuron_id].neuron.weight[weight_index] -= 2 * epsilon
     y_check_pred_2, activated_neurons_2 = forward!(x_check, network, false)
-    loss_2 =
+    loss_2, softmax_2 =
         negative_sparse_logit_cross_entropy(y_check_pred_2, y_check, activated_neurons_2)
-    empty_neurons_attributes!(network)
+
+    zero_neuron_attributes!(network)
     numerical_grad = (loss_1 - loss_2) / (2 * epsilon)
+
     println("Numerical gradient: $numerical_grad")
     println("Manual gradient: $(backprop_gradient[weight_index])")
     println("Absolute grad diff: $(abs(numerical_grad - backprop_gradient[weight_index]))")
@@ -100,27 +107,38 @@ function numerical_gradient_bias(
     network::SlideNetwork,
     layer_id::Int,
     neuron_id::Int,
-    x_check,
-    y_check,
+    x_check::Array{Float},
+    y_check::Array{Float},
     epsilon::Float,
 )
-    empty_neurons_attributes!(network)
+    # Computing bias gradient from backpropagation
+    zero_neuron_attributes!(network)
     y_check_pred, activated_neurons = forward!(x_check, network, false)
-    backward!(x_check, y_check_pred, network)
+    loss, softmax =
+        negative_sparse_logit_cross_entropy(y_check_pred, y_check, activated_neurons)
+    backward!(x_check, y_check_pred, network, softmax)
     backprop_gradient =
         sum(network.layers[layer_id].neurons[neuron_id].neuron.bias_gradients)
-    empty_neurons_attributes!(network)
+
+    zero_neuron_attributes!(network)
+
+    # Computing numerical bias gradient
+
     network.layers[layer_id].neurons[neuron_id].neuron.bias += epsilon
     y_check_pred_1, activated_neurons_1 = forward!(x_check, network, false)
-    loss_1 =
+    loss_1, softmax_1 =
         negative_sparse_logit_cross_entropy(y_check_pred_1, y_check, activated_neurons_1)
-    empty_neurons_attributes!(network)
+
+    zero_neuron_attributes!(network)
+
     network.layers[layer_id].neurons[neuron_id].neuron.bias -= 2 * epsilon
     y_check_pred_2, activated_neurons_2 = forward!(x_check, network, false)
-    loss_2 =
+    loss_2, softmax_2 =
         negative_sparse_logit_cross_entropy(y_check_pred_2, y_check, activated_neurons_2)
-    empty_neurons_attributes!(network)
+
+    zero_neuron_attributes!(network)
     numerical_grad = (loss_1 - loss_2) / (2 * epsilon)
+
     println("Numerical gradient: $numerical_grad")
     println("Manual gradient: $backprop_gradient")
     println("Absolute grad diff: $(abs(numerical_grad - backprop_gradient))")

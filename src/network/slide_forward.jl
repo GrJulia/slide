@@ -3,7 +3,7 @@ using LinearAlgebra
 function build_activated_neurons_single_sample(
     x::SubArray{Float},
     network::SlideNetwork,
-    random,
+    random::Bool,
 )::Vector{Vector{Int}}
     activated_neuron_ids = []
     for layer in network.layers
@@ -54,7 +54,7 @@ function handle_batch(x::SubArray{Float}, network::SlideNetwork, i::Int, random)
     activated_neuron_ids[end]
 end
 
-function forward!(x::Matrix{Float}, network::SlideNetwork, random = true)
+function forward!(x::Matrix{Float}, network::SlideNetwork, random::Bool = true)
     n_samples = size(x)[2]
     output = zeros(length(network.layers[end].neurons), n_samples)
     last_layer_activated_neuron_ids = []

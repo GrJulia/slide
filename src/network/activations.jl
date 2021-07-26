@@ -1,29 +1,36 @@
-sigmoid(x::Vector{Float}) = 1 ./ (1 .+ exp.(.-x))
+sigmoid(x::Vector{Float})::Vector{Float} = 1 ./ (1 .+ exp.(.-x))
 
-identity(x::Any) = x
+identity(x::Any)::Any = x
 
-relu(x::Vector{Float}) = max.(0, x)
+relu(x::Vector{Float})::Vector{Float} = max.(0, x)
 
 function negative_sparse_logit_cross_entropy(
     output::Array{Float},
     y_true::Array{Float},
-    last_layer_activated_neuron_ids,
-) # activated neurons + refactor (cancel log / exp)
-    return -mean([
-        negative_sparse_logit_cross_entropy_sample(
-            (@view output[:, i][last_layer_activated_neuron_ids[i]]),
-            (@view y_true[:, i][last_layer_activated_neuron_ids[i]]),
-        ) for i = 1:size(output)[end]
-    ])
+    output_activated_neuron_ids::Vector,
+)
+    logit_cross_entropy = Vector{Float}()
+    saved_softmax = Vector{Vector{Float}}()
+    for i = 1:size(output)[end]
+        current_loss, current_softmax = sparse_logit_cross_entropy_sample(
+            (@view output[:, i][output_activated_neuron_ids[i]]),
+            (@view y_true[:, i][output_activated_neuron_ids[i]]),
+        )
+        push!(logit_cross_entropy, current_loss)
+        push!(saved_softmax, current_softmax) # warning: saved_softmax only contains the softmax values
+        # for activated neurons
+    end
+    return -mean(logit_cross_entropy), saved_softmax
 end
 
-function negative_sparse_logit_cross_entropy_sample(
+function sparse_logit_cross_entropy_sample(
     output::A,
     y_true::A,
 ) where {A<:AbstractArray{Float}}
     λ = maximum(output)
     sparse_exp_output = map(a -> exp(a - λ), output)
-    return sum(y_true .* ((output .- λ) .- log(sum(sparse_exp_output) + eps())))
+    return sum(y_true .* ((output .- λ) .- log(sum(sparse_exp_output) + eps()))),
+    sparse_exp_output
 end
 
 activation_name_to_function =
@@ -37,8 +44,9 @@ end
     ::Type{typeof(negative_sparse_logit_cross_entropy)},
     x::Float,
     output::Float,
+    n_labels,
 )
-    return x - output
+    return x * n_labels - output
 end
 
 @inline function gradient(::Type{typeof(relu)}, x::Float)
