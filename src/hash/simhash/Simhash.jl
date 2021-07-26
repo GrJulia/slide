@@ -47,7 +47,7 @@ end
 
 
 @inline function compute_hash(data, sampled_indices, hashes)
-    subvector = getindex(data, sampled_indices)
+    subvector = view(data, sampled_indices)
 
     dot(subvector, hashes)
 end
@@ -76,7 +76,7 @@ function signature(
 
     signature::Signature = Signature(undef, n_hashes)
 
-    @inbounds for i = 1:n_hashes
+    @views @inbounds for i = 1:n_hashes
         signature[i] =
             Int8(compute_hash(data, sim_hasher.samples[:, i], sim_hasher.hashes[:, i]) >= 0)
     end
