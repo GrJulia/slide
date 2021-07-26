@@ -27,9 +27,19 @@ function sparse_logit_cross_entropy_sample(
     output::A,
     y_true::A,
 ) where {A<:AbstractArray{Float}}
-    λ = maximum(output)
+    λ, argmax_output = findmax(output)
     sparse_exp_output = map(a -> exp(a - λ), output)
-    return sum(y_true .* ((output .- λ) .- log(sum(sparse_exp_output) + eps()))),
+    # use of log1p after reading: https://github.com/mitmath/18335/blob/spring19/psets/midtermsol.pdf
+    return sum(
+        y_true .* (
+            (output .- λ) .- log1p(
+                sum(
+                    i == argmax_output ? 0.0 : sparse_exp_output[i] for
+                    i = 1:length(sparse_exp_output)
+                ),
+            )
+        ),
+    ),
     sparse_exp_output
 end
 
