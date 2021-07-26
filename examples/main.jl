@@ -19,6 +19,9 @@ function build_random_configuration()
 end
 
 if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
+
+    # Building parameters configuration
+
     random_config = false
     benchmark = false
     if random_config
@@ -38,17 +41,32 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
     )
     output_dim = config.n_neurons_per_layer[end]
     learning_rate = 0.01
+    batch_size = 256
+    drop_last = false
 
     x = rand(Float, config.input_dim, 4096)
     y = Vector{Float}(rand(1:output_dim, 4096))
-    output, network = build_and_train(x, y, 5, 256, false, network_params, learning_rate)
+
+
+    # Data processing and training loop
+
+    network = build_network(network_params, batch_size)
+    
+    y_cat = one_hot(y)
+    training_batches = batch_input(x, y_cat, batch_size, drop_last)
+
+    optimizer = AdamOptimizer(eta = learning_rate)
+
+    train!(training_batches, 5, network, optimizer)
     println("DONE \n")
 
-    layer_id = 1
+    # Numerical gradient analysis
+
+    layer_id = 2
     neuron_id = 1
     weight_index = 1
-    x_check = x[:, 1:256]
-    y_check = one_hot(y)[:, 1:256]
+    x_check = x[:, 1:batch_size]
+    y_check = one_hot(y)[:, 1:batch_size]
     for neuron_id in 1:12
         println("Neuron $neuron_id, weight grad")
         numerical_gradient_weights(network, layer_id, neuron_id, weight_index, x_check, y_check, 0.00001)

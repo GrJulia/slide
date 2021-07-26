@@ -20,7 +20,8 @@ export Neuron,
     numerical_gradient_weights,
     numerical_gradient_bias,
     empty_neurons_attributes!,
-    build_and_train,
+    build_network,
+    train!,
     Float,
     Optimizer,
     AdamOptimizer,
@@ -30,7 +31,8 @@ export Neuron,
     get_deterministic_hash,
     handle_batch,
     handle_batch_backward,
-    sparse_logit_cross_entropy
+    sparse_logit_cross_entropy,
+    Batch
 
 include("vanilla_hash_table.jl")
 include("activations.jl")

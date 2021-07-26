@@ -22,13 +22,15 @@ function handle_batch_backward(
         end
         for (k, neuron) in enumerate(active_neurons)
             if l == length(network.layers)
-                dz = neuron.activation_inputs[i] - y[k]
-                #dz = gradient(typeof(negative_sparse_logit_cross_entropy), neuron.activation_inputs[i],  y[k])
+                dz = gradient(
+                    typeof(negative_sparse_logit_cross_entropy),
+                    neuron.activation_inputs[i],
+                    y[k],
+                )
             else
                 da = sum(
-                    opt_neuron.neuron.bias_gradients[i] *
-                    opt_neuron.neuron.weight[k] for
-                    opt_neuron in network.layers[l+1].neurons
+                    opt_neuron.neuron.bias_gradients[i] * opt_neuron.neuron.weight[k]
+                    for opt_neuron in network.layers[l+1].neurons
                 )
                 dz =
                     da *
