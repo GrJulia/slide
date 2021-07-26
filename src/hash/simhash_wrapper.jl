@@ -29,6 +29,7 @@ struct SimhasherWrapper{A<:AbstractVector{<:Number}} <: AbstractHasher{A}
     end
 end
 
+
 @inline function compute_integer_from_bin(
     bin_repr::A,
 )::Int where {T<:Number,A<:AbstractVector{T}}
@@ -38,9 +39,9 @@ end
 end
 
 function LSH.compute_signatures!(
+    signatures::T,
     h::SimhasherWrapper{A},
     elem::A,
-    signatures::T,
 ) where {A<:AbstractVector{<:Number},T<:AbstractArray{Int}}
 
     raw_signature = signature(h.hasher, elem)
@@ -58,7 +59,7 @@ function LSH.compute_signatures(
     n_signatures = signature_len(h.hasher) ÷ h.signature_len
     signatures = Vector{Int}(undef, n_signatures)
 
-    LSH.compute_signatures!(h, elem, signatures)
+    LSH.compute_signatures!(signatures, h, elem)
 
     signatures
 end
@@ -71,11 +72,11 @@ end
 end
 
 @inline function LSH.compute_query_signatures!(
+    signatures::T,
     h::SimhasherWrapper{A},
     elem::A,
-    signatures::T,
 ) where {A<:AbstractVector{<:Number},T<:AbstractArray{Int}}
-    LSH.compute_signatures!(h, elem, signatures)
+    LSH.compute_signatures!(signatures, h, elem)
 end
 
 

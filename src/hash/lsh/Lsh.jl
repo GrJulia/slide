@@ -27,9 +27,9 @@ function compute_signatures(h::AbstractHasher{K}, elem::K)::Vector{Int} where {K
 end
 
 function compute_signatures!(
+    signatures::T,
     h::AbstractHasher{K},
     elem::K,
-    signature::T,
 ) where {K,T<:AbstractArray{Int}}
     error("unimplemented")
 end
@@ -39,9 +39,9 @@ function compute_query_signatures(h::AbstractHasher{K}, elem::K)::Vector{Int} wh
 end
 
 function compute_query_signatures!(
+    signature::T,
     h::AbstractHasher{K},
     elem::K,
-    signature::T,
 ) where {K,T<:AbstractArray{Int}}
     error("unimplemented")
 end
@@ -101,7 +101,7 @@ insert element into the table to the bucket selected by signature.
 function add!(lsh::Lsh{K,V,Hasher}, key::K, elem::V) where {K,V,Hasher<:AbstractHasher{K}}
     signatures = compute_signatures(lsh.hash, key)
 
-    @inbounds for (signature, ht) in zip(signatures, lsh.hash_tables)
+    for (signature, ht) in zip(signatures, lsh.hash_tables)
         add!(ht, signature, elem)
     end
 end
@@ -143,9 +143,9 @@ function add_batch!(
 
     signatures = Matrix{Int}(undef, n_tables, b_len)
 
-    @inbounds @floop executor for i = 1:b_len
+    @views @inbounds @floop executor for i = 1:b_len
         key, _ = batch[i]
-        compute_signatures!(lsh.hash, key, @view signatures[:, i])
+        compute_signatures!(signatures[:, i], lsh.hash, key,)
     end
 
     add_batch!(lsh, signatures, map(((_, elem),) -> elem, batch))

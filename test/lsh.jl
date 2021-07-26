@@ -12,9 +12,9 @@ LSH.compute_query_signatures(m::MockHasher, elem::Int)::Vector{Int} =
 
 
 function LSH.compute_signatures!(
+    signature::T,
     m::MockHasher,
     elem::Int,
-    signature::T,
 ) where {T<:AbstractArray{Int}}
     x = m.signature(elem)
     for (i, s) in enumerate(x)
@@ -23,9 +23,9 @@ function LSH.compute_signatures!(
 end
 
 function LSH.compute_query_signatures!(
+    signature::T,
     m::MockHasher,
     elem::Int,
-    signature::T,
 ) where {T<:AbstractArray{Int}}
     x = m.query_signature(elem)
     for (i, s) in enumerate(x)
