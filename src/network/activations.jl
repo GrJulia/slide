@@ -56,6 +56,9 @@ end
     output::Float,
     n_labels,
 )
+    # println(x)
+    # println(n_labels)
+    # println(output)
     return x * n_labels - output
 end
 

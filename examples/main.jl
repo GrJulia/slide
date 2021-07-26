@@ -73,11 +73,11 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
     n_tested_neurons = 12
     for neuron_id in 1:n_tested_neurons
         println("Neuron $neuron_id, weight grad")
-        numerical_gradient_weights(network, layer_id, neuron_id, weight_index, x_check, y_check, 0.000001)
+        numerical_gradient_weights(network, layer_id, neuron_id, weight_index, x_check, y_check, 0.0001)
     end
 
     for neuron_id in 1:n_tested_neurons
         println("Neuron $neuron_id, bias grad")
-        numerical_gradient_bias(network, layer_id, neuron_id, x_check, y_check, 0.000001)
+        numerical_gradient_bias(network, layer_id, neuron_id, x_check, y_check, 0.0001)
     end
 end

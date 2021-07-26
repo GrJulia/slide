@@ -7,6 +7,7 @@ end
 function handle_batch_backward(
     x::SubArray{Float},
     y::SubArray{Float},
+    y_true::SubArray{Float},
     network::SlideNetwork,
     i::Int,
     saved_softmax::Vector{Float},
@@ -27,8 +28,8 @@ function handle_batch_backward(
                 dz = gradient(
                     typeof(negative_sparse_logit_cross_entropy),
                     saved_softmax[k],
-                    y[neuron.id],
-                    sum(y),
+                    y_true[neuron.id],
+                    sum(y_true),
                 ) # recall that saved_softmax's length is size(active_neurons)
             # sum(y): to handle multiple labels
             else
@@ -59,6 +60,7 @@ end
 function backward!(
     x::Matrix{Float},
     y_pred::Matrix{Float},
+    y_true::Matrix{Float},
     network::SlideNetwork,
     saved_softmax::Vector{Vector{Float}},
 )
@@ -67,6 +69,7 @@ function backward!(
         handle_batch_backward(
             (@view x[:, i]),
             (@view y_pred[:, i]),
+            (@view y_true[:, i]),
             network,
             i,
             saved_softmax[i],

@@ -64,7 +64,7 @@ function train!(
                 last_layer_activated_neuron_ids,
             )
             loss += batch_loss
-            backward!(x_batch, y_batch_pred, network, saved_softmax)
+            backward!(x_batch, y_batch_pred, y_batch, network, saved_softmax)
             update_weight!(network, optimizer)
             zero_neuron_attributes!(network)
         end

@@ -67,7 +67,8 @@ function numerical_gradient_weights(
     y_check_pred, activated_neurons = forward!(x_check, network, false)
     _, softmax =
         negative_sparse_logit_cross_entropy(y_check_pred, y_check, activated_neurons)
-    backward!(x_check, y_check_pred, network, softmax)
+    y_check::Array{Float},
+    backward!(x_check, y_check_pred, y_check, network, softmax)
     backprop_gradient =
         mean(network.layers[layer_id].neurons[neuron_id].weight_gradients, dims = 2)
 
@@ -108,7 +109,7 @@ function numerical_gradient_bias(
     y_check_pred, activated_neurons = forward!(x_check, network, false)
     _, softmax =
         negative_sparse_logit_cross_entropy(y_check_pred, y_check, activated_neurons)
-    backward!(x_check, y_check_pred, network, softmax)
+    backward!(x_check, y_check_pred, y_check, network, softmax)
     backprop_gradient = mean(network.layers[layer_id].neurons[neuron_id].bias_gradients)
     zero_neuron_attributes!(network)
 
