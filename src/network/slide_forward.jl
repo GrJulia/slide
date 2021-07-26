@@ -37,6 +37,7 @@ function forward_single_sample(
         end
         current_input = layer_activation(layer_output)
         for (k, neuron) in enumerate(layer.neurons)
+            neuron.pre_activation_inputs[x_index] = layer_output[k]
             neuron.activation_inputs[x_index] = current_input[k]
         end
     end

@@ -16,6 +16,7 @@ mutable struct Neuron{W<:AbstractOptimizerAttributes}
     bias::Float
     active_inputs::Array{Id}
     activation_inputs::Array{Float}
+    pre_activation_inputs::Array{Float}
     weight_gradients::Matrix{Float}
     bias_gradients::Vector{Float}
     optimizer_attributes::W
@@ -26,6 +27,7 @@ Neuron(id::Id, batch_size::Int, input_dim::Int) = Neuron(
     rand(input_dim),
     rand(),
     zeros(Id, batch_size),
+    zeros(Float, batch_size),
     zeros(Float, batch_size),
     zeros(Float, input_dim, batch_size),
     zeros(Float, batch_size),

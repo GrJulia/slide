@@ -37,8 +37,10 @@ function handle_batch_backward(
                     neuron in network.layers[l+1].neurons
                 )
                 dz =
-                    da *
-                    gradient(typeof(layer.layer_activation), neuron.activation_inputs[i])
+                    da * gradient(
+                        typeof(layer.layer_activation),
+                        neuron.pre_activation_inputs[i],
+                    )
             end
             neuron.bias_gradients[i] = dz
             neuron.weight_gradients[:, i] = dz .* previous_activation
