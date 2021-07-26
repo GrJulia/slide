@@ -32,7 +32,8 @@ export Neuron,
     handle_batch_backward,
     sparse_logit_cross_entropy,
     Batch,
-    Id
+    Id,
+    predict_class
 
 include("vanilla_hash_table.jl")
 include("activations.jl")

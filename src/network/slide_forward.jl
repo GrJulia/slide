@@ -54,8 +54,8 @@ function handle_batch(x::SubArray{Float}, network::SlideNetwork, i::Int, random)
     activated_neuron_ids[end]
 end
 
-function forward!(x::Matrix{Float}, network::SlideNetwork, random::Bool = true)
-    n_samples = size(x)[2]
+function forward!(x::Array{Float}, network::SlideNetwork, random::Bool = true)
+    n_samples = typeof(x) == Vector{Float} ? 1 : size(x)[end]
     output = zeros(length(network.layers[end].neurons), n_samples)
     last_layer_activated_neuron_ids = []
     Threads.@threads for i = 1:n_samples
@@ -64,4 +64,9 @@ function forward!(x::Matrix{Float}, network::SlideNetwork, random::Bool = true)
         push!(last_layer_activated_neuron_ids, last_layer_activated_neuron_ids_batch)
     end
     output, last_layer_activated_neuron_ids
+end
+
+function predict_class(x::Array{Float}, network::SlideNetwork)
+    y_pred, _ = forward!(x, network, false)
+    return mapslices(argmax, y_pred, dims = 1)
 end
