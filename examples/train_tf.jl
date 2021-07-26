@@ -4,7 +4,7 @@ using Random
 using DataSets
 using Conda
 
-Conda.add("tensorflow")
+Conda.add("tensorflow");
 
 
 py"""
