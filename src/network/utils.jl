@@ -126,7 +126,6 @@ function numerical_gradient_bias(
     y_check_pred_2, activated_neurons_2 = forward!(x_check, network, false)
     loss_2, _ =
         negative_sparse_logit_cross_entropy(y_check_pred_2, y_check, activated_neurons_2)
-
     zero_neuron_attributes!(network)
     numerical_grad = (loss_1 - loss_2) / (2 * epsilon)
 

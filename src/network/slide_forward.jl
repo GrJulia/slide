@@ -55,7 +55,7 @@ function handle_batch(x::SubArray{Float}, network::SlideNetwork, i::Int, random)
     activated_neuron_ids[end]
 end
 
-function forward!(x::Array{Float}, network::SlideNetwork, random::Bool = true)
+function forward!(x::Array{Float}, network::SlideNetwork, random::Bool = false)
     n_samples = typeof(x) == Vector{Float} ? 1 : size(x)[end]
     output = zeros(length(network.layers[end].neurons), n_samples)
     last_layer_activated_neuron_ids = []

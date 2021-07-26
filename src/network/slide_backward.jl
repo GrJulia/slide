@@ -31,11 +31,11 @@ function handle_batch_backward(
                     y_true[neuron.id],
                     sum(y_true),
                 ) # recall that saved_softmax's length is size(active_neurons)
-            # sum(y): to handle multiple labels
+            # sum(y_true): to handle multiple labels
             else
                 da = sum(
-                    neuron.bias_gradients[i] * neuron.weight[k] for
-                    neuron in network.layers[l+1].neurons
+                    next_neuron.bias_gradients[i] * next_neuron.weight[k] for
+                    next_neuron in network.layers[l+1].neurons
                 )
                 dz =
                     da * gradient(

@@ -54,11 +54,8 @@ end
     ::Type{typeof(negative_sparse_logit_cross_entropy)},
     x::Float,
     output::Float,
-    n_labels,
+    n_labels::Float,
 )
-    # println(x)
-    # println(n_labels)
-    # println(output)
     return x * n_labels - output
 end
 
