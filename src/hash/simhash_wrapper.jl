@@ -29,8 +29,10 @@ struct SimhasherWrapper{A<:AbstractVector{<:Number}} <: AbstractHasher{A}
     end
 end
 
-@inline function compute_integer_from_bin(bin_repr::A)::Int where {T<:Number, A<:AbstractVector{T}}
-    foldl(bin_repr, init=zero(T)) do acc, n
+@inline function compute_integer_from_bin(
+    bin_repr::A,
+)::Int where {T<:Number,A<:AbstractVector{T}}
+    foldl(bin_repr, init = zero(T)) do acc, n
         2 * acc + n
     end |> Int
 end

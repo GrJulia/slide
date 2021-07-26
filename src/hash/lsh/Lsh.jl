@@ -118,7 +118,7 @@ function add_batch!(
     signatures::Matrix{Int},
     elems::T,
 ) where {K,V,Hasher<:AbstractHasher{K},T<:Vector{V}}
-    @inbounds for (i, elem) in enumerate(elems)
+    @views @inbounds for (i, elem) in enumerate(elems)
         for (signature, ht) in zip(signatures[:, i], lsh.hash_tables)
             add!(ht, signature, elem)
         end
@@ -136,14 +136,14 @@ Ith column of this matrix contains computed `signatures` of the ith element from
 function add_batch!(
     lsh::Lsh{K,V,Hasher},
     batch::Vector{Tuple{K,V}};
-    ex = SequentialEx(),
+    executor = SequentialEx(),
 )::Matrix{Int} where {K,V,Hasher<:AbstractHasher{K}}
     n_tables = length(lsh.hash_tables)
     b_len = length(batch)
 
     signatures = Matrix{Int}(undef, n_tables, b_len)
 
-    @inbounds @floop ex for i = 1:b_len
+    @inbounds @floop executor for i = 1:b_len
         key, _ = batch[i]
         compute_signatures!(lsh.hash, key, @view signatures[:, i])
     end
