@@ -109,13 +109,14 @@ function retrieve(
 )::Set{V} where {K,V,Hasher<:AbstractHasher{K}}
     signatures = compute_query_signatures(lsh.hash, key)
 
-    reduce(
-        zip(signatures, lsh.hash_tables),
-        init = V[],
-    ) do acc::Vector{V}, (signature, ht)::Tuple{Int,HashTable{V}}
+    similar_elems = Set{V}()
+
+    for (signature, ht) in zip(signatures, lsh.hash_tables)
         retrieved = retrieve(ht, signature)
-        vcat(acc, retrieved)
-    end |> Set{V}
+        union!(similar_elems, retrieved)
+    end
+
+    similar_elems
 end
 
 end # LSH
