@@ -16,8 +16,7 @@ end
 function negative_sparse_logit_cross_entropy_sample(output::Vector{Float}, y_true::Vector{Float})
     λ = maximum(output)
     sparse_exp_output = map(a -> exp(a - λ), output)
-    output_softmax = sparse_exp_output ./ sum(sparse_exp_output)
-    return sum(y_true .* log.(output_softmax .+ eps()))
+    return sum(y_true .* ((output .- λ) .- log(sum(sparse_exp_output) + eps())))
 end
 
 activation_name_to_function = Dict(
