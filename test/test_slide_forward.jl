@@ -5,30 +5,27 @@ using Slide.Network
 @testset "slide_forward" begin
     x = Array{Float}([1.0; 2.0; 3.0])
     n_layers = 1
-    neuron_1 = OptimizerNeuron(
-        Neuron(
+    neuron_1 = Neuron(
             1,
-            Array{Float32}([1.0, 1.0, 1.0]),
-            0,
-            zeros(1),
+            Array{Float}([1.0, 1.0, 1.0]),
+            0.0,
+            zeros(Id, 1),
             zeros(1),
             zeros(1, 1),
             zeros(1),
-        ),
-        AdamAttributes(zeros(3), 0, zeros(3), 0),
-    )
-    neuron_2 = OptimizerNeuron(
-        Neuron(
+            AdamAttributes(zeros(3), 0, zeros(3), 0),
+        )
+    neuron_2 = Neuron(
             2,
-            Array{Float32}([0.0, 0.0, 0.0]),
-            1,
-            zeros(1),
+            Array{Float}([0.0, 0.0, 0.0]),
+            1.0,
+            zeros(Id, 1),
             zeros(1),
             zeros(1, 1),
             zeros(1),
-        ),
-        AdamAttributes(zeros(3), 0, zeros(3), 0),
-    )
+            AdamAttributes(zeros(3), 0, zeros(3), 0),
+        )
+        
     network =
         SlideNetwork([Layer(1, [neuron_1, neuron_2], HashTable([[1], [2]]), identity)])
 

@@ -17,8 +17,8 @@ function retrieve_ids_from_bucket(hash_table, input_hash)
 end
 
 function store_neurons_in_bucket(hash_table, neurons::Vector)
-    for opt_neuron in neurons
-        neurons_hash = get_random_hash(hash_table, opt_neuron.neuron)
-        push!(hash_table.buckets[neurons_hash], opt_neuron.neuron.id)
+    for neuron in neurons
+        neurons_hash = get_random_hash(hash_table, neuron)
+        push!(hash_table.buckets[neurons_hash], neuron.id)
     end
 end

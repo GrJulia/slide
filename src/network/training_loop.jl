@@ -32,15 +32,9 @@ function build_layer(
     layer_activation,
     hash_tables,
 )
-    neurons = Vector{OptimizerNeuron{AdamAttributes}}()
+    neurons = Vector{Neuron{AdamAttributes}}()
     for neuron_id = 1:output_dim
-        push!(
-            neurons,
-            OptimizerNeuron(
-                Neuron(neuron_id, batch_size, input_dim),
-                AdamAttributes(input_dim),
-            ),
-        )
+        push!(neurons, Neuron(neuron_id, batch_size, input_dim))
     end
     return Layer(
         layer_id,
@@ -52,9 +46,9 @@ end
 
 function train!(
     training_batches::Vector{Batch},
-    n_iters::Int,
     network::SlideNetwork,
-    optimizer::Optimizer,
+    optimizer::Optimizer;
+    n_iters::Int,
 )
     output = nothing
     n_labels = length(network.layers[end].neurons)

@@ -1,10 +1,7 @@
 using Statistics: mean, Threads
 
 function get_active_neurons(layer::Layer, sample_index::Int)::Vector{Neuron}
-    return [
-        opt_neuron.neuron for
-        opt_neuron in layer.neurons if opt_neuron.neuron.active_inputs[sample_index] == 1
-    ]
+    return [neuron for neuron in layer.neurons if neuron.active_inputs[sample_index] == 1]
 end
 
 function handle_batch_backward(
@@ -21,7 +18,7 @@ function handle_batch_backward(
             previous_activation = x
         else
             previous_activation = [
-                previous_neuron.neuron.activation_inputs[i] for
+                previous_neuron.activation_inputs[i] for
                 previous_neuron in network.layers[l-1].neurons
             ]
         end
@@ -36,8 +33,8 @@ function handle_batch_backward(
             # sum(y): to handle multiple labels
             else
                 da = sum(
-                    opt_neuron.neuron.bias_gradients[i] * opt_neuron.neuron.weight[k]
-                    for opt_neuron in network.layers[l+1].neurons
+                    neuron.bias_gradients[i] * neuron.weight[k] for
+                    neuron in network.layers[l+1].neurons
                 )
                 dz =
                     da *

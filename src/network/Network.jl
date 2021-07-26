@@ -4,7 +4,6 @@ const Float = typeof(1.0)
 
 export Neuron,
     OptimizerAttributes,
-    OptimizerNeuron,
     AdamAttributes,
     build_activated_neurons_single_sample,
     forward_single_sample,
@@ -32,7 +31,8 @@ export Neuron,
     handle_batch,
     handle_batch_backward,
     sparse_logit_cross_entropy,
-    Batch
+    Batch,
+    Id
 
 include("vanilla_hash_table.jl")
 include("activations.jl")

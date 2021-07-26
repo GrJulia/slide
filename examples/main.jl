@@ -7,7 +7,7 @@ function build_random_configuration()
     input_dim = rand(8:32)
     n_neurons_per_layer = [rand(1:10) for _ = 1:n_layers]
     layer_activations = ["relu" for _ = 1:n_layers-1]
-    push!(layers_activations, "sparse_softmax")
+    push!(layers_activations, "identity")
     n_buckets = 2
     return (
         n_layers = n_layers,
@@ -44,8 +44,10 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
     batch_size = 256
     drop_last = false
 
-    x = rand(Float, config.input_dim, 4096)
-    y = Vector{Float}(rand(1:output_dim, 4096))
+    const N_ROWS = 4096
+
+    x = rand(Float, config.input_dim, N_ROWS)
+    y = Vector{Float}(rand(1:output_dim, N_ROWS))
 
 
     # Data processing and training loop
@@ -57,7 +59,7 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
     optimizer = AdamOptimizer(eta = learning_rate)
 
-    train!(training_batches, 5, network, optimizer)
+    train!(training_batches, network, optimizer, n_iters=5)
     println("DONE \n")
 
     # Numerical gradient analysis
@@ -67,12 +69,14 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
     weight_index = 1
     x_check = x[:, 1:batch_size]
     y_check = one_hot(y)[:, 1:batch_size]
-    for neuron_id in 1:12
+
+    n_tested_neurons = 12
+    for neuron_id in 1:n_tested_neurons
         println("Neuron $neuron_id, weight grad")
         numerical_gradient_weights(network, layer_id, neuron_id, weight_index, x_check, y_check, 0.00001)
     end
 
-    for neuron_id in 1:12
+    for neuron_id in 1:n_tested_neurons
         println("Neuron $neuron_id, bias grad")
         numerical_gradient_bias(network, layer_id, neuron_id, x_check, y_check, 0.00001)
     end

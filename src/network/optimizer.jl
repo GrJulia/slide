@@ -2,7 +2,7 @@ using Base: @kwdef
 
 abstract type Optimizer end
 
-function optimizer_step!(optimizer::Optimizer, neuron::OptimizerNeuron)
+function optimizer_step!(optimizer::Optimizer, neuron::Neuron)
     error("unimplemented")
 end
 
@@ -14,9 +14,9 @@ end
     t::Int = 1
 end
 
-function optimizer_step!(optimizer::AdamOptimizer, neuron::OptimizerNeuron)
-    dw = sum(neuron.neuron.weight_gradients, dims = 2)[:, 1]
-    db = sum(neuron.neuron.bias_gradients)
+function optimizer_step!(optimizer::AdamOptimizer, neuron::Neuron)
+    dw = sum(neuron.weight_gradients, dims = 2)[:, 1]
+    db = sum(neuron.bias_gradients)
     adam_attributes = neuron.optimizer_attributes
     adam_attributes.m_dw =
         optimizer.beta_1 .* adam_attributes.m_dw .+ (1 - optimizer.beta_1) .* dw
@@ -33,9 +33,9 @@ function optimizer_step!(optimizer::AdamOptimizer, neuron::OptimizerNeuron)
     corr_velocity_dw = adam_attributes.v_dw ./ (1 - optimizer.beta_2^optimizer.t)
     corr_velocity_db = adam_attributes.v_db / (1 - optimizer.beta_2^optimizer.t)
 
-    neuron.neuron.weight .-=
+    neuron.weight .-=
         optimizer.eta .*
         (corr_momentum_dw ./ (sqrt.(corr_velocity_dw) .+ optimizer.epsilon))
-    neuron.neuron.bias -=
+    neuron.bias -=
         optimizer.eta * (corr_momentum_db / (sqrt(corr_velocity_db) + optimizer.epsilon))
 end
