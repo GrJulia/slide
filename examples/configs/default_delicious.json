@@ -1,0 +1,22 @@
+{
+    "name": "default_delicious",
+    "dataset": {
+        "train_path": "examples/datasets/DeliciousLarge/deliciousLarge_train.txt",
+        "test_path": "examples/datasets/DeliciousLarge/deliciousLarge_test.txt",
+        "shuffle": false
+    },
+    "logging_path": "examples/logs",
+    "n_features": 782585,
+    "hidden_dim": 128,
+    "n_classes": 205443,
+    "batch_size": 128,
+    "lr": 1e-4,
+    "n_epochs": 10,
+    "use_gpu": false,
+    "testing": {
+        "n_batches": 20,
+        "test_freq": 20,
+        "use_random_indices": false,
+        "top_k_classes": 1
+    }
+}

@@ -1,5 +1,5 @@
 using Test
-using Slide.SimHash: SimHasher, signature, initialize!
+using Slide.SimHash: SimHasher, signature, initialize!, signature_len
 
 
 sh(x, y) = SimHasher(convert(Matrix{Int8}, x), y)
@@ -63,4 +63,8 @@ end
             @test_throws AssertionError test_routine(rng, 1000, 1232, 1100)
         end
     end
+end
+
+@testset "Utilities" begin
+    @test signature_len(sh(hcat([1, 1, 1], [-1, -1, -1]), hcat([1, 2, 3], [1, 2, 3]))) == 2
 end
