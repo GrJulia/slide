@@ -58,7 +58,7 @@ end
 function forward!(x::Array{Float}, network::SlideNetwork, random::Bool = false)
     n_samples = typeof(x) == Vector{Float} ? 1 : size(x)[end]
     output = zeros(length(network.layers[end].neurons), n_samples)
-    last_layer_activated_neuron_ids = [[] for _ in 1:n_samples]
+    last_layer_activated_neuron_ids = [[] for _ = 1:n_samples]
     Threads.@threads for i = 1:n_samples
         output[:, i], last_layer_activated_neuron_ids_batch =
             handle_batch((@view x[:, i]), network, i, random)
