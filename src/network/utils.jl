@@ -6,7 +6,7 @@ const Batch = Tuple{Matrix{Float},Matrix{Float}}
 function batch_input(
     x::Matrix{Float},
     y::Matrix{Float},
-    batch_size::Int64,
+    batch_size::Int,
     drop_last::Bool,
 )::Vector{Batch}
     batches = map(Iterators.partition(axes(x, 2), batch_size)) do columns
@@ -18,7 +18,7 @@ function batch_input(
     return batches
 end
 
-function one_hot(y::Vector, n_labels::Int64 = Int(maximum(y)))
+function one_hot(y::Vector, n_labels::Int = Int(maximum(y)))
     y_categorical = zeros(Float, n_labels, length(y))
     for (i, label) in enumerate(y)
         y_categorical[Int(label), i] = 1
@@ -26,7 +26,7 @@ function one_hot(y::Vector, n_labels::Int64 = Int(maximum(y)))
     y_categorical
 end
 
-function one_hot(y::Vector{Vector{Float}}, n_labels::Int64 = Int(maximum(maximum.(y))))
+function one_hot(y::Vector{Vector{Float}}, n_labels::Int = Int(maximum(maximum.(y))))
     # One hot encoding for datasets used by Slide
     # which turns out to be a mutlilabels classification problem
     y_categorical = zeros(Float, n_labels, length(y))

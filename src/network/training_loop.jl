@@ -69,7 +69,7 @@ function train!(
             zero_neuron_attributes!(network)
         end
         println("Iteration $i, Loss $(loss / length(training_batches))")
-        optimizer.t += 1
+        optimizer_end_epoch_step!(optimizer)
     end
     return output
 end

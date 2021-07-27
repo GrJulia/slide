@@ -24,8 +24,8 @@ end
 
 Neuron(id::Id, batch_size::Int, input_dim::Int) = Neuron(
     id,
-    rand(input_dim),
-    rand(),
+    rand(Float, input_dim),
+    rand(Float),
     zeros(Id, batch_size),
     zeros(Float, batch_size),
     zeros(Float, batch_size),

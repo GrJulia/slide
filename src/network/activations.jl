@@ -54,9 +54,9 @@ end
     ::Type{typeof(negative_sparse_logit_cross_entropy)},
     x::Float,
     output::Float,
-    n_labels::Float,
+    n_true_labels::Float,
 )
-    return x * n_labels - output
+    return x * n_true_labels - output
 end
 
 @inline function gradient(::Type{typeof(relu)}, x::Float)

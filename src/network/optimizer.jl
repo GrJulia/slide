@@ -6,6 +6,10 @@ function optimizer_step!(optimizer::Optimizer, neuron::Neuron)
     error("unimplemented")
 end
 
+function optimizer_end_epoch_step!(optimizer::Optimizer)
+    error("unimplemented")
+end
+
 @kwdef mutable struct AdamOptimizer <: Optimizer
     eta::Float = 0.01
     beta_1::Float = 0.9
@@ -38,4 +42,8 @@ function optimizer_step!(optimizer::AdamOptimizer, neuron::Neuron)
         (corr_momentum_dw ./ (sqrt.(corr_velocity_dw) .+ optimizer.epsilon))
     neuron.bias -=
         optimizer.eta * (corr_momentum_db / (sqrt(corr_velocity_db) + optimizer.epsilon))
+end
+
+function optimizer_end_epoch_step!(optimizer::AdamOptimizer)
+    optimizer.t += 1
 end
