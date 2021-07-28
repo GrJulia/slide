@@ -1,9 +1,7 @@
 name: Test
 
 on:
-  pull_request:
-    branches:
-      - main
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -14,8 +12,8 @@ jobs:
     strategy:
       matrix:
         julia-version: ['1.6']
-        julia-arch: [x64, x86]
-        os: [ubuntu-latest, windows-latest]
+        julia-arch: [x64]
+        os: [ubuntu-latest]
 
     steps:
       - uses: actions/checkout@v2

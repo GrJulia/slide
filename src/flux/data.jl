@@ -1,7 +1,3 @@
-module FluxTraining
-
-export SparseDataset, preprocess_dataset, get_dataloaders
-
 using Flux
 using Random
 using DataLoaders
@@ -10,25 +6,43 @@ using LearnBase
 struct SparseDataset
     xs::Tuple{Vector{Vector{Int}},Vector{Vector{Float32}}}
     ys::Vector{Vector{Int}}
+    batch_size::Int
     n_features::Int
     n_classes::Int
+    keep_last::Bool
 end
 
-function LearnBase.getobs(ds::SparseDataset, idx::Int)
-    (xs_indices, xs_vals) = ds.xs
-    x = zeros(Float32, ds.n_features)
-    x[xs_indices[idx]] = xs_vals[idx]
+LearnBase.getobs(ds::SparseDataset, raw_batch_idx) =
+    LearnBase.getobs(ds, convert(Int, raw_batch_idx))
 
-    ys = ds.ys[idx]
-    y = zeros(Int, ds.n_classes)
-    y[ys] .= 1
+function LearnBase.getobs(ds::SparseDataset, batch_idx::Int)
+    batch = ds.batch_size
+    if ds.keep_last
+        batch = min(batch, length(ds.ys) - batch * (batch_idx - 1))
+    end
+
+    (xs_indices, xs_vals) = ds.xs
+    x = zeros(Float32, ds.n_features, batch)
+    y = zeros(Float32, ds.n_classes, batch)
+
+    for b = 1:batch
+        idx = (batch_idx - 1) * batch + b
+        x[xs_indices[idx], b] = xs_vals[idx]
+        y[ds.ys[idx], b] .= 1
+    end
 
     return x, y
 end
 
-LearnBase.nobs(ds::SparseDataset) = length(ds.ys)
+function LearnBase.nobs(ds::SparseDataset)
+    n_of_batches = length(ds.ys) / ds.batch_size
+    if ds.keep_last
+        return ceil(n_of_batches)
+    end
+    return floor(n_of_batches)
+end
 
-function preprocess_dataset(dataset_path)
+function preprocess_dataset(dataset_path, shuffle)
     f = open(dataset_path, "r")
     x_indices, x_vals, ys = [], [], []
     for line in readlines(f)[2:end]
@@ -43,24 +57,39 @@ function preprocess_dataset(dataset_path)
         push!(ys, y)
     end
 
-    perm = randperm(length(ys))
+    perm = if shuffle
+        randperm(length(ys))
+    else
+        1:length(ys)
+    end
     data, labels = (x_indices[perm], x_vals[perm]), ys[perm]
 
     return data, labels
 end
 
 function get_dataloaders(config::Dict{String,Any})
-    train_data, train_labels = preprocess_dataset(config["dataset"]["train_path"])
-    test_data, test_labels = preprocess_dataset(config["dataset"]["test_path"])
+    train_data, train_labels =
+        preprocess_dataset(config["dataset"]["train_path"], config["dataset"]["shuffle"])
+    test_data, test_labels =
+        preprocess_dataset(config["dataset"]["test_path"], config["dataset"]["shuffle"])
 
-    trainset =
-        SparseDataset(train_data, train_labels, config["n_features"], config["n_classes"])
-    testset =
-        SparseDataset(test_data, test_labels, config["n_features"], config["n_classes"])
+    train_set = SparseDataset(
+        train_data,
+        train_labels,
+        config["batch_size"],
+        config["n_features"],
+        config["n_classes"],
+        true,
+    )
+    test_set = SparseDataset(
+        test_data,
+        test_labels,
+        config["batch_size"],
+        config["n_features"],
+        config["n_classes"],
+        false,
+    )
 
-    train_loader = DataLoader(trainset, config["batch_size"], partial = false)
-    test_loader = DataLoader(testset, config["batch_size"], partial = true)
-    return train_loader, test_loader
+    train_loader = DataLoader(train_set, nothing)
+    return train_loader, test_set
 end
-
-end # FluxTraining

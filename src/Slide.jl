@@ -1,6 +1,8 @@
 module Slide
 
-include("flux/data.jl")
+include("flux/Flux.jl")
 include("network/Network.jl")
 
-end
+include("hash/Hash.jl")
+
+end # Slide
