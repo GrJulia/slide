@@ -34,7 +34,8 @@ export Neuron,
     Batch,
     Id,
     predict_class,
-    optimizer_end_epoch_step!
+    optimizer_end_epoch_step!,
+    negative_sparse_logit_cross_entropy
 
 include("vanilla_hash_table.jl")
 include("activations.jl")
