@@ -56,7 +56,7 @@ end
     output::Float,
     n_true_labels::Float,
 )
-    return x * n_true_labels - output
+    return x - output / n_true_labels
 end
 
 @inline function gradient(::Type{typeof(relu)}, x::Float)
