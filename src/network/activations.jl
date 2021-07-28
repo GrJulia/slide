@@ -40,7 +40,7 @@ function sparse_logit_cross_entropy_sample(
             )
         ),
     ),
-    sparse_exp_output
+    sparse_exp_output / sum(sparse_exp_output)
 end
 
 activation_name_to_function =
@@ -52,11 +52,11 @@ end
 
 @inline function gradient(
     ::Type{typeof(negative_sparse_logit_cross_entropy)},
-    x::Float,
-    output::Float,
-    n_true_labels::Float,
+    labels::Float,
+    probabilities::Float,
+    ratio_positve_labels_sampled::Float
 )
-    return x - output / n_true_labels
+    return probabilities * ratio_positve_labels_sampled - labels
 end
 
 @inline function gradient(::Type{typeof(relu)}, x::Float)

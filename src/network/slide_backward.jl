@@ -23,13 +23,14 @@ function handle_batch_backward(
                 previous_neuron in network.layers[l-1].neurons
             ]
         end
+        active_neuron_ids = [neuron.id for neuron in active_neurons]
         for (k, neuron) in enumerate(active_neurons)
             if l == length(network.layers)
                 dz = gradient(
                     typeof(negative_sparse_logit_cross_entropy),
-                    saved_softmax[k],
                     y_true[neuron.id],
-                    sum(y_true),
+                    saved_softmax[k],
+                    sum(y_true[active_neuron_ids]),
                 ) # recall that saved_softmax's length is size(active_neurons)
             # sum(y_true): to handle multiple labels
             else
