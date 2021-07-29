@@ -89,11 +89,8 @@ function numerical_gradient_weights(
     zero_neuron_attributes!(network)
     numerical_grad = (loss_1 - loss_2) / (2 * epsilon)
 
-    println("Numerical gradient: $numerical_grad")
-    println("Manual gradient: $(backprop_gradient[weight_index])")
-    println("Absolute grad diff: $(abs(numerical_grad - backprop_gradient[weight_index]))")
-
     network.layers[layer_id].neurons[neuron_id].weight[weight_index] += epsilon
+    return abs(numerical_grad - backprop_gradient[weight_index])
 end
 
 function numerical_gradient_bias(
@@ -128,11 +125,6 @@ function numerical_gradient_bias(
     zero_neuron_attributes!(network)
     numerical_grad = (loss_1 - loss_2) / (2 * epsilon)
 
-    println("Numerical gradient: $numerical_grad")
-    println("Manual gradient: $backprop_gradient")
-    println("Absolute grad diff: $(abs(numerical_grad - backprop_gradient))")
-    println("Loss 1 $loss_1")
-    println("Loss 2 $loss_2")
-
     network.layers[layer_id].neurons[neuron_id].bias += epsilon
+    return abs(numerical_grad - backprop_gradient)
 end

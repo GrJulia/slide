@@ -53,13 +53,14 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
     # Data processing and training loop
 
     network = build_network(network_params, batch_size)
-    
+
     y_cat = one_hot(y)
+    y_cat ./= sum(y_cat, dims = 1)
     training_batches = batch_input(x, y_cat, batch_size, drop_last)
 
     optimizer = AdamOptimizer(eta = learning_rate)
 
-    train!(training_batches, network, optimizer, n_iters=5)
+    train!(training_batches, network, optimizer, n_iters = 1)
     println("DONE \n")
 
     # Numerical gradient analysis
@@ -68,16 +69,37 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
     neuron_id = 1
     weight_index = 1
     x_check = x[:, 1:batch_size]
-    y_check = one_hot(y)[:, 1:batch_size]
+    y_check = y_cat[:, 1:batch_size]
 
-    n_tested_neurons = 12
-    for neuron_id in 1:n_tested_neurons
-        println("Neuron $neuron_id, weight grad")
-        numerical_gradient_weights(network, layer_id, neuron_id, weight_index, x_check, y_check, 0.0001)
-    end
+    # for layer in network.layers
+    #     for neuron in layer.neurons
+    #         for weight_index in 1:length(neuron.weight)
+    #             current_grad_diff = numerical_gradient_weights(network, layer.id, neuron.id, weight_index, x_check, y_check, 0.00001)
+    #             if current_grad_diff > 1e-8
+    #                 println("Error on layer $(layer.id), neuron $(neuron.id) weight $weight_index")
+    #                 println(current_grad_diff)
+    #             end
+    #         end
+    #     end
+    # end
 
-    for neuron_id in 1:n_tested_neurons
-        println("Neuron $neuron_id, bias grad")
-        numerical_gradient_bias(network, layer_id, neuron_id, x_check, y_check, 0.0001)
+    println("------------------------------------------------------")
+
+    for layer in network.layers
+        println(" ------------ Layer ID: $(layer.id) -------------------")
+        for neuron in layer.neurons
+            current_grad_diff = numerical_gradient_bias(
+                network,
+                layer.id,
+                neuron.id,
+                x_check,
+                y_check,
+                0.00001,
+            )
+            if current_grad_diff > 1e-8
+                println("Error on layer $(layer.id), neuron $(neuron.id) bias")
+                println(current_grad_diff)
+            end
+        end
     end
 end

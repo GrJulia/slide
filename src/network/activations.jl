@@ -54,7 +54,7 @@ end
     ::Type{typeof(negative_sparse_logit_cross_entropy)},
     labels::Float,
     probabilities::Float,
-    ratio_positve_labels_sampled::Float
+    ratio_positve_labels_sampled::Float,
 )
     return probabilities * ratio_positve_labels_sampled - labels
 end
