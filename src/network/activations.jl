@@ -62,3 +62,7 @@ end
 @inline function gradient(::Type{typeof(relu)}, x::Float)
     return Int(x > 0)
 end
+
+@inline function gradient(::Type{typeof(identity)}, x::Float)
+    return 1.0
+end

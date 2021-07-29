@@ -62,44 +62,5 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
     train!(training_batches, network, optimizer, n_iters = 1)
     println("DONE \n")
-
-    # Numerical gradient analysis
-
-    layer_id = 2
-    neuron_id = 1
-    weight_index = 1
-    x_check = x[:, 1:batch_size]
-    y_check = y_cat[:, 1:batch_size]
-
-    # for layer in network.layers
-    #     for neuron in layer.neurons
-    #         for weight_index in 1:length(neuron.weight)
-    #             current_grad_diff = numerical_gradient_weights(network, layer.id, neuron.id, weight_index, x_check, y_check, 0.00001)
-    #             if current_grad_diff > 1e-8
-    #                 println("Error on layer $(layer.id), neuron $(neuron.id) weight $weight_index")
-    #                 println(current_grad_diff)
-    #             end
-    #         end
-    #     end
-    # end
-
-    println("------------------------------------------------------")
-
-    for layer in network.layers
-        println(" ------------ Layer ID: $(layer.id) -------------------")
-        for neuron in layer.neurons
-            current_grad_diff = numerical_gradient_bias(
-                network,
-                layer.id,
-                neuron.id,
-                x_check,
-                y_check,
-                0.00001,
-            )
-            if current_grad_diff > 1e-8
-                println("Error on layer $(layer.id), neuron $(neuron.id) bias")
-                println(current_grad_diff)
-            end
-        end
-    end
+    
 end

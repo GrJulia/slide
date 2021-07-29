@@ -4,7 +4,7 @@ using Slide.Network
 
 @testset "slide_backward" begin
     n_layers = 2
-    n_buckets = 8
+    n_buckets = 2
     batch_size = 128
     input_dim = 16
     output_dim = 16
@@ -23,22 +23,25 @@ using Slide.Network
     y_cat = one_hot(y)
     y_cat ./= sum(y_cat, dims = 1)
 
-
-    for neuron in network.layers[2].neurons
-        for weight_index = 1:length(neuron.weight)
-            @test numerical_gradient_weights(
-                network,
-                2,
-                neuron.id,
-                weight_index,
-                x,
-                y_cat,
-                0.00001,
-            ) < 1e-8
+    for layer in network.layers
+        for neuron in layer.neurons
+            for weight_index = 1:length(neuron.weight)
+                @test numerical_gradient_weights(
+                    network,
+                    layer.id,
+                    neuron.id,
+                    weight_index,
+                    x,
+                    y_cat,
+                    0.00001,
+                ) < 1e-8
+            end
         end
     end
 
-    for neuron in network.layers[2].neurons
-        @test numerical_gradient_bias(network, 2, neuron.id, x, y_cat, 0.00001) < 1e-8
+    for layer in network.layers
+        for neuron in layer.neurons
+            @test numerical_gradient_bias(network, layer.id, neuron.id, x, y_cat, 0.00001) < 1e-8
+        end
     end
 end

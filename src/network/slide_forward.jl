@@ -26,6 +26,7 @@ function forward_single_sample(
     n_layers = length(network.layers)
     current_input = x
     for i = 1:n_layers
+        # compute activated neurons with current_input
         layer = network.layers[i]
         current_n_neurons = length(layer.neurons)
         layer_activation = layer.layer_activation
@@ -50,7 +51,7 @@ function handle_batch(x::SubArray{Float}, network::SlideNetwork, i::Int, random)
         for neuron_id in activated_neuron_ids[j]
             network.layers[j].neurons[neuron_id].active_inputs[i] = 1
         end
-    end
+    end # need to be done in forward_single_sample function at each iteration, using current_input
     return forward_single_sample(x, network, activated_neuron_ids, i),
     activated_neuron_ids[end]
 end
