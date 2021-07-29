@@ -6,6 +6,7 @@ end
 
 @testset "Network" begin
     include("test_slide_forward.jl")
+    include("test_slide_backward.jl")
 end
 
 @testset "LSH" begin
