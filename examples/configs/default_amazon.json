@@ -1,15 +1,15 @@
 {
     "name": "default_amazon",
     "dataset": {
-        "train_path": "examples/datasets/Amazon/train.txt",
-        "test_path": "examples/datasets/Amazon/test.txt",
+        "train_path": "amazon_train",
+        "test_path": "amazon_test",
         "shuffle": false
     },
-    "logging_path": "examples/logs",
+    "logging_path": "/home/jrun/data/code/slide/examples/logs",
     "n_features": 135909,
     "hidden_dim": 128,
     "n_classes": 670091,
-    "batch_size": 128,
+    "batch_size": 256,
     "lr": 1e-4,
     "n_epochs": 10,
     "use_gpu": false,
