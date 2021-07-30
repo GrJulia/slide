@@ -1,6 +1,10 @@
 using JSON
 using BenchmarkTools
+
+using Slide
 using Slide.Network
+using Slide.LshSimHashWrapper: LshSimHashParams
+using Slide.Hash: LshParams
 
 function build_random_configuration()
     n_layers = rand(1:10)
@@ -31,13 +35,35 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
         config = NamedTuple{Tuple(Symbol.(keys(config_dict)))}(values(config_dict))
     end
 
-    hash_tables = [HashTable([[] for _ = 1:config.n_buckets]) for _ = 1:config.n_layers]
+    lsh_params = let
+        common_lsh = LshParams(
+            n_buckets = config.n_buckets,
+            n_tables = config.n_tables,
+            max_bucket_len = config.max_bucket_len,
+        )
+        lsh_params = Vector()
+
+        prev_n_neurons = config.input_dim
+        for n_neurons in config.n_neurons_per_layer
+            simparams = LshSimHashParams(
+                common_lsh,
+                prev_n_neurons,
+                config.simhash["signature_len"],
+                prev_n_neurons ÷ config.simhash["sample_ratio"],
+            )
+            push!(lsh_params, simparams)
+            prev_n_neurons = n_neurons
+        end
+
+        lsh_params
+    end
+
     network_params = Dict(
         "n_layers" => config.n_layers,
         "n_neurons_per_layer" => Vector{Int}(config.n_neurons_per_layer),
         "layer_activations" => Vector{String}(config.layer_activations),
         "input_dim" => config.input_dim,
-        "hash_tables" => hash_tables,
+        "lsh_params" => lsh_params,
     )
     output_dim = config.n_neurons_per_layer[end]
     learning_rate = 0.01
@@ -60,7 +86,7 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
     optimizer = AdamOptimizer(eta = learning_rate)
 
-    train!(training_batches, network, optimizer, n_iters = 1)
+    train!(training_batches, network, optimizer; n_iters = 20)
     println("DONE \n")
 
 end

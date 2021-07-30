@@ -1,4 +1,5 @@
 using Slide.Network: Batch, Float
+using ..Hash: AbstractLshParams
 
 function build_network(network_params::Dict, batch_size::Int)::SlideNetwork
     network_layers = Vector{Layer}()
@@ -15,10 +16,8 @@ function build_network(network_params::Dict, batch_size::Int)::SlideNetwork
             batch_size,
             layer_id,
             network_params["layer_activations"][layer_id],
-            network_params["hash_tables"][layer_id],
+            network_params["lsh_params"][layer_id],
         )
-
-        store_neurons_in_bucket(layer.hash_table, layer.neurons)
         push!(network_layers, layer)
     end
     return SlideNetwork(network_layers)
@@ -30,8 +29,8 @@ function build_layer(
     batch_size,
     layer_id,
     layer_activation,
-    hash_tables,
-)
+    lsh_params::T,
+) where {T<:AbstractLshParams}
     neurons = Vector{Neuron{AdamAttributes}}()
     for neuron_id = 1:output_dim
         push!(neurons, Neuron(neuron_id, batch_size, input_dim))
@@ -39,7 +38,7 @@ function build_layer(
     return Layer(
         layer_id,
         neurons,
-        hash_tables,
+        lsh_params,
         activation_name_to_function[layer_activation],
     )
 end
@@ -49,27 +48,34 @@ function train!(
     network::SlideNetwork,
     optimizer::Optimizer;
     n_iters::Int,
-)
-    output = nothing
-    n_labels = length(network.layers[end].neurons)
+    scheduler::S = VanillaScheduler(10),
+) where {S<:AbstractScheduler}
     for i = 1:n_iters
         loss = 0
-        output = Array{Float}(undef, n_labels, 0)
         for (x_batch, y_batch) in training_batches
-            y_batch_pred, last_layer_activated_neuron_ids = forward!(x_batch, network)
-            output = hcat(output, y_batch_pred)
+            y_batch_pred = forward!(x_batch, network)
+
+            last_layer_activated_neuron_ids =
+                get_active_neurons_id(network, length(network.layers))
             batch_loss, saved_softmax = negative_sparse_logit_cross_entropy(
                 y_batch_pred,
                 y_batch,
                 last_layer_activated_neuron_ids,
             )
+
             loss += batch_loss
             backward!(x_batch, y_batch_pred, y_batch, network, saved_softmax)
             update_weight!(network, optimizer)
             zero_neuron_attributes!(network)
         end
+
+
         println("Iteration $i, Loss $(loss / length(training_batches))")
+        scheduler(i) do
+            for layer in network.layers
+                update!(layer.hash_tables, layer.neurons)
+            end
+        end
         optimizer_end_epoch_step!(optimizer)
     end
-    return output
 end

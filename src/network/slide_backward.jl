@@ -1,8 +1,5 @@
 using Statistics: mean, Threads
 
-function get_active_neurons(layer::Layer, sample_index::Int)::Vector{Neuron}
-    return [neuron for neuron in layer.neurons if neuron.active_inputs[sample_index] == 1]
-end
 
 function handle_batch_backward(
     x::SubArray{Float},

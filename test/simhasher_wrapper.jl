@@ -3,7 +3,7 @@ using Random: default_rng
 
 using Slide.Hash: LshParams, init_lsh!
 using Slide.LshSimHashWrapper: LshSimHashParams
-using Slide.LSH: add!, retrieve
+using Slide.LSH: add!, add_batch!, retrieve
 
 
 @testset "Initializing LSH with SimHasher" begin
@@ -18,10 +18,14 @@ using Slide.LSH: add!, retrieve
     end
 
     @testset "LSH can handle vectors" begin
-        @test begin
-            add!(lsh_with_simhash, zeros(Float32, 10), 10)
+        @test @views begin
+            add!(lsh_with_simhash, zeros(Float64, 10)[:], 10)
+            add_batch!(
+                lsh_with_simhash,
+                convert(Vector{Tuple{SubArray{Float64},Int}}, [(zeros(Float64, 10)[:], 1)]),
+            )
 
-            retrieve(lsh_with_simhash, zeros(Float32, 10)) == Set{Int}(10)
+            retrieve(lsh_with_simhash, zeros(Float64, 10)[:]) == Set{Int}([10, 1])
         end
     end
 

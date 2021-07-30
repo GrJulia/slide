@@ -1,3 +1,7 @@
+using Random: default_rng
+using Slide.LSH: Lsh, AbstractHasher, add_batch!
+using Slide.Hash: AbstractLshParams, init_lsh!
+
 
 abstract type AbstractOptimizerAttributes end
 
@@ -34,13 +38,79 @@ Neuron(id::Id, batch_size::Int, input_dim::Int) = Neuron(
     AdamAttributes(input_dim),
 )
 
-struct Layer{T<:AbstractOptimizerAttributes,F<:Function}
+mutable struct SlideHashTables{A<:AbstractLshParams,Hasher<:AbstractHasher{SubArray{Float}}}
+    lsh::SlideLsh{Hasher}
+    lsh_params::A
+    hashes::Matrix{Int}
+    changed_ids::Set{Id}
+end
+
+struct Layer{
+    A<:AbstractLshParams,
+    T<:AbstractOptimizerAttributes,
+    F<:Function,
+    Hasher<:AbstractHasher{SubArray{Float}},
+}
     id::Id
     neurons::Vector{Neuron{T}}
-    hash_table::HashTable
+    hash_tables::SlideHashTables{A,Hasher}
     layer_activation::F
 end
 
 struct SlideNetwork
     layers::Vector{Layer}
+end
+
+function Layer(
+    id::Id,
+    neurons::Vector{Neuron{T}},
+    lsh_params::A,
+    layer_activation::F,
+) where {A<:AbstractLshParams,T<:AbstractOptimizerAttributes,F<:Function}
+
+    lsh = init_lsh!(lsh_params, default_rng(), Id)
+
+    hashes = add_batch!(
+        lsh,
+        convert(
+            Vector{Tuple{SubArray{Float64},Int}},
+            map(neuron -> (@view(neuron.weight[:]), neuron.id), neurons),
+        ),
+    )
+
+    hash_tables = SlideHashTables(lsh, lsh_params, hashes, Set{Id}())
+
+    Layer(id, neurons, hash_tables, layer_activation)
+end
+
+
+function update!(
+    hash_tables::SlideHashTables{A,Hasher},
+    neurons::Vector{Neuron{T}},
+) where {A<:AbstractLshParams,Hasher<:AbstractHasher{SubArray{Float}},T}
+    lsh = init_lsh!(hash_tables.lsh_params, default_rng(), Id)
+
+    changed_ids = [x for x in hash_tables.changed_ids]
+    not_changed_ids =
+        filter(n -> !(n.id in hash_tables.changed_ids), neurons) |>
+        not_changed_neurons -> map(n -> n.id, not_changed_neurons)
+
+    not_changed_hashes = hash_tables.hashes[:, not_changed_ids]
+    add_batch!(lsh, not_changed_hashes, not_changed_ids)
+
+    new_hashes = add_batch!(
+        lsh,
+        convert(
+            Vector{Tuple{SubArray{Float64},Int}},
+            map(id -> (@view(neurons[id].weight[:]), id), changed_ids),
+        ),
+    )
+
+    hash_tables.hashes[:, changed_ids] = new_hashes
+
+    hash_tables.lsh = lsh
+end
+
+function mark_ids!(hash_tables::SlideHashTables{A,Hasher}, ids::Vector{Id}) where {A,Hasher}
+    union!(hash_tables.changed_ids, ids)
 end
