@@ -62,5 +62,5 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
     train!(training_batches, network, optimizer, n_iters = 1)
     println("DONE \n")
-    
+
 end

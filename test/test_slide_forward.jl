@@ -32,7 +32,10 @@ using Slide.Network
         SlideNetwork([Layer(1, [neuron_1, neuron_2], HashTable([[1], [2]]), identity)])
 
     @test length(network.layers) == 1
-    @test forward_single_sample((@view x[:, 1]), network, [[1, 2]], 1) == [6.0; 1.0]
-    @test build_activated_neurons_single_sample((@view x[1, :]), network, true) in
-          [[[1]], [[2]]]
+    @test forward_single_sample((@view x[:, 1]), network, 1, false)[1] == [6.0; 0.0]
+    @test get_activated_neuron_ids_from_hash_tables(
+        (@view x[:, 1]),
+        network.layers[1],
+        true,
+    ) in [[1], [2]]
 end

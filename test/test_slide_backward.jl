@@ -41,7 +41,8 @@ using Slide.Network
 
     for layer in network.layers
         for neuron in layer.neurons
-            @test numerical_gradient_bias(network, layer.id, neuron.id, x, y_cat, 0.00001) < 1e-8
+            @test numerical_gradient_bias(network, layer.id, neuron.id, x, y_cat, 0.00001) <
+                  1e-8
         end
     end
 end

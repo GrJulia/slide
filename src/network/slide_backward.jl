@@ -38,7 +38,7 @@ function handle_batch_backward(
                     next_neuron.bias_gradients[i] * next_neuron.weight[neuron.id] for
                     next_neuron in network.layers[l+1].neurons
                 ) # we could only sum over the active neurons in layer l+1, but 
-                  # here, if a neuron is not active, we're just summing 0
+                # here, if a neuron is not active, we're just summing 0
                 dz =
                     da * gradient(
                         typeof(layer.layer_activation),
