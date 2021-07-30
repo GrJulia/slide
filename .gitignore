@@ -28,3 +28,5 @@ Manifest.toml
 examples/datasets/*
 !examples/datasets/.gitkeep
 examples/logs/*
+examples/configs/*
+e
