@@ -1,8 +1,8 @@
 {
     "name": "default_amazon",
     "dataset": {
-        "train_path": "examples/datasets/Amazon/train.txt",
-        "test_path": "examples/datasets/Amazon/test.txt",
+        "train_path": "amazon_train",
+        "test_path": "amazon_test",
         "shuffle": false
     },
     "logging_path": "examples/logs",
