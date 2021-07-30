@@ -3,9 +3,8 @@ module DWTA
 using Random: shuffle, rand, AbstractRNG
 
 
-const Signatures = Vector{Vector{UInt32}}
-
-const EMPTY_SAMPLING = Float32(-Inf)
+const Signatures = Vector{Vector{Int8}}
+const EMPTY_SAMPLING = zero(Int8)
 
 struct DWTAHasher
     idx_to_bins::Vector{Int}
@@ -73,14 +72,17 @@ end
 
 function signatures(
     dwta::DWTAHasher,
-    data::A,
+    data::A;
+    wta=true
 )::Signatures where {A<:AbstractVector{<:Number}}
-    hashes = fill(EMPTY_SAMPLING, dwta.n_hashes)
-    max_vals_in_bins = fill(EMPTY_SAMPLING, dwta.n_hashes)
+    n_hashes, n_bins = dwta.n_hashes, dwta.n_bins
+    hashes = fill(EMPTY_SAMPLING, n_hashes)
+    max_vals_in_bins = fill(EMPTY_SAMPLING, n_hashes)
+    bin_cnt = fill(one(UInt8), n_bins)
 
     for idx in eachindex(data)
         idx_start, idx_end = dwta.bins_offsets[idx] + 1, dwta.bins_offsets[idx+1]
-        if idx_end - idx_start == 0 # 'idx' isn't present in any of the bins
+        if idx_end - idx_start == -1 # 'idx' isn't present in any of the bins
             continue
         end
 
@@ -89,14 +91,19 @@ function signatures(
         for bin_idx in bins_with_idx
             if val > max_vals_in_bins[bin_idx]
                 max_vals_in_bins[bin_idx] = val
-                hashes[bin_idx] = idx
+                hashes[bin_idx] = bin_cnt[bin_idx]
             end
+            bin_cnt[bin_idx] += 1
         end
     end
 
+    if wta
+        return @views [hashes[i:i+n_bins-1] for i = 1:n_bins:n_hashes-n_bins+1]
+    end
+
     # Handling empty sampling (is it ever used?)
-    out_hashes = fill(EMPTY_SAMPLING, dwta.n_hashes)
-    for bin_idx in eachidex(hashes)
+    out_hashes = fill(EMPTY_SAMPLING, n_hashes)
+    for bin_idx in eachindex(hashes)
         curr_idx, cnt = bin_idx, 0
         while hashes[curr_idx] == EMPTY_SAMPLING
             cnt += 1
@@ -108,7 +115,7 @@ function signatures(
         out_hashes[bin_idx] = hashes[curr_idx]
     end
 
-    @views [out_hashes[i:i+dwta.n_bins] for i = 1:n_bins:n_hashes-n_bins]
+    @views [out_hashes[i:i+n_bins] for i = 1:n_bins:n_hashes-n_bins]
 end
 
 end # DWTA
