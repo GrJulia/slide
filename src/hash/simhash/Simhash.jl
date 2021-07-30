@@ -10,7 +10,7 @@ using StatsBase: sample
 const Signature = Vector{Int8}
 
 struct SimHasher
-    hashes::Matrix{Int8}ju
+    hashes::Matrix{Int8}
     samples::Matrix{Int}
 
     SimHasher(hashes::Matrix{Int8}, samples::Matrix{Int}) =

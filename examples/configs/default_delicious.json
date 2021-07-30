@@ -1,8 +1,8 @@
 {
     "name": "default_delicious",
     "dataset": {
-        "train_path": "examples/datasets/DeliciousLarge/deliciousLarge_train.txt",
-        "test_path": "examples/datasets/DeliciousLarge/deliciousLarge_test.txt",
+        "train_path": "delicious_train",
+        "test_path": "delicious_test",
         "shuffle": false
     },
     "logging_path": "examples/logs",
@@ -14,7 +14,7 @@
     "n_epochs": 10,
     "use_gpu": false,
     "testing": {
-        "n_batches": 20,
+        "n_batches": 5,
         "test_freq": 20,
         "use_random_indices": false,
         "top_k_classes": 1
