@@ -2,7 +2,6 @@ module DWTA
 
 using Random: shuffle, rand, AbstractRNG
 
-
 const Signatures = Vector{Vector{Int8}}
 const EMPTY_SAMPLING = zero(Int8)
 
@@ -73,7 +72,7 @@ end
 function signatures(
     dwta::DWTAHasher,
     data::A;
-    wta=true
+    wta = true,
 )::Signatures where {A<:AbstractVector{<:Number}}
     n_hashes, n_bins = dwta.n_hashes, dwta.n_bins
     hashes = fill(EMPTY_SAMPLING, n_hashes)

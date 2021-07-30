@@ -10,20 +10,34 @@ using Random: default_rng
             idxs_to_bins = [1, 4, 5, 1, 3, 6, 2, 5, 3, 6, 2, 6, 3, 5, 1, 4, 2, 4]
             bins_offsets = [0, 3, 6, 8, 10, 12, 13, 14, 16, 18]
 
-            dwta = DWTAHasher(idxs_to_bins, bins_offsets, n_tables * n_bins, n_bins, one(Float32), 1)
+            dwta = DWTAHasher(
+                idxs_to_bins,
+                bins_offsets,
+                n_tables * n_bins,
+                n_bins,
+                one(Float32),
+                1,
+            )
 
             data1 = [0, 0, 5, 0, 0, 7, 6, 0, 0]
             data2 = [0, 0, 1, 0, 0, 0, 0, 0, 0]
-                
+
             out1 = Signatures([[EMPTY_SAMPLING, 1, 3, EMPTY_SAMPLING, 3, EMPTY_SAMPLING]])
-            out2 = Signatures([[EMPTY_SAMPLING, 1, EMPTY_SAMPLING, EMPTY_SAMPLING, 2, EMPTY_SAMPLING]])
+            out2 = Signatures([[
+                EMPTY_SAMPLING,
+                1,
+                EMPTY_SAMPLING,
+                EMPTY_SAMPLING,
+                2,
+                EMPTY_SAMPLING,
+            ]])
 
             @test signatures(dwta, data1) == out1
             @test signatures(dwta, data2) == out2
         end
 
         @testset "testing densification" begin
-            
+
         end
     end
 end
