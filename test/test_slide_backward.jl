@@ -1,20 +1,30 @@
 using Test
 
+using Slide
 using Slide.Network
+using Slide.LshSimHashWrapper: LshSimHashParams
+using Slide.Hash: LshParams
+
 
 @testset "slide_backward" begin
     n_layers = 2
-    n_buckets = 2
+    n_buckets = 10
     batch_size = 128
     input_dim = 16
     output_dim = 16
-    hash_tables = [HashTable([[] for _ = 1:n_buckets]) for _ = 1:n_layers]
+
+    common_lsh = LshParams(n_buckets = n_buckets, n_tables = 10, max_bucket_len = 128)
+    lsh_params = [
+        LshSimHashParams(common_lsh, input_dim, 2, input_dim ÷ 2),
+        LshSimHashParams(common_lsh, 32, 2, 16),
+    ]
+
     network_params = Dict(
         "n_layers" => n_layers,
         "n_neurons_per_layer" => [32, output_dim],
         "layer_activations" => ["relu", "identity"],
         "input_dim" => input_dim,
-        "hash_tables" => hash_tables,
+        "lsh_params" => lsh_params,
     )
 
     x = rand(Float, input_dim, batch_size)
@@ -38,7 +48,7 @@ using Slide.Network
             end
         end
     end
-
+    return
     for layer in network.layers
         for neuron in layer.neurons
             @test numerical_gradient_bias(network, layer.id, neuron.id, x, y_cat, 0.00001) <

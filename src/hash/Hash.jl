@@ -3,14 +3,16 @@ include("./simhash/Simhash.jl")
 
 module Hash
 
-export LshParams, init_lsh, init_lsh!
+export AbstractLshParams, LshParams, init_lsh, init_lsh!
 
 using Base: @kwdef
+
+abstract type AbstractLshParams end
 
 """
 Default values are just for convenience.
 """
-@kwdef struct LshParams
+@kwdef struct LshParams <: AbstractLshParams
     n_buckets::Int = 10
     max_bucket_len::Int = 100
     n_tables::Int = 100
