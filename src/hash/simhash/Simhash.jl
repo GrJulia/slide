@@ -1,13 +1,13 @@
 module SimHash
 
-export SimHasher, Signature, initialize!, signature
+export SimHasher, Signature, initialize!, signature, signature_len
 
 using LinearAlgebra: dot
 using Random: AbstractRNG, bitrand
 using StatsBase: sample
 
 
-const Signature = BitArray
+const Signature = Vector{Int8}
 
 struct SimHasher
     hashes::Matrix{Int8}
@@ -20,31 +20,33 @@ struct SimHasher
         )
 end
 
-"""
-    initialize!(r, n_hashes, subvector_length, data_length)
 
-Initialize SimHasher which can hash vector of dimension of `data_length`
+@inline signature_len(sim_hasher::SimHasher)::Int = size(sim_hasher.hashes)[2]
+
+"""
+    initialize!(r, n_hashes, subvector_len, data_len)
+
+Initialize SimHasher which can hash vector of dimension of `data_len`
 into signature of `n_hashes` bits. Mutates the `r` argument.
 """
 function initialize!(
     rng::Rand,
     n_hashes::Int,
-    subvector_length::Int,
-    data_length::Int,
+    subvector_len::Int,
+    data_len::Int,
 )::SimHasher where {Rand<:AbstractRNG}
-    @assert subvector_length <= data_length "`subvector_length` can't be larger than `data_length`"
+    @assert subvector_len <= data_len "`subvector_len` can't be larger than `data_len`"
 
-    hashes = sample(rng, Vector{Int8}([1, -1]), (subvector_length, n_hashes))
-    samples = hcat(
-        [sample(1:data_length, subvector_length, ordered = true) for _ = 1:n_hashes]...,
-    )
+    hashes = sample(rng, Vector{Int8}([1, -1]), (subvector_len, n_hashes))
+    samples =
+        hcat([sample(1:data_len, subvector_len, ordered = true) for _ = 1:n_hashes]...)
 
     SimHasher(hashes, samples)
 end
 
 
-function compute_hash(data, sampled_indices, hashes)
-    subvector = getindex(data, sampled_indices)
+@inline function compute_hash(data, sampled_indices, hashes)
+    subvector = view(data, sampled_indices)
 
     dot(subvector, hashes)
 end
@@ -68,17 +70,17 @@ function signature(
     sim_hasher::SimHasher,
     data::A,
 )::Signature where {A<:AbstractVector{<:Number}}
-    subvector_length, n_hashes = size(sim_hasher.hashes)
-    @assert subvector_length <= length(data) "`subvector_length` can't be larger than `length(data_length)`"
+    subvector_len, n_hashes = size(sim_hasher.hashes)
+    @assert subvector_len <= length(data) "`subvector_len` can't be larger than `length(data_len)`"
 
-    raw_signature::Vector{Float32} = Vector{Float32}(undef, n_hashes)
+    signature::Signature = Signature(undef, n_hashes)
 
-    for i = 1:n_hashes
-        raw_signature[i] =
-            compute_hash(data, sim_hasher.samples[:, i], sim_hasher.hashes[:, i])
+    @views @inbounds for i = 1:n_hashes
+        signature[i] =
+            Int8(compute_hash(data, sim_hasher.samples[:, i], sim_hasher.hashes[:, i]) >= 0)
     end
 
-    map(x -> x >= 0, raw_signature)
+    signature
 end
 
 end # SimHash
