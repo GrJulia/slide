@@ -5,7 +5,7 @@ const Float = typeof(1.0)
 export Neuron,
     OptimizerAttributes,
     AdamAttributes,
-    build_activated_neurons_single_sample,
+    get_activated_neuron_ids_from_hash_tables,
     forward_single_sample,
     Layer,
     SlideNetwork,

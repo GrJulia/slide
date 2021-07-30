@@ -1,10 +1,10 @@
 using LinearAlgebra
 
-function build_activated_neurons_single_sample(
+function get_activated_neuron_ids_from_hash_tables(
     x::SubArray{Float},
     layer::Layer,
     random::Bool,
-)::Vector{Int}
+)::Vector{Id}
     current_hash_table = layer.hash_table
     input_hash =
         random ? get_random_hash(current_hash_table, x) :
@@ -25,8 +25,11 @@ function forward_single_sample(
         # compute activated neurons with current_input
         layer = network.layers[i]
 
-        activated_neuron_ids =
-            build_activated_neurons_single_sample((@view current_input[:]), layer, random)
+        activated_neuron_ids = get_activated_neuron_ids_from_hash_tables(
+            (@view current_input[:]),
+            layer,
+            random,
+        )
         for neuron_id in activated_neuron_ids
             layer.neurons[neuron_id].active_inputs[x_index] = 1
         end
