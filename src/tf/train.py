@@ -27,9 +27,9 @@ class SparseDataset(keras.utils.Sequence):
         self.n_classes = n_classes
         self.batch_size = batch_size
 
-        self.__preprocess_dataset(ds)
+        self._preprocess_dataset(ds)
 
-    def __preprocess_dataset(self, dataset):
+    def _preprocess_dataset(self, dataset):
         x_indices, x_vals, ys = [], [], []
         for line in dataset.split('\n')[1:-1]:
             line_split = line.split()
@@ -66,9 +66,9 @@ class SparseDataset(keras.utils.Sequence):
 
 
 class TestAccCallback(keras.callbacks.Callback):
-    def __init__(self, test_dataloader, config):
+    def __init__(self, test_set, config):
         super().__init__()
-        self.test_dataloader = test_dataloader
+        self.test_set = test_set
         self.freq = config["test_freq"]
         self.n_batches = config["n_batches"]
         self.use_random_indices = config["use_random_indices"]
@@ -81,17 +81,16 @@ class TestAccCallback(keras.callbacks.Callback):
 
     def test_epoch(self):
         if self.use_random_indices:
-            rand_indices = np.random.randint(0, len(self.test_dataloader), self.n_batches)
+            rand_indices = np.random.randint(0, len(self.test_set), self.n_batches)
         else:
             rand_indices = np.arange(self.n_batches)
-        total_acc, batch_size = 0, self.test_dataloader.batch_size
+        total_acc, batch_size = 0, self.test_set.batch_size
         for idx in rand_indices:
-            x, y = self.test_dataloader[idx]
+            x, y = self.test_set[idx]
             out = self.model(x)
-            for b in range(batch_size):
-                top_class = np.argmax(out[b])
-                total_acc += y[b, top_class]
-        test_acc = total_acc / (self.n_batches * batch_size)
+            top_class = np.argmax(out, axis=1).reshape(batch_size, 1)
+            total_acc += np.sum(np.take_along_axis(y, top_class, axis=1)) / batch_size
+        test_acc = total_acc / self.n_batches
         return test_acc
 
 
@@ -143,7 +142,7 @@ def train(config, train_f, test_f):
     test_cb = TestAccCallback(test_set, config["testing"])
     time_measure_cb = TimeMeasureCallback()
     logger_cb = LoggerCallback(log_dir)
-    callbacks = [tensorboard_cb, test_cb, time_measure_cb, logger_cb]
+    callbacks = [tensorboard_cb, time_measure_cb, test_cb, logger_cb]
 
     model.fit(train_set, epochs=config["n_epochs"], callbacks=callbacks)
     
