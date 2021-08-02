@@ -3,7 +3,7 @@ using BenchmarkTools
 
 using Slide
 using Slide.Network
-using Slide.LshSimHashWrapper: LshSimHashParams
+using Slide.LshSimHashWrapper: LshSimHashParams, get_simhash_params
 using Slide.Hash: LshParams
 
 function build_random_configuration()
@@ -35,28 +35,18 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
         config = NamedTuple{Tuple(Symbol.(keys(config_dict)))}(values(config_dict))
     end
 
-    lsh_params = let
-        common_lsh = LshParams(
-            n_buckets = config.n_buckets,
-            n_tables = config.n_tables,
-            max_bucket_len = config.max_bucket_len,
-        )
-        lsh_params = Vector()
-
-        prev_n_neurons = config.input_dim
-        for n_neurons in config.n_neurons_per_layer
-            simparams = LshSimHashParams(
-                common_lsh,
-                prev_n_neurons,
-                config.simhash["signature_len"],
-                prev_n_neurons ÷ config.simhash["sample_ratio"],
-            )
-            push!(lsh_params, simparams)
-            prev_n_neurons = n_neurons
-        end
-
-        lsh_params
-    end
+    common_lsh = LshParams(
+        n_buckets = config.n_buckets,
+        n_tables = config.n_tables,
+        max_bucket_len = config.max_bucket_len,
+    )
+    lsh_params = get_simhash_params(
+        common_lsh,
+        convert(Vector{Int}, config.n_neurons_per_layer);
+        signature_len = config.simhash["signature_len"],
+        sample_ratio = config.simhash["sample_ratio"],
+        input_size = config.input_dim,
+    )
 
     network_params = Dict(
         "n_layers" => config.n_layers,

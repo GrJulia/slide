@@ -1,5 +1,5 @@
 using LinearAlgebra
-using ..LSH: retrieve
+using Slide.LSH: retrieve
 
 
 function forward_single_sample(
@@ -15,6 +15,7 @@ function forward_single_sample(
         # compute activated neurons with current_input
         layer = network.layers[i]
 
+        #get activated neurons and mark them as changed
         activated_neuron_ids =
             [x for x in retrieve(layer.hash_tables.lsh, @view current_input[:])]
         if use_all_true_labels && (i == length(network.layers))

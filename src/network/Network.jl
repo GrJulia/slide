@@ -23,13 +23,13 @@ export AbstractScheduler,
     one_hot,
     optimizer_end_epoch_step!,
     optimizer_step!,
+    PeriodicScheduler,
     predict_class,
     relu,
     sparse_logit_cross_entropy,
     train!,
     update!,
     update_weight!,
-    VanillaScheduler,
     zero_neuron_attributes!
 
 

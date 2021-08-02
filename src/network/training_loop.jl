@@ -1,5 +1,5 @@
 using Slide.Network: Batch, Float
-using ..Hash: AbstractLshParams
+using Slide.Hash: AbstractLshParams
 
 function build_network(network_params::Dict, batch_size::Int)::SlideNetwork
     network_layers = Vector{Layer}()
@@ -48,7 +48,7 @@ function train!(
     network::SlideNetwork,
     optimizer::Optimizer;
     n_iters::Int,
-    scheduler::S = VanillaScheduler(10),
+    scheduler::S = PeriodicScheduler(10),
     use_all_true_labels::Bool = true,
 ) where {S<:AbstractScheduler}
     for i = 1:n_iters

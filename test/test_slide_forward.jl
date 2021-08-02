@@ -1,10 +1,9 @@
 using Test
-using Random: default_rng
 
 using Slide
 using Slide.Network
 using Slide.LshSimHashWrapper: LshSimHashParams
-using Slide.Hash: LshParams, init_lsh!
+using Slide.Hash: LshParams
 using Slide.LSH: retrieve
 
 common_lsh = LshParams(n_buckets = 1, n_tables = 1, max_bucket_len = 2)
