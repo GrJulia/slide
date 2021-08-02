@@ -1,7 +1,7 @@
 
 module LshSimHashWrapper
 
-export LshSimHashParams
+export LshSimHashParams, get_simhash_params
 
 using Base.Iterators: partition
 using Random: AbstractRNG
@@ -113,6 +113,30 @@ function Hash.init_lsh!(
         SubArray{Float},
         Id,
     )
+end
+
+function get_simhash_params(
+    params::LshParams,
+    layer_sizes::Vector{Int};
+    input_size::Int,
+    signature_len::Int,
+    sample_ratio::Int,
+)::Vector{LshSimHashParams}
+    lsh_params = Vector{LshSimHashParams}()
+
+    prev_n_neurons = input_size
+    for n_neurons in layer_sizes
+        simparams = LshSimHashParams(
+            params,
+            prev_n_neurons,
+            signature_len,
+            prev_n_neurons ÷ sample_ratio,
+        )
+        push!(lsh_params, simparams)
+        prev_n_neurons = n_neurons
+    end
+
+    lsh_params
 end
 
 end # LshSimHashWrapper

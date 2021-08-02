@@ -7,6 +7,8 @@ end
 @testset "Network" begin
     include("test_slide_forward.jl")
     include("test_slide_backward.jl")
+    include("network_utils.jl")
+    include("hashtables.jl")
 end
 
 @testset "LSH" begin
