@@ -49,6 +49,7 @@ function train!(
     optimizer::Optimizer;
     n_iters::Int,
     scheduler::S = VanillaScheduler(10),
+    use_all_true_labels::Bool = true,
 ) where {S<:AbstractScheduler}
     for i = 1:n_iters
         loss = 0
@@ -61,6 +62,7 @@ function train!(
                 y_batch_pred,
                 y_batch,
                 last_layer_activated_neuron_ids,
+                use_all_true_labels,
             )
 
             loss += batch_loss

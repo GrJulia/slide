@@ -86,7 +86,7 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
     optimizer = AdamOptimizer(eta = learning_rate)
 
-    train!(training_batches, network, optimizer; n_iters = 20)
+    train!(training_batches, network, optimizer; n_iters = 20, use_all_true_labels = true)
     println("DONE \n")
 
 end
