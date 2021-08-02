@@ -84,6 +84,12 @@ function Layer(
 end
 
 
+
+"""
+    update!(hash_tables, neurons)
+Recompute the hashes for the neurons but only for those that appear in the
+`hash_tables.changed_ids`. Reinitialize `lsh`.
+"""
 function update!(
     hash_tables::SlideHashTables{A,Hasher},
     neurons::Vector{Neuron{T}},
@@ -109,8 +115,12 @@ function update!(
     hash_tables.hashes[:, changed_ids] = new_hashes
 
     hash_tables.lsh = lsh
+    hash_tables.changed_ids = Set{Id}()
 end
 
+"""
+    Marks ids as changed.
+"""
 function mark_ids!(hash_tables::SlideHashTables{A,Hasher}, ids::Vector{Id}) where {A,Hasher}
     union!(hash_tables.changed_ids, ids)
 end
