@@ -4,10 +4,12 @@ authors = ["Casey Haaland, Maxence Gélard, Konstanty Subbotko, Jan Koscisz"]
 version = "0.1.0"
 
 [deps]
+BSON = "fbb218c0-5317-5bc6-957e-2ee96dd4b1f0"
 DataLoaders = "2e981812-ef13-4a9c-bfa0-ab13047b12a9"
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
 FLoops = "cc61a311-1640-44b5-9fba-1b764f453329"
 Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
+IterTools = "c8e1da08-722c-5040-9ed9-7db0dc04731e"
 JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 LearnBase = "7f8f8fb0-2700-5f03-b4bd-41f8cfc144b6"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
