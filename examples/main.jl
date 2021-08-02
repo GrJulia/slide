@@ -1,10 +1,12 @@
 using JSON
 using BenchmarkTools
+using Random
 
 using Slide
 using Slide.Network
 using Slide.LshSimHashWrapper: LshSimHashParams, get_simhash_params
 using Slide.Hash: LshParams
+using Slide.FluxTraining
 
 function build_random_configuration()
     n_layers = rand(1:10)
@@ -48,35 +50,49 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
         input_size = config.input_dim,
     )
 
-    network_params = Dict(
-        "n_layers" => config.n_layers,
-        "n_neurons_per_layer" => Vector{Int}(config.n_neurons_per_layer),
-        "layer_activations" => Vector{String}(config.layer_activations),
-        "input_dim" => config.input_dim,
-        "lsh_params" => lsh_params,
-    )
-    output_dim = config.n_neurons_per_layer[end]
+    # network_params = Dict(
+    #     "n_layers" => config.n_layers,
+    #     "n_neurons_per_layer" => Vector{Int}(config.n_neurons_per_layer),
+    #     "layer_activations" => Vector{String}(config.layer_activations),
+    #     "input_dim" => config.input_dim,
+    #     "lsh_params" => lsh_params,
+    # )
+    # output_dim = config.n_neurons_per_layer[end]
     learning_rate = 0.01
     batch_size = 256
     drop_last = false
 
     const N_ROWS = 4096
 
-    x = rand(Float, config.input_dim, N_ROWS)
-    y = Vector{Float}(rand(1:output_dim, N_ROWS))
+    # x = rand(Float, config.input_dim, N_ROWS)
+    # y = Vector{Float}(rand(1:output_dim, N_ROWS))
 
+    dataset_config = JSON.parsefile("./examples/configs/default_delicious.json")
+    dataset_config["name"] *= "_" * randstring(8)
+    println("Name: $(dataset_config["name"])")
+
+    train_loader, test_set = get_dataloaders(dataset_config)
+
+    network_params = Dict(
+        "n_layers" => config.n_layers,
+        "n_neurons_per_layer" => Vector{Int}(config.n_neurons_per_layer),
+        "layer_activations" => Vector{String}(config.layer_activations),
+        "input_dim" => dataset_config["n_features"],
+        "lsh_params" => lsh_params,
+    )
+    output_dim = dataset_config["n_classes"]
 
     # Data processing and training loop
 
     network = build_network(network_params, batch_size)
 
-    y_cat = one_hot(y)
-    y_cat ./= sum(y_cat, dims = 1)
-    training_batches = batch_input(x, y_cat, batch_size, drop_last)
+    # y_cat = one_hot(y)
+    # y_cat ./= sum(y_cat, dims = 1)
+    # training_batches = batch_input(x, y_cat, batch_size, drop_last)
 
     optimizer = AdamOptimizer(eta = learning_rate)
 
-    train!(training_batches, network, optimizer; n_iters = 20, use_all_true_labels = true)
+    train!(train_loader, network, optimizer; n_iters = 20, use_all_true_labels = true)
     println("DONE \n")
 
 end

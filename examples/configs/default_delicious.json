@@ -1,8 +1,8 @@
 {
     "name": "default_delicious",
     "dataset": {
-        "train_path": "delicious_train",
-        "test_path": "delicious_test",
+        "train_path": "./examples/datasets/delicious_train.txt",
+        "test_path": "./examples/datasets/delicious_test.txt",
         "shuffle": false
     },
     "logging_path": "/home/jrun/data/code/slide/examples/logs",

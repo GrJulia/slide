@@ -44,7 +44,7 @@ function build_layer(
 end
 
 function train!(
-    training_batches::Vector{Batch},
+    training_batches,
     network::SlideNetwork,
     optimizer::Optimizer;
     n_iters::Int,
