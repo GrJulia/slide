@@ -1,23 +1,22 @@
 using Test
 
 using Slide
+using Slide.Hash: AbstractLshParams
 using Slide.LSH: AbstractHasher, Lsh
 using Slide.Network: SlideHashTables, update!
 
 import Slide.Hash.init_lsh!
-import Slide.LSH.compute_signatures
+import Slide.LSH.compute_signatures!
 
-struct MockParams end
+struct MockParams <: AbstractLshParams end
 struct SumHasher <: AbstractHasher{SubArray{Float}} end
 
-
-compute_signatures(::SumHasher, elem)::Vector{Int} = [sum(elem), 2 * sum(elem)]
-compute_signatures!(signatures, ::SumHasher, elem) =
+compute_signatures!(signatures::SubArray{Int}, ::SumHasher, elem::SubArray{Float}) =
     for i = 1:length(signatures)
         signatures[i] = i * sum(elem)
     end
 
-init_lsh!(::MockParams, r, t) = Lsh(2, 10, 10, SumHasher())
+init_lsh!(::MockParams, r, t) = Lsh(3, 10, 10, SumHasher(), SubArray{Float}, Id)
 
 neuron_with_id(i) = Neuron(
     i,
@@ -35,7 +34,7 @@ neuron_with_id(i) = Neuron(
 @testset "HashTables" begin
     lsh = init_lsh!(MockParams(), 1, 1)
 
-    tables = SlideHashTables(lsh, MockParams(), zeros(3, 4)Set{Id}([1, 3]))
+    tables = SlideHashTables(lsh, MockParams(), zeros(Int, 3, 4), Set{Id}([1, 3]))
 
     update!(
         tables,
