@@ -54,7 +54,7 @@ function train!(
     for i = 1:n_iters
         loss = 0
         for (x_batch, y_batch) in training_batches
-            y_batch_pred = forward!(x_batch, network)
+            y_batch_pred = forward!(x_batch, y_batch, network, use_all_true_labels)
 
             last_layer_activated_neuron_ids =
                 get_active_neurons_id(network, length(network.layers))
@@ -62,7 +62,6 @@ function train!(
                 y_batch_pred,
                 y_batch,
                 last_layer_activated_neuron_ids,
-                use_all_true_labels,
             )
 
             loss += batch_loss

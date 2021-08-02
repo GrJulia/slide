@@ -8,19 +8,13 @@ function negative_sparse_logit_cross_entropy(
     output::Array{Float},
     y_true::Array{Float},
     output_activated_neuron_ids::Vector,
-    use_all_true_labels::Bool = true,
 )
     logit_cross_entropy = Vector{Float}()
     saved_softmax = Vector{Vector{Float}}()
     for i = 1:size(output)[end]
-        activated_neuron_ids =
-            use_all_true_labels ?
-            sort!(
-                unique(vcat(output_activated_neuron_ids[i], findall(>(0), y_true[:, i]))),
-            ) : output_activated_neuron_ids[i]
         current_loss, current_softmax = sparse_logit_cross_entropy_sample(
-            (@view output[:, i][activated_neuron_ids]),
-            (@view y_true[:, i][activated_neuron_ids]),
+            (@view output[:, i][output_activated_neuron_ids[i]]),
+            (@view y_true[:, i][output_activated_neuron_ids[i]]),
         )
         push!(logit_cross_entropy, current_loss)
         push!(saved_softmax, current_softmax) # warning: saved_softmax only contains the softmax values

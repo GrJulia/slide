@@ -4,8 +4,10 @@ using ..LSH: retrieve
 
 function forward_single_sample(
     x::SubArray{Float},
+    y_true::SubArray{Float},
     network::SlideNetwork,
     x_index::Int,
+    use_all_true_labels::Bool,
 )::Vector{Float}
     n_layers = length(network.layers)
     current_input = x
@@ -15,6 +17,10 @@ function forward_single_sample(
 
         activated_neuron_ids =
             [x for x in retrieve(layer.hash_tables.lsh, @view current_input[:])]
+        if use_all_true_labels && (i == length(network.layers))
+            activated_neuron_ids =
+                sort!(unique(vcat(activated_neuron_ids, findall(>(0), y_true))))
+        end
         mark_ids!(layer.hash_tables, activated_neuron_ids)
 
         for neuron_id in activated_neuron_ids
@@ -38,18 +44,29 @@ function forward_single_sample(
     return current_input
 end
 
-function forward!(x::Array{Float}, network::SlideNetwork)
+function forward!(
+    x::Array{Float},
+    y_true::Array{Float},
+    network::SlideNetwork,
+    use_all_true_labels::Bool = true,
+)
     n_samples = typeof(x) == Vector{Float} ? 1 : size(x)[end]
     output = zeros(length(network.layers[end].neurons), n_samples)
 
     Threads.@threads for i = 1:n_samples
-        output[:, i] = forward_single_sample((@view x[:, i]), network, i)
+        output[:, i] = forward_single_sample(
+            (@view x[:, i]),
+            (@view y_true[:, i]),
+            network,
+            i,
+            use_all_true_labels,
+        )
     end
 
     output
 end
 
-function predict_class(x::Array{Float}, network::SlideNetwork)
-    y_pred, _ = forward!(x, network)
+function predict_class(x::Array{Float}, y_true::Array{Float}, network::SlideNetwork)
+    y_pred, _ = forward!(x, y_true, network)
     return mapslices(argmax, y_pred, dims = 1)
 end
