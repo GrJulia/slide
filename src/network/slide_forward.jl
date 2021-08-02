@@ -19,8 +19,7 @@ function forward_single_sample(
         activated_neuron_ids =
             [x for x in retrieve(layer.hash_tables.lsh, @view current_input[:])]
         if use_all_true_labels && (i == length(network.layers))
-            activated_neuron_ids =
-                unique(vcat(activated_neuron_ids, findall(>(0), y_true)))
+            union!(activated_neuron_ids, findall(>(0), y_true))
         end
         mark_ids!(layer.hash_tables, activated_neuron_ids)
 
