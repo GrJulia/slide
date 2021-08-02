@@ -1,6 +1,6 @@
 using Test
 using Slide.DWTA: DWTAHasher, Signatures, initialize!, signatures, EMPTY_SAMPLING, two_universal_hash
-using Random: default_rng
+using Random: default_rng, randperm
 using IterTools
 
 
@@ -9,11 +9,17 @@ using IterTools
     idxs_to_bins = [1, 4, 5, 1, 3, 6, 2, 5, 3, 6, 2, 6, 3, 5, 1, 4, 2, 4]
     bins_per_idx_offsets = [0, 3, 6, 8, 10, 12, 13, 14, 16, 18]
 
+    next_idxs = Matrix{UInt16}(undef, n_bins, n_bins)
+    for i = 1:n_bins
+        next_idxs[:, i] = randperm(n_bins)
+    end
+
     dwta = DWTAHasher(
         idxs_to_bins,
         bins_per_idx_offsets,
         n_tables * n_bins,
         n_bins,
+        next_idxs,
     )
 
     data1 = [0, 0, 5, 0, 0, 7, 6, 0, 0]
@@ -36,14 +42,20 @@ end
 @testset "DWTAHasher - 2-universal hashing" begin
     res = true
     for n_bins = 2:15
-        dwta = DWTAHasher([], [], 0, n_bins)
-        threshold = 0.8
+        next_idxs = Matrix{UInt16}(undef, n_bins, n_bins)
+        for i = 1:n_bins
+            next_idxs[:, i] = randperm(n_bins)
+        end
+
+        dwta = DWTAHasher([], [], 0, n_bins, next_idxs)
+
+        threshold = 0.9
         hashes = zeros(n_bins)
         for (bin_idx, cnt) in product(1:n_bins, 1:n_bins)
             hash = two_universal_hash(dwta, UInt16(bin_idx), UInt16(cnt))
             hashes[hash] += 1
         end
-        println(hashes)
+        
         res = res && all(map(n_hits -> n_hits > n_bins * threshold, hashes))
     end
     @test res

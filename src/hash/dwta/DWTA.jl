@@ -1,6 +1,6 @@
 module DWTA
 
-using Random: shuffle, rand, AbstractRNG
+using Random: shuffle, rand, AbstractRNG, randperm
 using IterTools
 
 const IdxType = UInt16
@@ -16,6 +16,7 @@ struct DWTAHasher
     n_bins_per_idx_offsets::Vector{IdxType}
     n_hashes::IdxType
     n_bins::IdxType
+    next_idxs::Matrix{IdxType}
 end
 
 function initialize!(
@@ -44,15 +45,16 @@ function initialize!(
 
     flat_idxs_to_bins = collect(Iterators.flatten(idxs_to_bins))
 
-    DWTAHasher(flat_idxs_to_bins, n_bins_per_idx_offsets, n_hashes, n_bins)
+    next_idxs = Matrix{IdxType}(undef, n_bins, n_bins)
+    for i = 1:n_bins
+        next_idxs[:, i] = randperm(n_bins)
+    end
+
+    DWTAHasher(flat_idxs_to_bins, n_bins_per_idx_offsets, n_hashes, n_bins, next_idxs)
 end
 
 function two_universal_hash(dwta::DWTAHasher, bin_idx::IdxType, cnt::IdxType)::IdxType
-    pair_hash = bin_idx * dwta.n_bins + cnt
-    M = ceil(UInt16, log2(dwta.n_bins))
-    # return (16 * pair_hash + 25 % 233) % dwta.n_bins + 1
-    println((pair_hash * 9152 + 4441) >> 16 - M)
-    return (pair_hash * 9152 + 4441) >> 16 - M
+    return dwta.next_idxs[cnt, bin_idx]
 end
 
 function signatures(
@@ -72,9 +74,7 @@ function signatures(
         end
 
         val = data[i]
-        bins_with_idx = @view dwta.idx_to_bins[idx_start:idx_end]
-
-        for bin_idx in bins_with_idx
+        for bin_idx in dwta.idx_to_bins[idx_start:idx_end]
             if val > max_vals_in_bins[bin_idx] && val != ZERO_ELEM
                 max_vals_in_bins[bin_idx] = val
                 hashes[bin_idx] = bin_cnt[bin_idx]
@@ -92,7 +92,6 @@ function signatures(
     for (i, table_start) = enumerate(1:n_bins:n_hashes-n_bins+1)
         table_end = table_start + n_bins - 1
         curr_hashes = @view hashes[table_start:table_end]
-        println(i, " ", curr_hashes)
         for bin_idx = one(IdxType):n_bins
             curr_idx, cnt = bin_idx, zero(IdxType)
             while curr_hashes[curr_idx] == EMPTY_SAMPLING
