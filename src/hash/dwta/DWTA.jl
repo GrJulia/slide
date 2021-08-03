@@ -3,20 +3,22 @@ module DWTA
 using Random: shuffle, rand, AbstractRNG, randperm
 using IterTools
 
-const IdxType = UInt16
-const Signatures = Vector{IdxType}
-const EMPTY_SAMPLING = zero(IdxType)
+const Idx = UInt16
+const BinId = UInt16
+
+const Signatures = Vector{Idx}
+const EMPTY_SAMPLING = zero(Idx)
 const EMPTY_SAMPLING_VAL = Float32(-Inf)
-const ZERO_ELEM = zero(Float32)
-const MAX_N_ATTEMPS = IdxType(100)
+const ZERO_VAL = zero(Float32)
+const MAX_N_ATTEMPS = UInt16(100)
 
 
 struct DWTAHasher
-    idx_to_bins::Vector{IdxType}
-    n_bins_per_idx_offsets::Vector{IdxType}
-    n_hashes::IdxType
+    idxs_to_list_of_bins::Vector{BinId}
+    n_bins_per_idx_offsets::Vector{UInt16}
+    n_hashes::Int
     log_n_hashes::Int32
-    n_bins::IdxType
+    n_bins::Int
 end
 
 function initialize!(
@@ -26,28 +28,27 @@ function initialize!(
     k::Int,
     data_len::Int,
 )::DWTAHasher where {Rand<:AbstractRNG}
-    temps = repeat(1:data_len, outer = (1, n_hashes)) # Vector of shape (data_len, n_hashes) s.t. temps[:, i] = 1:data_len
-    perms = mapslices(col -> shuffle(rng, col), temps, dims = [1])
+    perms = hcat((randperm(rng, data_len) for _ = 1:n_hashes)...)
     sampled_indices = @view perms[1:k, :]
 
-    idxs_to_bins = [Vector{IdxType}() for _ = 1:data_len]
+    idx_to_list_of_bins = [Vector{BinId}() for _ = 1:data_len]
 
-    # To each idx assign list of bins including this idx
+    # To each idx assign list of bins which include this idx
     for bin_idx = 1:n_hashes
         @views for idx in sampled_indices[:, bin_idx]
-            push!(idxs_to_bins[idx], bin_idx)
+            push!(idx_to_list_of_bins[idx], bin_idx)
         end
     end
 
-    n_bins_per_idx = [length(idx_to_bins) for idx_to_bins in idxs_to_bins]
+    n_bins_per_idx = [length(list_of_bins) for list_of_bins in idx_to_list_of_bins]
     n_bins_per_idx_offsets = accumulate(+, n_bins_per_idx)
     pushfirst!(n_bins_per_idx_offsets, 0)
 
-    flat_idxs_to_bins = collect(Iterators.flatten(idxs_to_bins))
+    idxs_to_list_of_bins = collect(Iterators.flatten(idx_to_list_of_bins))
 
     log_n_hashes = ceil(Int32, log2(n_hashes))
 
-    DWTAHasher(flat_idxs_to_bins, n_bins_per_idx_offsets, n_hashes, log_n_hashes, n_bins)
+    DWTAHasher(idxs_to_list_of_bins, n_bins_per_idx_offsets, n_hashes, log_n_hashes, n_bins)
 end
 
 """
@@ -58,7 +59,7 @@ Link: https://en.wikipedia.org/wiki/Universal_hashing
 """
 function two_universal_hash(dwta::DWTAHasher, bin_idx::Int32, cnt::Int32)::Int32
     pair_hash = (bin_idx << 6) + cnt
-    return ((13557786906 * pair_hash) >> (32 - dwta.log_n_hashes)) % dwta.n_hashes + 1
+    return ((13557786907 * pair_hash) >>> (32 - dwta.log_n_hashes)) % dwta.n_hashes + 1
 end
 
 function signatures(
@@ -69,7 +70,7 @@ function signatures(
     n_hashes, n_bins = dwta.n_hashes, dwta.n_bins
     hashes = fill(EMPTY_SAMPLING, n_hashes)
     max_vals_in_bins = fill(EMPTY_SAMPLING_VAL, n_hashes)
-    bin_cnt = fill(one(IdxType), n_bins)
+    bin_cnt = fill(one(Idx), n_bins)
 
     for i in eachindex(data)
         idx_start, idx_end = dwta.n_bins_per_idx_offsets[i] + 1, dwta.n_bins_per_idx_offsets[i+1]
@@ -78,8 +79,9 @@ function signatures(
         end
 
         val = data[i]
-        for bin_idx in dwta.idx_to_bins[idx_start:idx_end]
-            if val > max_vals_in_bins[bin_idx] && val != ZERO_ELEM
+        # iterate over all bins which include index $i
+        for bin_idx in dwta.idxs_to_list_of_bins[idx_start:idx_end]
+            if val > max_vals_in_bins[bin_idx] && val != ZERO_VAL
                 max_vals_in_bins[bin_idx] = val
                 hashes[bin_idx] = bin_cnt[bin_idx]
             end

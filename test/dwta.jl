@@ -1,17 +1,16 @@
 using Test
 using Slide.DWTA: DWTAHasher, Signatures, initialize!, signatures, EMPTY_SAMPLING, two_universal_hash, MAX_N_ATTEMPS
 using Random: default_rng, randperm
-using IterTools
 
 
 @testset "DWTAHasher - computing signatures" begin
     n_tables, n_bins, k, data_len = 1, 6, 3, 2
-    idxs_to_bins = [1, 4, 5, 1, 3, 6, 2, 5, 3, 6, 2, 6, 3, 5, 1, 4, 2, 4]
-    bins_per_idx_offsets = [0, 3, 6, 8, 10, 12, 13, 14, 16, 18]
+    idxs_to_list_of_bins = [1, 4, 5, 1, 3, 6, 2, 5, 3, 6, 2, 6, 3, 5, 1, 4, 2, 4]
+    n_bins_per_idx_offsets = [0, 3, 6, 8, 10, 12, 13, 14, 16, 18]
 
     dwta = DWTAHasher(
-        idxs_to_bins,
-        bins_per_idx_offsets,
+        idxs_to_list_of_bins,
+        n_bins_per_idx_offsets,
         n_tables * n_bins,
         1,
         n_bins,
@@ -36,7 +35,7 @@ end
 
 @testset "DWTAHasher - 2-universal hashing" begin
     res = true
-    for (n_tables, n_bins) in [(20, 2), (50, 6)]
+    for (n_tables, n_bins) in [(20, 2), (30, 4), (50, 6)]
         n_hashes = n_tables * n_bins
         log_n_hashes = ceil(Int32, log2(n_hashes))
         dwta = DWTAHasher([], [], n_hashes, log_n_hashes, n_bins)
@@ -56,7 +55,7 @@ end
             end
         end
         # println("L=$n_tables, K=$n_bins, hashes=$hashes")
-        res = res && all(map(n_hits -> n_hits > n_attempts * 0.9, hashes)) && good
+        res = res && all(map(n_hits -> n_hits > n_attempts * 0.8, hashes)) && good
     end
     @test res
 end
@@ -67,7 +66,7 @@ end
     function test_routine(rng, n_tables, n_bins, k, data_len)
         dwta = initialize!(rng, n_tables * n_bins, n_bins, k, data_len)
         n_indices = n_tables * n_bins * k
-        length(dwta.idx_to_bins) == n_indices && dwta.n_bins_per_idx_offsets[end] == n_indices
+        length(dwta.idxs_to_list_of_bins) == n_indices && dwta.n_bins_per_idx_offsets[end] == n_indices
     end
 
     @testset "dense indices" begin
