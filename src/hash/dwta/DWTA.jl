@@ -15,8 +15,8 @@ struct DWTAHasher
     idx_to_bins::Vector{IdxType}
     n_bins_per_idx_offsets::Vector{IdxType}
     n_hashes::IdxType
+    log_n_hashes::Int32
     n_bins::IdxType
-    next_idxs::Matrix{IdxType}
 end
 
 function initialize!(
@@ -45,16 +45,20 @@ function initialize!(
 
     flat_idxs_to_bins = collect(Iterators.flatten(idxs_to_bins))
 
-    next_idxs = Matrix{IdxType}(undef, n_bins, n_bins)
-    for i = 1:n_bins
-        next_idxs[:, i] = randperm(n_bins)
-    end
+    log_n_hashes = ceil(Int32, log2(n_hashes))
 
-    DWTAHasher(flat_idxs_to_bins, n_bins_per_idx_offsets, n_hashes, n_bins, next_idxs)
+    DWTAHasher(flat_idxs_to_bins, n_bins_per_idx_offsets, n_hashes, log_n_hashes, n_bins)
 end
 
-function two_universal_hash(dwta::DWTAHasher, bin_idx::IdxType, cnt::IdxType)::IdxType
-    return dwta.next_idxs[cnt, bin_idx]
+"""
+Method for hashing a pair of integers which aims to avoid modular arithmetic. (TODO remove '% dwta.n_hashes' in case K * L = 2^M)
+It computes f(x) = (a*x mod 2^w) div 2^(w-M) by doing (a*x) >> (w-M), where w in number of bits of the integer (32 in this case)
+In other words, hash is computed by deriving M highest bits.
+Link: https://en.wikipedia.org/wiki/Universal_hashing
+"""
+function two_universal_hash(dwta::DWTAHasher, bin_idx::Int32, cnt::Int32)::Int32
+    pair_hash = (bin_idx << 6) + cnt
+    return ((13557786906 * pair_hash) >> (32 - dwta.log_n_hashes)) % dwta.n_hashes + 1
 end
 
 function signatures(
@@ -88,21 +92,16 @@ function signatures(
     end
 
     out_hashes = fill(EMPTY_SAMPLING, n_hashes)
-
-    for (i, table_start) = enumerate(1:n_bins:n_hashes-n_bins+1)
-        table_end = table_start + n_bins - 1
-        curr_hashes = @view hashes[table_start:table_end]
-        for bin_idx = one(IdxType):n_bins
-            curr_idx, cnt = bin_idx, zero(IdxType)
-            while curr_hashes[curr_idx] == EMPTY_SAMPLING
-                cnt += one(IdxType)
-                curr_idx = two_universal_hash(dwta, bin_idx, cnt)
-                if cnt > min(n_bins, MAX_N_ATTEMPS)
-                    break
-                end
+    for bin_idx = one(Int32):n_hashes
+        curr_idx, cnt = bin_idx, zero(Int32)
+        while hashes[curr_idx] == EMPTY_SAMPLING
+            cnt += 1
+            curr_idx = two_universal_hash(dwta, bin_idx, cnt)
+            if cnt > min(n_hashes, MAX_N_ATTEMPS)
+                break
             end
-            out_hashes[(i-1) * n_bins + bin_idx] = curr_hashes[curr_idx]
         end
+        out_hashes[bin_idx] = hashes[curr_idx]
     end
 
     out_hashes
