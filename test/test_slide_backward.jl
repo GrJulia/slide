@@ -48,7 +48,7 @@ using Slide.Hash: LshParams
             end
         end
     end
-    return
+    
     for layer in network.layers
         for neuron in layer.neurons
             @test numerical_gradient_bias(network, layer.id, neuron.id, x, y_cat, 0.00001) <

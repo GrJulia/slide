@@ -18,7 +18,7 @@ import Slide.Network.get_active_neurons_id
         [1, 1, 1, 0],
         zeros(1),
         zeros(1),
-        zeros(1, 1),
+        zeros(1),
         zeros(1),
         AdamAttributes(zeros(3), 0, zeros(3), 0),
     )
@@ -29,7 +29,7 @@ import Slide.Network.get_active_neurons_id
         [1, 0, 1, 0],
         zeros(1),
         zeros(1),
-        zeros(1, 1),
+        zeros(1),
         zeros(1),
         AdamAttributes(zeros(3), 0, zeros(3), 0),
     )

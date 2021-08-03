@@ -87,8 +87,7 @@ function numerical_gradient_weights(
     activated_neurons = get_active_neurons_id(network, length(network.layers))
     _, probs = negative_sparse_logit_cross_entropy(y_check_pred, y_check, activated_neurons)
     backward!(x_check, y_check_pred, y_check, network, probs)
-    backprop_gradient =
-        mean(network.layers[layer_id].neurons[neuron_id].weight_gradients, dims = 2)
+    backprop_gradient = network.layers[layer_id].neurons[neuron_id].weight_gradients / size(x_check)[2]
 
     zero_neuron_attributes!(network)
 
