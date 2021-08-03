@@ -53,9 +53,13 @@ function train!(
 ) where {S<:AbstractScheduler}
     for i = 1:n_iters
         loss = 0
-        for (x_batch, y_batch) in training_batches
+        for (n , (x_batch, y_batch)) in enumerate(training_batches)
+            start_batch_time = time()
+            println("Iteration $i, sample $n")
+            println("Forward")
             y_batch_pred = forward!(x_batch, network, use_all_true_labels, y_batch)
-
+            println("Forward time $(time() - start_batch_time)")
+            println("Loss")
             last_layer_activated_neuron_ids =
                 get_active_neurons_id(network, length(network.layers))
             batch_loss, saved_softmax = negative_sparse_logit_cross_entropy(
@@ -63,11 +67,13 @@ function train!(
                 y_batch,
                 last_layer_activated_neuron_ids,
             )
-
+            println("Backward")
             loss += batch_loss
             backward!(x_batch, y_batch_pred, y_batch, network, saved_softmax)
+            println("Backward time $(time() - start_batch_time)")
             update_weight!(network, optimizer)
             zero_neuron_attributes!(network)
+            println("Total Batch time $(time() - start_batch_time)")
         end
 
 

@@ -1,5 +1,4 @@
 using JSON
-using BenchmarkTools
 using Random
 
 using Slide
@@ -59,7 +58,7 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
     # )
     # output_dim = config.n_neurons_per_layer[end]
     learning_rate = 0.01
-    batch_size = 256
+    batch_size = 128
     drop_last = false
 
     const N_ROWS = 4096
@@ -82,7 +81,8 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
     )
     output_dim = dataset_config["n_classes"]
 
-    # Data processing and training loop
+    # # Data processing and training loop
+    println("Data loaded, building network..........")
 
     network = build_network(network_params, batch_size)
 
@@ -93,6 +93,6 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
     optimizer = AdamOptimizer(eta = learning_rate)
 
     train!(train_loader, network, optimizer; n_iters = 20, use_all_true_labels = true)
-    println("DONE \n")
+    # println("DONE \n")
 
 end
