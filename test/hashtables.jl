@@ -19,15 +19,13 @@ compute_signatures!(signatures::SubArray{Int}, ::SumHasher, elem::SubArray{Float
 init_lsh!(::MockParams, r, t) = Lsh(3, 10, 10, SumHasher(), SubArray{Float}, Id)
 
 neuron_with_id(i) = Neuron(
-    i,
+    1,
     Array{Float}([1.0, 1.0, 1.0]),
-    0.0,
-    [1, 1, 1, 0],
-    zeros(1),
-    zeros(1),
-    zeros(1),
-    zeros(1),
+    zero(Float),
+    zeros(Float, 1),
+    zeros(Float, 1),
     AdamAttributes(zeros(3), 0, zeros(3), 0),
+    false,
 )
 
 

@@ -40,7 +40,8 @@ function build_layer(
         layer_id,
         neurons,
         lsh_params,
-        activation_name_to_function[layer_activation],
+        activation_name_to_function[layer_activation];
+        batch_size = batch_size,
     )
 end
 
@@ -51,7 +52,7 @@ function train!(
     optimizer::Optimizer,
     logger::Logger;
     n_iters::Int,
-    scheduler::S = PeriodicScheduler(20),
+    scheduler::S = PeriodicScheduler(15),
     use_all_true_labels::Bool = true,
     test_parameters::Dict,
 ) where {S<:AbstractScheduler}
@@ -60,32 +61,46 @@ function train!(
         for (n, (x_batch, y_batch)) in enumerate(training_batches)
             println("Iteration $i , batch $n")
             step!(logger)
-            time_stats = @timed begin
-                println("Forward")
-                if use_all_true_labels
-                    forward_stats = @timed forward!(x_batch, network, y_batch)
-                else
-                    forward_stats = @timed forward!(x_batch, network, nothing)
-                end
-                y_batch_pred = forward_stats.value
-                log_scalar!(logger, "forward_time", forward_stats.time)
-                last_layer_activated_neuron_ids =
-                    get_active_neuron_ids(network, length(network.layers))
-                batch_loss, saved_softmax = negative_sparse_logit_cross_entropy(
-                    y_batch_pred,
-                    y_batch,
-                    last_layer_activated_neuron_ids,
-                )
-                loss += batch_loss
-                println("Backward")
-                backward!(x_batch, y_batch_pred, y_batch, network, saved_softmax)
-                update_weight!(network, optimizer)
-                zero_neuron_attributes!(network)
-            end
-            println("Training step done")
 
-            elapsed_time = time_stats.time
-            log_scalar!(logger, "train_step time", elapsed_time)
+            time_stats = @timed begin
+                y_batch_or_nothing = if use_all_true_labels
+                    y_batch
+                else
+                    nothing
+                end
+
+                forward_stats = @timed forward!(x_batch, network; y_true = y_batch_or_nothing)
+                y_batch_pred, last_layer_activated_neuron_ids = forward_stats.value
+                log_scalar!(logger, "forward_time", forward_stats.time)
+
+                println("Forward time $(forward_stats.time)")
+
+                y_batch_activated = [
+                    view(y_batch, last_layer_activated_neuron_ids[i], i) for
+                    i = 1:size(y_batch, 2)
+                ]
+
+                batch_loss, saved_softmax =
+                    negative_sparse_logit_cross_entropy(y_batch_pred, y_batch_activated)
+                loss += batch_loss
+
+                backward_stats = @timed backward!(x_batch, y_batch_pred, y_batch_activated, network, saved_softmax)
+
+                log_scalar!(logger, "backward_time", backward_stats.time)
+                println("Backward time $(backward_stats.time)")
+
+                update_stats = @timed begin
+                    update_weight!(network, optimizer)
+                    zero_neuron_attributes!(network)
+                end
+
+                log_scalar!(logger, "update_time", update_stats.time)
+                println("Update time $(update_stats.time)")
+            end
+
+            println("Training step done in $(time_stats.time)")
+            log_scalar!(logger, "train_step time", time_stats.time)
+
             if n % test_parameters["test_frequency"] == 0
                 test_accuracy = compute_accuracy(
                     network,
@@ -95,15 +110,16 @@ function train!(
                 )
                 log_scalar!(logger, "test_acc", test_accuracy)
             end
+
+            scheduler(n) do
+                for layer in network.layers
+                    update!(layer.hash_tables, layer.neurons)
+                end
+                optimizer_end_epoch_step!(optimizer)
+            end
         end
 
         println("Iteration $i, Loss $(loss / length(training_batches))")
         log_scalar!(logger, "train_loss", loss / length(training_batches))
-        scheduler(i) do
-            for layer in network.layers
-                update!(layer.hash_tables, layer.neurons)
-            end
-        end
-        optimizer_end_epoch_step!(optimizer)
     end
 end

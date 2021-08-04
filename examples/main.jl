@@ -7,6 +7,8 @@ using Slide.LshSimHashWrapper: LshSimHashParams, get_simhash_params
 using Slide.Hash: LshParams
 using Slide.FluxTraining
 
+Random.seed!(1);
+
 if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
     use_real_dataset = true
@@ -98,7 +100,8 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
     logger = get_logger(dataset_config)
 
-    train!(train_loader, test_set, network, optimizer, logger; n_iters = 3, use_all_true_labels = true, test_parameters = test_parameters)
+    train!(train_loader, test_set, network, optimizer, logger; n_iters = 3,
+    scheduler = PeriodicScheduler(50), use_all_true_labels = true, test_parameters = test_parameters)
     println("DONE \n")
 
     save(logger)
