@@ -145,7 +145,7 @@ function add_batch!(
 
     @views @inbounds @floop executor for i = 1:b_len
         key, _ = batch[i]
-        compute_signatures!(signatures[:, i], lsh.hash, key,)
+        compute_signatures!(signatures[:, i], lsh.hash, key)
     end
 
     add_batch!(lsh, signatures, map(((_, elem),) -> elem, batch))

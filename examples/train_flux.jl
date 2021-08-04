@@ -83,7 +83,7 @@ function test_epoch(model, test_set, logger, config)
 
     log_scalar!(logger, "test_loss", test_loss, true)
     log_scalar!(logger, "test_acc", test_acc, true)
-    
+
     return test_acc
 end
 

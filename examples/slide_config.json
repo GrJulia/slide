@@ -3,5 +3,12 @@
     "n_neurons_per_layer": [128, 128],
     "layer_activations": ["relu", "identity"],
     "input_dim": 16,
-    "n_buckets": 2
+    "n_buckets": 2,
+    "n_tables": 1,
+    "max_bucket_len": 100,
+
+    "simhash": {
+        "signature_len": 9,
+        "sample_ratio": 3
+    }
 }

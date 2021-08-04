@@ -1,42 +1,44 @@
 module Network
 
-const Float = typeof(1.0)
 
-export Neuron,
-    OptimizerAttributes,
+export AbstractScheduler,
     AdamAttributes,
-    get_activated_neuron_ids_from_hash_tables,
-    forward_single_sample,
+    AdamOptimizer,
+    Batch,
     Layer,
+    Neuron,
+    Optimizer,
+    OptimizerAttributes,
     SlideNetwork,
-    HashTable,
+    backward!,
+    batch_input,
     build_network,
     forward!,
-    batch_input,
-    one_hot,
-    backward!,
-    update_weight!,
-    numerical_gradient_weights,
-    numerical_gradient_bias,
-    zero_neuron_attributes!,
-    build_network,
-    train!,
-    Float,
-    Optimizer,
-    AdamOptimizer,
-    optimizer_step!,
+    forward_single_sample,
     gradient,
-    relu,
-    get_deterministic_hash,
     handle_batch_backward,
-    sparse_logit_cross_entropy,
-    Batch,
-    Id,
-    predict_class,
+    negative_sparse_logit_cross_entropy,
+    numerical_gradient_bias,
+    numerical_gradient_weights,
+    one_hot,
     optimizer_end_epoch_step!,
-    negative_sparse_logit_cross_entropy
+    optimizer_step!,
+    PeriodicScheduler,
+    predict_class,
+    relu,
+    sparse_logit_cross_entropy,
+    train!,
+    update!,
+    update_weight!,
+    zero_neuron_attributes!
 
-include("vanilla_hash_table.jl")
+
+using Slide.LSH: Lsh
+using Slide: Float, Id
+
+const SlideLsh{Hasher} = Lsh{SubArray{Float},Id,Hasher}
+
+include("scheduler.jl")
 include("activations.jl")
 include("slide.jl")
 include("utils.jl")

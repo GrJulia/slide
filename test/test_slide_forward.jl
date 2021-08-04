@@ -1,6 +1,13 @@
 using Test
 
+using Slide
 using Slide.Network
+using Slide.LshSimHashWrapper: LshSimHashParams
+using Slide.Hash: LshParams
+using Slide.LSH: retrieve
+
+common_lsh = LshParams(n_buckets = 1, n_tables = 1, max_bucket_len = 2)
+simparams = LshSimHashParams(common_lsh, 3, 1, 3)
 
 @testset "slide_forward" begin
     x = Array{Float}([1.0; 2.0; 3.0])
@@ -28,14 +35,11 @@ using Slide.Network
         AdamAttributes(zeros(3), 0, zeros(3), 0),
     )
 
-    network =
-        SlideNetwork([Layer(1, [neuron_1, neuron_2], HashTable([[1], [2]]), identity)])
+    network = SlideNetwork([Layer(1, [neuron_1, neuron_2], simparams, identity)])
 
-    @test length(network.layers) == 1
-    @test forward_single_sample((@view x[:, 1]), network, 1, false)[1] == [6.0; 0.0]
-    @test get_activated_neuron_ids_from_hash_tables(
-        (@view x[:, 1]),
-        network.layers[1],
-        true,
-    ) in [[1], [2]]
+    @views begin
+        @test length(network.layers) == 1
+        @test forward_single_sample(x[:, 1], network, 1) == [6.0; 1.0]
+        @test retrieve(network.layers[1].hash_tables.lsh, x[:, 1]) == Set{Int}([1, 2])
+    end
 end

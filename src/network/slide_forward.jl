@@ -1,35 +1,22 @@
 using LinearAlgebra
+using Slide.LSH: retrieve
 
-function get_activated_neuron_ids_from_hash_tables(
-    x::SubArray{Float},
-    layer::Layer,
-    random::Bool,
-)::Vector{Id}
-    current_hash_table = layer.hash_table
-    input_hash =
-        random ? get_random_hash(current_hash_table, x) :
-        get_deterministic_hash(current_hash_table, x)
-    return retrieve_ids_from_bucket(current_hash_table, input_hash)
-end
 
 function forward_single_sample(
     x::SubArray{Float},
     network::SlideNetwork,
     x_index::Int,
-    random::Bool,
-)::Tuple{Vector{Float},Vector{Id}}
+)::Vector{Float}
     n_layers = length(network.layers)
     current_input = x
-    activated_neuron_ids = nothing
     for i = 1:n_layers
         # compute activated neurons with current_input
         layer = network.layers[i]
 
-        activated_neuron_ids = get_activated_neuron_ids_from_hash_tables(
-            (@view current_input[:]),
-            layer,
-            random,
-        )
+        #get activated neurons and mark them as changed
+        activated_neuron_ids = collect(retrieve(layer.hash_tables.lsh, @view current_input[:]))
+        mark_ids!(layer.hash_tables, activated_neuron_ids)
+
         for neuron_id in activated_neuron_ids
             layer.neurons[neuron_id].active_inputs[x_index] = 1
         end
@@ -48,22 +35,21 @@ function forward_single_sample(
             neuron.activation_inputs[x_index] = current_input[k]
         end
     end
-    return current_input, activated_neuron_ids
+    return current_input
 end
 
-function forward!(x::Array{Float}, network::SlideNetwork, random::Bool = false)
+function forward!(x::Array{Float}, network::SlideNetwork)
     n_samples = typeof(x) == Vector{Float} ? 1 : size(x)[end]
     output = zeros(length(network.layers[end].neurons), n_samples)
-    last_layer_activated_neuron_ids = Vector{Vector{Id}}(undef, n_samples)
+
     Threads.@threads for i = 1:n_samples
-        output[:, i], last_layer_activated_neuron_ids_batch =
-            forward_single_sample((@view x[:, i]), network, i, random)
-        last_layer_activated_neuron_ids[i] = last_layer_activated_neuron_ids_batch
+        output[:, i] = forward_single_sample((@view x[:, i]), network, i)
     end
-    output, last_layer_activated_neuron_ids
+
+    output
 end
 
 function predict_class(x::Array{Float}, network::SlideNetwork)
-    y_pred, _ = forward!(x, network, false)
+    y_pred, _ = forward!(x, network)
     return mapslices(argmax, y_pred, dims = 1)
 end
