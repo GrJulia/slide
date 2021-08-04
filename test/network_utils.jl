@@ -5,7 +5,7 @@ using Slide.Hash: LshParams
 using Slide.LSH: retrieve
 
 import Slide.Network.get_active_neurons
-import Slide.Network.get_active_neurons_id
+import Slide.Network.get_active_neuron_ids
 
 @testset "Network utils" begin
     common_lsh = LshParams(n_buckets = 1, n_tables = 1, max_bucket_len = 2)
@@ -43,6 +43,6 @@ import Slide.Network.get_active_neurons_id
         @test get_active_neurons(layer, 3) == [neuron_1, neuron_2]
         @test get_active_neurons(layer, 4) == []
 
-        @test get_active_neurons_id(network, 1) == [[1, 2], [1], [1, 2], []]
+        @test get_active_neuron_ids(network, 1) == [[1, 2], [1], [1, 2], []]
     end
 end

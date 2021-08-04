@@ -1,11 +1,18 @@
 using JSON
+<<<<<<< HEAD
 using Random
+=======
+using BenchmarkTools
+>>>>>>> f094fcd09c4d1eabebeda8a194713d7a56c1bda1
 
 using Slide
 using Slide.Network
 using Slide.LshSimHashWrapper: LshSimHashParams, get_simhash_params
 using Slide.Hash: LshParams
+<<<<<<< HEAD
 using Slide.FluxTraining
+=======
+>>>>>>> f094fcd09c4d1eabebeda8a194713d7a56c1bda1
 
 function build_random_configuration()
     n_layers = rand(1:10)
@@ -92,7 +99,7 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
     optimizer = AdamOptimizer(eta = learning_rate)
 
-    train!(train_loader, network, optimizer; n_iters = 20, use_all_true_labels = true)
-    # println("DONE \n")
+    train!(training_batches, network, optimizer; n_iters = 20, use_all_true_labels = true)
+    println("DONE \n")
 
 end
