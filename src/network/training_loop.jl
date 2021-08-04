@@ -49,14 +49,18 @@ function train!(
     optimizer::Optimizer;
     n_iters::Int,
     scheduler::S = PeriodicScheduler(10),
+    use_all_true_labels::Bool = true,
 ) where {S<:AbstractScheduler}
     for i = 1:n_iters
         loss = 0
         for (x_batch, y_batch) in training_batches
-            y_batch_pred = forward!(x_batch, network)
-
+            if use_all_true_labels
+                y_batch_pred = forward!(x_batch, network, y_batch)
+            else
+                y_batch_pred = forward!(x_batch, network, nothing)
+            end
             last_layer_activated_neuron_ids =
-                get_active_neurons_id(network, length(network.layers))
+                get_active_neuron_ids(network, length(network.layers))
             batch_loss, saved_softmax = negative_sparse_logit_cross_entropy(
                 y_batch_pred,
                 y_batch,

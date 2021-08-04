@@ -83,7 +83,7 @@ function numerical_gradient_weights(
 )
     # Computing weight gradient from backpropagation
     zero_neuron_attributes!(network)
-    y_check_pred = forward!(x_check, network)
+    y_check_pred = forward!(x_check, network, y_check)
     activated_neurons = get_active_neuron_ids(network, length(network.layers))
     _, probs = negative_sparse_logit_cross_entropy(y_check_pred, y_check, activated_neurons)
     backward!(x_check, y_check_pred, y_check, network, probs)
@@ -95,7 +95,7 @@ function numerical_gradient_weights(
     # Computing numerical weight gradient
 
     network.layers[layer_id].neurons[neuron_id].weight[weight_index] += epsilon
-    y_check_pred_1 = forward!(x_check, network)
+    y_check_pred_1 = forward!(x_check, network, y_check)
     activated_neurons_1 = get_active_neuron_ids(network, length(network.layers))
     loss_1, _ =
         negative_sparse_logit_cross_entropy(y_check_pred_1, y_check, activated_neurons_1)
@@ -103,7 +103,7 @@ function numerical_gradient_weights(
     zero_neuron_attributes!(network)
 
     network.layers[layer_id].neurons[neuron_id].weight[weight_index] -= 2 * epsilon
-    y_check_pred_2 = forward!(x_check, network)
+    y_check_pred_2 = forward!(x_check, network, y_check)
     activated_neurons_2 = get_active_neuron_ids(network, length(network.layers))
     loss_2, _ =
         negative_sparse_logit_cross_entropy(y_check_pred_2, y_check, activated_neurons_2)
@@ -127,7 +127,7 @@ function numerical_gradient_bias(
 )
     # Computing bias gradient from backpropagation
     zero_neuron_attributes!(network)
-    y_check_pred = forward!(x_check, network)
+    y_check_pred = forward!(x_check, network, y_check)
     activated_neurons = get_active_neuron_ids(network, length(network.layers))
     _, probs = negative_sparse_logit_cross_entropy(y_check_pred, y_check, activated_neurons)
     backward!(x_check, y_check_pred, y_check, network, probs)
@@ -137,7 +137,7 @@ function numerical_gradient_bias(
     # Computing numerical bias gradient
 
     network.layers[layer_id].neurons[neuron_id].bias += epsilon
-    y_check_pred_1 = forward!(x_check, network)
+    y_check_pred_1 = forward!(x_check, network, y_check)
     activated_neurons_1 = get_active_neuron_ids(network, length(network.layers))
     loss_1, _ =
         negative_sparse_logit_cross_entropy(y_check_pred_1, y_check, activated_neurons_1)
@@ -145,7 +145,7 @@ function numerical_gradient_bias(
     zero_neuron_attributes!(network)
 
     network.layers[layer_id].neurons[neuron_id].bias -= 2 * epsilon
-    y_check_pred_2 = forward!(x_check, network)
+    y_check_pred_2 = forward!(x_check, network, y_check)
     activated_neurons_2 = get_active_neuron_ids(network, length(network.layers))
     loss_2, _ =
         negative_sparse_logit_cross_entropy(y_check_pred_2, y_check, activated_neurons_2)
