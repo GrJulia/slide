@@ -1,5 +1,5 @@
 using Test
-using Slide.DWTA: DWTAHasher, Signatures, initialize!, signatures, EMPTY_SAMPLING, two_universal_hash, MAX_N_ATTEMPS
+using Slide.DWTA: DWTAHasher, Signature, initialize!, signature, EMPTY_SAMPLING, two_universal_hash
 using Random: default_rng, randperm
 
 
@@ -19,15 +19,15 @@ using Random: default_rng, randperm
         data3 = [9, 2, 6, 1]
         data4 = [3, 5, 1, 7]
 
-        out1 = Signatures([1])
-        out2 = Signatures([1])
-        out3 = Signatures([2])
-        out4 = Signatures([1])
+        out1 = Signature([1])
+        out2 = Signature([1])
+        out3 = Signature([2])
+        out4 = Signature([1])
 
-        @test signatures(dwta, data1, true) == out1
-        @test signatures(dwta, data2, true) == out2
-        @test signatures(dwta, data3, true) == out3
-        @test signatures(dwta, data4, true) == out4
+        @test signature(dwta, data1, true) == out1
+        @test signature(dwta, data2, true) == out2
+        @test signature(dwta, data3, true) == out3
+        @test signature(dwta, data4, true) == out4
     end
 
     @testset "example from the paper #2" begin
@@ -51,19 +51,19 @@ using Random: default_rng, randperm
         data2 = [0, 0, 1, 0, 0, 0, 0, 0, 0]
 
         @testset "wta" begin
-            out1 = Signatures([EMPTY_SAMPLING, 2, 1, EMPTY_SAMPLING, 2, EMPTY_SAMPLING])
-            out2 = Signatures([EMPTY_SAMPLING, 2, EMPTY_SAMPLING, EMPTY_SAMPLING, 3, EMPTY_SAMPLING])
+            out1 = Signature([EMPTY_SAMPLING, 2, 1, EMPTY_SAMPLING, 2, EMPTY_SAMPLING])
+            out2 = Signature([EMPTY_SAMPLING, 2, EMPTY_SAMPLING, EMPTY_SAMPLING, 3, EMPTY_SAMPLING])
 
-            @test signatures(dwta, data1, false) == out1
-            @test signatures(dwta, data2, false) == out2
+            @test signature(dwta, data1, false) == out1
+            @test signature(dwta, data2, false) == out2
         end
 
         @testset "dwta" begin
-            out1 = Signatures([2, 2, 1, 2, 2, 1])
-            out2 = Signatures([3, 2, 2, 3, 3, 2])
+            out1 = Signature([2, 2, 1, 2, 2, 1])
+            out2 = Signature([3, 2, 2, 3, 3, 2])
 
-            @test signatures(dwta, data1, true) == out1
-            @test signatures(dwta, data2, true) == out2
+            @test signature(dwta, data1, true) == out1
+            @test signature(dwta, data2, true) == out2
         end
     end
 end
@@ -76,7 +76,7 @@ end
         dwta = DWTAHasher(Matrix{Int32}(undef, (3, 6)), n_hashes, log_n_hashes)
 
         hashes = zeros(n_hashes)
-        n_attempts = min(n_hashes, MAX_N_ATTEMPS)
+        n_attempts = min(n_hashes, 100)
         good = true
 
         for bin_idx = 1:n_hashes

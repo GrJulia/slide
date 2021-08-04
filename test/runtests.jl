@@ -22,3 +22,7 @@ end
 @testset "Lsh-Simhash" begin
     include("simhasher_wrapper.jl")
 end
+
+@testset "Lsh-DWTA" begin
+    include("dwta_wrapper.jl")
+end

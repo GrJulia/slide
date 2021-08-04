@@ -1,4 +1,3 @@
-
 module LshSimHashWrapper
 
 export LshSimHashParams, get_simhash_params

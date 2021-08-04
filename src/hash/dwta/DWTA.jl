@@ -1,17 +1,18 @@
 module DWTA
 
-# TODO add export
+export DWTAHasher, Signature, initialize!, signature
+
+using Slide: Float
 
 using Random: shuffle, rand, AbstractRNG, randperm
 using IterTools
 
 const Idx = UInt8
 
-const Signatures = Vector{Idx}
+const Signature = Vector{Idx}
 const EMPTY_SAMPLING = zero(Idx)
-const EMPTY_SAMPLING_VAL = Float32(-Inf)
-const ZERO_VAL = zero(Float32)
-const MAX_N_ATTEMPS = UInt32(100)
+const EMPTY_SAMPLING_VAL = Float(-Inf)
+const ZERO_VAL = zero(Float)
 
 
 struct DWTAHasher
@@ -49,11 +50,12 @@ end
 function signature(
     dwta::DWTAHasher,
     data::A,
-    densification::Bool,
-)::Signatures where {A<:AbstractVector{<:Number}}
+    densification::Bool;
+    max_n_attemps=UInt32(100)
+)::Signature where {A<:AbstractVector{<:Number}}
     indices_in_bin = dwta.indices_in_bin
     n_hashes = dwta.n_hashes
-    hashes = fill!(Signatures(undef, n_hashes), EMPTY_SAMPLING)
+    hashes = fill!(Signature(undef, n_hashes), EMPTY_SAMPLING)
 
     for i = 1:n_hashes
         hashes[i] = argmax(view(data, indices_in_bin[:, i]))
@@ -66,13 +68,13 @@ function signature(
         return hashes
     end
 
-    out_hashes = Signatures(undef, n_hashes)
+    out_hashes = Signature(undef, n_hashes)
     for bin_idx = one(UInt32):n_hashes
         curr_idx, cnt = bin_idx, zero(UInt32)
         while hashes[curr_idx] == EMPTY_SAMPLING
             cnt += one(UInt32)
             curr_idx = two_universal_hash(dwta, bin_idx, cnt)
-            if cnt > min(n_hashes, MAX_N_ATTEMPS)
+            if cnt > min(n_hashes, max_n_attemps)
                 break
             end
         end
