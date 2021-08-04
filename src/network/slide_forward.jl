@@ -6,11 +6,8 @@ function forward_single_sample(
     x::SubArray{Float},
     network::SlideNetwork,
     x_index::Int,
-<<<<<<< HEAD
     use_all_true_labels::Bool,
     y_true::Union{Nothing, SubArray{Float}} = nothing,
-=======
->>>>>>> b37d866df982ffdcd5345d06b0b914bf76e1e945
 )::Vector{Float}
     n_layers = length(network.layers)
     current_input = x
@@ -21,12 +18,9 @@ function forward_single_sample(
         #get activated neurons and mark them as changed
         activated_neuron_ids =
             [x for x in retrieve(layer.hash_tables.lsh, @view current_input[:])]
-<<<<<<< HEAD
         if !(isnothing(y_true)) && use_all_true_labels && (i == length(network.layers))
             union!(activated_neuron_ids, findall(>(0), y_true))
         end
-=======
->>>>>>> b37d866df982ffdcd5345d06b0b914bf76e1e945
         mark_ids!(layer.hash_tables, activated_neuron_ids)
 
         for neuron_id in activated_neuron_ids
