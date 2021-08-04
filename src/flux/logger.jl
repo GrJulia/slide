@@ -25,11 +25,13 @@ end
 function log_scalar!(logger::Logger, key::String, val::Any, log_to_tb = false)
     push!(logger.logs[key], (logger.curr_it, val))
     if log_to_tb
-        if !logger.incr_tb
-            @info key key = val
-            logger.incr_tb = true
-        else
-            @info key key = val log_step_increment = 0
+        with_logger(logger.tb_logger) do
+            if !logger.incr_tb
+                @info key key = val
+                logger.incr_tb = true
+            else
+                @info key key = val log_step_increment = 0
+            end
         end
     end
 end
@@ -42,9 +44,8 @@ function save(logger::Logger)
 end
 
 function get_logger(config)
-    log_dir = joinpath(config["logging_path"], config["name"])
+    log_dir = config["logging_path"] * "/" * config["name"]
     tb_logger = TBLogger(log_dir)
-    global_logger(tb_logger)
 
     logger = Logger(tb_logger, log_dir)
     return logger
