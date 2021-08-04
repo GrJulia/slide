@@ -5,7 +5,7 @@
         "test_path": "delicious_test",
         "shuffle": true
     },
-    "logging_path": "examples/logs",
+    "logging_path": "/home/jrun/data/code/slide/examples/logs",
     "n_features": 782585,
     "hidden_dim": 128,
     "n_classes": 205443,
