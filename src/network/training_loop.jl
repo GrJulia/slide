@@ -60,7 +60,7 @@ function train!(
                 y_batch_pred = forward!(x_batch, network, nothing)
             end
             last_layer_activated_neuron_ids =
-                get_active_neurons_id(network, length(network.layers))
+                get_active_neuron_ids(network, length(network.layers))
             batch_loss, saved_softmax = negative_sparse_logit_cross_entropy(
                 y_batch_pred,
                 y_batch,

@@ -16,7 +16,7 @@ function forward_single_sample(
 
         #get activated neurons and mark them as changed
         activated_neuron_ids =
-            [x for x in retrieve(layer.hash_tables.lsh, @view current_input[:])]
+            collect(retrieve(layer.hash_tables.lsh, @view current_input[:]))
         if !(isnothing(y_true)) && (i == length(network.layers))
             union!(activated_neuron_ids, findall(>(0), y_true))
         end
@@ -64,6 +64,6 @@ function forward!(
 end
 
 function predict_class(x::Array{Float}, y_true::Array{Float}, network::SlideNetwork)
-    y_pred, _ = forward!(x, network, true, y_true)
+    y_pred, _ = forward!(x, network, y_true)
     return mapslices(argmax, y_pred, dims = 1)
 end

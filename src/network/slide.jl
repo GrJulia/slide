@@ -73,7 +73,7 @@ function Layer(
     hashes = add_batch!(
         lsh,
         convert(
-            Vector{Tuple{SubArray{Float64},Int}},
+            Vector{Tuple{SubArray{Float},Id}},
             map(neuron -> (@view(neuron.weight[:]), neuron.id), neurons),
         ),
     )
@@ -96,18 +96,17 @@ function update!(
 ) where {A<:AbstractLshParams,Hasher<:AbstractHasher{SubArray{Float}},T}
     lsh = init_lsh!(hash_tables.lsh_params, default_rng(), Id)
 
-    changed_ids = [x for x in hash_tables.changed_ids]
-    not_changed_ids =
-        filter(n -> !(n.id in hash_tables.changed_ids), neurons) |>
-        not_changed_neurons -> map(n -> n.id, not_changed_neurons)
+    changed_ids = collect(hash_tables.changed_ids)
+    unchanged_neurons = filter(n -> !(n.id in changed_ids), neurons)
+    unchanged_ids = map(n -> n.id, unchanged_neurons)
 
-    not_changed_hashes = hash_tables.hashes[:, not_changed_ids]
-    add_batch!(lsh, not_changed_hashes, not_changed_ids)
+    not_changed_hashes = hash_tables.hashes[:, unchanged_ids]
+    add_batch!(lsh, not_changed_hashes, unchanged_ids)
 
     new_hashes = add_batch!(
         lsh,
         convert(
-            Vector{Tuple{SubArray{Float64},Int}},
+            Vector{Tuple{SubArray{Float},Id}},
             map(id -> (@view(neurons[id].weight[:]), id), changed_ids),
         ),
     )

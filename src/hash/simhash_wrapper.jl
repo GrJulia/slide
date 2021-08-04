@@ -7,7 +7,7 @@ using Base.Iterators: partition
 using Random: AbstractRNG
 
 using Slide: Float
-using Slide.LSH: AbstractHasher, Lsh, add!, retrieve
+using Slide.LSH: AbstractHasher, Lsh
 using Slide.SimHash: SimHasher, Signature, initialize!, signature, signature_len
 using Slide.Hash: LshParams, AbstractLshParams
 
