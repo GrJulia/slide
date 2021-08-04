@@ -4,32 +4,67 @@ using Random: default_rng, randperm
 
 
 @testset "DWTAHasher - computing signatures" begin
-    n_tables, n_bins, k, data_len = 1, 6, 3, 2
-    idxs_to_list_of_bins = [1, 4, 5, 1, 3, 6, 2, 5, 3, 6, 2, 6, 3, 5, 1, 4, 2, 4]
-    n_bins_per_idx_offsets = [0, 3, 6, 8, 10, 12, 13, 14, 16, 18]
+    @testset "example from the paper #1" begin
+        n_hashes, log_n_hashes, data_len = 1, 1, 4
+        indices_in_bin = Matrix{Int32}(undef, (3, 1))
+        indices = [
+            [4, 1, 2],
+        ]
+        indices_in_bin[:, 1] = indices[1]
 
-    dwta = DWTAHasher(
-        idxs_to_list_of_bins,
-        n_bins_per_idx_offsets,
-        n_tables * n_bins,
-        1,
-        n_bins,
-    )
+        dwta = DWTAHasher(indices_in_bin, n_hashes, log_n_hashes)
 
-    data1 = [0, 0, 5, 0, 0, 7, 6, 0, 0]
-    data2 = [0, 0, 1, 0, 0, 0, 0, 0, 0]
+        data1 = [10, 12, 9, 23]
+        data2 = [8, 9, 1, 12]
+        data3 = [9, 2, 6, 1]
+        data4 = [3, 5, 1, 7]
 
-    @testset "example from the paper" begin
-        out1 = Signatures([EMPTY_SAMPLING, 1, 3, EMPTY_SAMPLING, 3, EMPTY_SAMPLING])
-        out2 = Signatures([EMPTY_SAMPLING, 1, EMPTY_SAMPLING, EMPTY_SAMPLING, 2, EMPTY_SAMPLING])
+        out1 = Signatures([1])
+        out2 = Signatures([1])
+        out3 = Signatures([2])
+        out4 = Signatures([1])
 
         @test signatures(dwta, data1, true) == out1
         @test signatures(dwta, data2, true) == out2
+        @test signatures(dwta, data3, true) == out3
+        @test signatures(dwta, data4, true) == out4
     end
 
-    @testset "densification" begin
-        # println(signatures(dwta, data1, false))
-        # println(signatures(dwta, data2, false)) 
+    @testset "example from the paper #2" begin
+        n_hashes, log_n_hashes, data_len = 6, 3, 2
+        indices_in_bin = Matrix{Int32}(undef, (3, 6))
+        indices = [
+            [2, 1, 8],
+            [5, 3, 9],
+            [6, 2, 4],
+            [8, 9, 1],
+            [1, 7, 3],
+            [2, 4, 5],
+        ]
+        for i = 1:6
+            indices_in_bin[:, i] = indices[i] 
+        end
+
+        dwta = DWTAHasher(indices_in_bin, n_hashes, log_n_hashes)
+
+        data1 = [0, 0, 5, 0, 0, 7, 6, 0, 0]
+        data2 = [0, 0, 1, 0, 0, 0, 0, 0, 0]
+
+        @testset "wta" begin
+            out1 = Signatures([EMPTY_SAMPLING, 2, 1, EMPTY_SAMPLING, 2, EMPTY_SAMPLING])
+            out2 = Signatures([EMPTY_SAMPLING, 2, EMPTY_SAMPLING, EMPTY_SAMPLING, 3, EMPTY_SAMPLING])
+
+            @test signatures(dwta, data1, false) == out1
+            @test signatures(dwta, data2, false) == out2
+        end
+
+        @testset "dwta" begin
+            out1 = Signatures([2, 2, 1, 2, 2, 1])
+            out2 = Signatures([3, 2, 2, 3, 3, 2])
+
+            @test signatures(dwta, data1, true) == out1
+            @test signatures(dwta, data2, true) == out2
+        end
     end
 end
 
@@ -37,24 +72,26 @@ end
     res = true
     for (n_tables, n_bins) in [(20, 2), (30, 4), (50, 6)]
         n_hashes = n_tables * n_bins
-        log_n_hashes = ceil(Int32, log2(n_hashes))
-        dwta = DWTAHasher([], [], n_hashes, log_n_hashes, n_bins)
+        log_n_hashes = ceil(UInt32, log2(n_hashes))
+        dwta = DWTAHasher(Matrix{Int32}(undef, (3, 6)), n_hashes, log_n_hashes)
 
         hashes = zeros(n_hashes)
         n_attempts = min(n_hashes, MAX_N_ATTEMPS)
         good = true
+
         for bin_idx = 1:n_hashes
             bin_hashes = zeros(n_hashes)
             for cnt = 1:n_attempts
-                hash = two_universal_hash(dwta, Int32(bin_idx), Int32(cnt))
+                hash = two_universal_hash(dwta, UInt32(bin_idx), UInt32(cnt))
                 hashes[hash] += 1
                 bin_hashes[hash] += 1
             end
+            
             if any(map(n_hits -> n_hits > 2 * ceil(n_attempts / n_hashes), bin_hashes))
                 good = false
             end
         end
-        # println("L=$n_tables, K=$n_bins, hashes=$hashes")
+
         res = res && all(map(n_hits -> n_hits > n_attempts * 0.8, hashes)) && good
     end
     @test res
@@ -64,9 +101,8 @@ end
     rng = default_rng()
 
     function test_routine(rng, n_tables, n_bins, k, data_len)
-        dwta = initialize!(rng, n_tables * n_bins, n_bins, k, data_len)
-        n_indices = n_tables * n_bins * k
-        length(dwta.idxs_to_list_of_bins) == n_indices && dwta.n_bins_per_idx_offsets[end] == n_indices
+        dwta = initialize!(rng, UInt32(n_tables * n_bins), UInt32(k), UInt32(data_len))
+        size(dwta.indices_in_bin) == (k, n_tables * n_bins)
     end
 
     @testset "dense indices" begin
