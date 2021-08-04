@@ -43,7 +43,7 @@ simparams = LshSimHashParams(common_lsh, 3, 1, 3)
 
     @views begin
         @test length(network.layers) == 1
-        @test forward_single_sample(x[:, 1], network, 1, false) == [6.0; 1.0]
+        @test forward_single_sample(x[:, 1], network, 1, nothing) == [6.0; 1.0]
         @test retrieve(network.layers[1].hash_tables.lsh, x[:, 1]) == Set{Int}([1, 2])
     end
 end

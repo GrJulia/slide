@@ -54,8 +54,11 @@ function train!(
     for i = 1:n_iters
         loss = 0
         for (x_batch, y_batch) in training_batches
-            y_batch_pred = forward!(x_batch, network, use_all_true_labels, y_batch)
-
+            if use_all_true_labels
+                y_batch_pred = forward!(x_batch, network, y_batch)
+            else
+                y_batch_pred = forward!(x_batch, network, nothing)
+            end
             last_layer_activated_neuron_ids =
                 get_active_neurons_id(network, length(network.layers))
             batch_loss, saved_softmax = negative_sparse_logit_cross_entropy(
