@@ -14,8 +14,7 @@ function forward_single_sample(
         layer = network.layers[i]
 
         #get activated neurons and mark them as changed
-        activated_neuron_ids =
-            [x for x in retrieve(layer.hash_tables.lsh, @view current_input[:])]
+        activated_neuron_ids = collect(retrieve(layer.hash_tables.lsh, @view current_input[:]))
         mark_ids!(layer.hash_tables, activated_neuron_ids)
 
         for neuron_id in activated_neuron_ids
