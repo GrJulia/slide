@@ -2,7 +2,7 @@
 abstract type AbstractScheduler end
 
 """
-    PeriodicScheduler schedule update every `update_period` nr of iterations
+    PeriodicScheduler schedules update every `update_period` iterations.
 """
 struct PeriodicScheduler <: AbstractScheduler
     update_period::Int
