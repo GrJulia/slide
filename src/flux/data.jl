@@ -83,13 +83,10 @@ function LearnBase.nobs(ds::SparseDataset)
 end
 
 function preprocess_dataset(dataset_path, shuffle)
-    # f = open(String, dataset(dataset_path))
-    # lines = split(f, '\n')
-    # x_indices, x_vals, ys = [], [], []
-    # for line in lines[2:end-1]
-    f = open(dataset_path, "r")
+    f = open(String, dataset(dataset_path))
+    lines = split(f, '\n')
     x_indices, x_vals, ys = [], [], []
-    for line in readlines(f)[2:end]
+    for line in lines[2:end-1]
         line_split = split(line)
         x = map(
             ftr -> (parse(Int, split(ftr, ':')[1]) + 1, parse(Float, split(ftr, ':')[2])),
