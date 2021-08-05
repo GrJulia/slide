@@ -74,7 +74,7 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
     network = build_network(network_params, batch_size)
 
-    learning_rate = 0.01
+    learning_rate = 0.001
     optimizer = AdamOptimizer(eta = learning_rate)
 
     train!(train_loader, network, optimizer; n_iters = 20, use_all_true_labels = true)

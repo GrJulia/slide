@@ -14,6 +14,7 @@ struct SparseDataset
     n_features::Int
     n_classes::Int
     keep_last::Bool
+    smooth_labels::Bool
 end
 
 LearnBase.getobs!(
@@ -46,7 +47,9 @@ function LearnBase.getobs!(
         x[xs_indices[idx], b] = xs_vals[idx]
         y[ds.ys[idx], b] .= one(Float)
     end
-    y ./= sum(y, dims = 1)
+    if ds.smooth_labels
+        y ./= sum(y, dims = 1)
+    end
     return buffer
 end
 
@@ -68,7 +71,9 @@ function LearnBase.getobs(ds::SparseDataset, batch_idx::Int)
         x[xs_indices[idx], b] = xs_vals[idx]
         y[ds.ys[idx], b] .= one(Float)
     end
-    y ./= sum(y, dims = 1)
+    if ds.smooth_labels
+        y ./= sum(y, dims = 1)
+    end
     return x, y
 end
 
@@ -120,6 +125,7 @@ function get_dataloaders(config::Dict{String,Any})
         config["n_features"],
         config["n_classes"],
         true,
+        config["smooth_labels"],
     )
     test_set = SparseDataset(
         test_data,
@@ -128,6 +134,7 @@ function get_dataloaders(config::Dict{String,Any})
         config["n_features"],
         config["n_classes"],
         false,
+        config["smooth_labels"],
     )
 
     train_loader = eachobsparallel(train_set)
