@@ -19,8 +19,7 @@ end
 end
 
 function optimizer_step!(optimizer::AdamOptimizer, neuron::Neuron)
-    batch_size = length(neuron.bias_gradients)
-    dw = neuron.weight_gradients ./ batch_size 
+    dw = neuron.weight_gradients
     db = mean(neuron.bias_gradients)
     adam_attributes = neuron.optimizer_attributes
     adam_attributes.m_dw =

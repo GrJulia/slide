@@ -30,7 +30,7 @@ using Slide.Hash: LshParams
     x = rand(Float, input_dim, batch_size)
     y = Vector{Float}(rand(1:output_dim, batch_size))
     network = build_network(network_params, batch_size)
-    y_cat = one_hot(y)
+    y_cat = one_hot(y, output_dim)
     y_cat ./= sum(y_cat, dims = 1)
 
     for layer in network.layers
