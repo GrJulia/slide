@@ -3,7 +3,7 @@
     "dataset": {
         "train_path": "amazon_train",
         "test_path": "amazon_test",
-        "shuffle": false
+        "shuffle": true
     },
     "logging_path": "/home/jrun/data/code/slide/examples/logs",
     "n_features": 135909,
@@ -15,7 +15,7 @@
     "use_gpu": false,
     "testing": {
         "n_batches": 20,
-        "test_freq": 20,
+        "test_freq": 50,
         "use_random_indices": false,
         "top_k_classes": 1
     }

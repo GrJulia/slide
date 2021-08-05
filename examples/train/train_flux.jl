@@ -96,8 +96,8 @@ logger = get_logger(config)
 train_loader, test_set = get_dataloaders(config)
 
 model = Chain(
-    Dense(config["n_features"], config["hidden_dim"], relu),
-    Dense(config["hidden_dim"], config["n_classes"]),
+    Dense(config["n_features"], config["hidden_dim"], relu, init=glorot_normal),
+    Dense(config["hidden_dim"], config["n_classes"], init=glorot_normal),
 )
 
 opt = ADAM(config["lr"])

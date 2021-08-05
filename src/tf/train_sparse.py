@@ -1,18 +1,31 @@
 import tensorflow.keras as keras
 import tensorflow.nn as nn
+import tensorflow as tf
 import numpy as np
 import os
 import time
 from collections import defaultdict
 import json
+import math
+
+
+class SparseDense(keras.layers.Layer):
+    def __init__(self, n_features_in, n_features_out):
+        super(SparseDense, self).__init__()
+        glorot_stddev = math.sqrt(2.0/(n_features_in+n_features_out))
+        self.W = tf.Variable(tf.random.normal([n_features_in, n_features_out], stddev=glorot_stddev))
+        self.B = tf.Variable(tf.random.normal([n_features_out], stddev=glorot_stddev))
+
+    def call(self, x):
+        return nn.relu(tf.sparse.sparse_dense_matmul(x, self.W) + self.B)
 
 
 class Model(keras.Model):
     def __init__(self, n_features, hidden_dim, n_classes):
         super(Model, self).__init__()
         self.model = keras.Sequential([
-            keras.layers.InputLayer(n_features),
-            keras.layers.Dense(hidden_dim, activation='relu', kernel_initializer="glorot_normal", bias_initializer="glorot_normal"),
+            keras.layers.InputLayer(n_features, sparse=True),
+            SparseDense(n_features, hidden_dim),
             keras.layers.Dense(n_classes, kernel_initializer="glorot_normal", bias_initializer="glorot_normal"),
         ])
 
@@ -36,7 +49,7 @@ class SparseDataset(keras.utils.Sequence):
             x = [(int(ftr.split(':')[0]), float(ftr.split(':')[1])) for ftr in line_split[1:]]
             y = [int(yi) for yi in line_split[0].split(',')]
             x_indices.append(np.array([xi[0] for xi in x]))
-            x_vals.append(np.array([xi[1] for xi in x]))
+            x_vals.append([xi[1] for xi in x])
             ys.append(np.array(y))
     
         perm = np.random.permutation(len(ys))
@@ -53,15 +66,18 @@ class SparseDataset(keras.utils.Sequence):
     def __getitem__(self, b_idx):
         (xs_indices, xs_vals) = self.xs
 
-        x = np.zeros((self.batch_size, self.n_features))
+        x_indices, x_vals = [], []
         y = np.zeros((self.batch_size, self.n_classes))
         for idx in range(self.batch_size):
             tr_idx = b_idx * self.batch_size + idx
-            x[idx, xs_indices[tr_idx]] = xs_vals[tr_idx]
-            
+
+            x_indices += [[idx, x_index] for x_index in xs_indices[tr_idx]]
+            x_vals += xs_vals[tr_idx]
+
             ys = self.ys[tr_idx]
             y[idx, ys] = 1
-        
+
+        x = tf.SparseTensor(x_indices, x_vals, (self.batch_size, self.n_features))
         return x, y
 
 
