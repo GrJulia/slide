@@ -4,28 +4,31 @@ using DataLoaders
 using LearnBase
 using DataSets
 
+using Slide
+
 
 struct SparseDataset
-    xs::Tuple{Vector{Vector{Int}},Vector{Vector{Float32}}}
+    xs::Tuple{Vector{Vector{Int}},Vector{Vector{Float}}}
     ys::Vector{Vector{Int}}
     batch_size::Int
     n_features::Int
     n_classes::Int
     keep_last::Bool
+    smooth_labels::Bool
 end
 
 LearnBase.getobs!(
-    buffer::Tuple{Matrix{Float32},Matrix{Float32}},
+    buffer::Tuple{Matrix{Float},Matrix{Float}},
     ds::SparseDataset,
     raw_batch_idx,
 ) = LearnBase.getobs!(
-    buffer::Tuple{Matrix{Float32},Matrix{Float32}},
+    buffer::Tuple{Matrix{Float},Matrix{Float}},
     ds,
     convert(Int, raw_batch_idx),
 )
 
 function LearnBase.getobs!(
-    buffer::Tuple{Matrix{Float32},Matrix{Float32}},
+    buffer::Tuple{Matrix{Float},Matrix{Float}},
     ds::SparseDataset,
     batch_idx::Int,
 )
@@ -36,15 +39,17 @@ function LearnBase.getobs!(
 
     xs_indices, xs_vals = ds.xs
     x, y = buffer
-    x .= zero(Float32)
-    y .= zero(Float32)
+    x .= zero(Float)
+    y .= zero(Float)
 
     for b = 1:batch
         idx = (batch_idx - 1) * batch + b
         x[xs_indices[idx], b] = xs_vals[idx]
-        y[ds.ys[idx], b] .= one(Float32)
+        y[ds.ys[idx], b] .= one(Float)
     end
-
+    if ds.smooth_labels
+        y ./= sum(y, dims = 1)
+    end
     return buffer
 end
 
@@ -58,15 +63,17 @@ function LearnBase.getobs(ds::SparseDataset, batch_idx::Int)
     end
 
     xs_indices, xs_vals = ds.xs
-    x = zeros(Float32, ds.n_features, batch)
-    y = zeros(Float32, ds.n_classes, batch)
+    x = zeros(Float, ds.n_features, batch)
+    y = zeros(Float, ds.n_classes, batch)
 
     for b = 1:batch
         idx = (batch_idx - 1) * batch + b
         x[xs_indices[idx], b] = xs_vals[idx]
-        y[ds.ys[idx], b] .= one(Float32)
+        y[ds.ys[idx], b] .= one(Float)
     end
-
+    if ds.smooth_labels
+        y ./= sum(y, dims = 1)
+    end
     return x, y
 end
 
@@ -87,7 +94,7 @@ function preprocess_dataset(dataset_path, shuffle)
     for line in lines[2:end-1]
         line_split = split(line)
         x = map(
-            ftr -> (parse(Int, split(ftr, ':')[1]) + 1, parse(Float32, split(ftr, ':')[2])),
+            ftr -> (parse(Int, split(ftr, ':')[1]) + 1, parse(Float, split(ftr, ':')[2])),
             line_split[2:end],
         )
         y = parse.(Int, split(line_split[1], ',')) .+ 1
@@ -118,6 +125,7 @@ function get_dataloaders(config::Dict{String,Any})
         config["n_features"],
         config["n_classes"],
         true,
+        config["smooth_labels"],
     )
     test_set = SparseDataset(
         test_data,
@@ -126,6 +134,7 @@ function get_dataloaders(config::Dict{String,Any})
         config["n_features"],
         config["n_classes"],
         false,
+        config["smooth_labels"],
     )
 
     train_loader = eachobsparallel(train_set)

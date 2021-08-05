@@ -44,7 +44,7 @@ function build_layer(
 end
 
 function train!(
-    training_batches::Vector{Batch},
+    training_batches,
     network::SlideNetwork,
     optimizer::Optimizer;
     n_iters::Int,
@@ -53,12 +53,16 @@ function train!(
 ) where {S<:AbstractScheduler}
     for i = 1:n_iters
         loss = 0
-        for (x_batch, y_batch) in training_batches
+        for (n, (x_batch, y_batch)) in enumerate(training_batches)
+            println("Iteration $i, batch $n")
+            start_batch_time = time()
+            println("Forward")
             if use_all_true_labels
                 y_batch_pred = forward!(x_batch, network, y_batch)
             else
                 y_batch_pred = forward!(x_batch, network, nothing)
             end
+            println("Froward time $(time() - start_batch_time)")
             last_layer_activated_neuron_ids =
                 get_active_neuron_ids(network, length(network.layers))
             batch_loss, saved_softmax = negative_sparse_logit_cross_entropy(
@@ -66,11 +70,13 @@ function train!(
                 y_batch,
                 last_layer_activated_neuron_ids,
             )
-
             loss += batch_loss
+            println("Backward")
             backward!(x_batch, y_batch_pred, y_batch, network, saved_softmax)
+            println("Backward time $(time() - start_batch_time)")
             update_weight!(network, optimizer)
             zero_neuron_attributes!(network)
+            println("Total Batch time $(time() - start_batch_time)")
         end
 
 

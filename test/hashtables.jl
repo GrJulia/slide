@@ -25,7 +25,7 @@ neuron_with_id(i) = Neuron(
     [1, 1, 1, 0],
     zeros(1),
     zeros(1),
-    zeros(1, 1),
+    zeros(1),
     zeros(1),
     AdamAttributes(zeros(3), 0, zeros(3), 0),
 )

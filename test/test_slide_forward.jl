@@ -23,7 +23,7 @@ simparams = LshSimHashParams(common_lsh, 3, 1, 3)
         zeros(Id, 1),
         zeros(1),
         zeros(1),
-        zeros(1, 1),
+        zeros(1),
         zeros(1),
         AdamAttributes(zeros(3), 0, zeros(3), 0),
     )
@@ -34,7 +34,7 @@ simparams = LshSimHashParams(common_lsh, 3, 1, 3)
         zeros(Id, 1),
         zeros(1),
         zeros(1),
-        zeros(1, 1),
+        zeros(1),
         zeros(1),
         AdamAttributes(zeros(3), 0, zeros(3), 0),
     )
