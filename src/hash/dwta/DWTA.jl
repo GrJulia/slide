@@ -59,7 +59,7 @@ function signature(
 
     for i = 1:n_hashes
         hashes[i] = argmax(view(data, indices_in_bin[:, i]))
-        if data[indices_in_bin[hashes[i], i]] == ZERO_VAL
+        if densification && data[indices_in_bin[hashes[i], i]] == ZERO_VAL
             hashes[i] = EMPTY_SAMPLING
         end
     end

@@ -88,7 +88,6 @@ is removed from the table (FIFO).
 """
 function add!(table::HashTable{V}, signature::Int, elem::V) where {V}
     bucket_id = compute_bucket_for_signature(signature, length(table.buckets))
-
     push!(table.buckets[bucket_id], elem)
 end
 

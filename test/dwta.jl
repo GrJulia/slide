@@ -1,5 +1,6 @@
 using Test
-using Slide.DWTA: DWTAHasher, Signature, initialize!, signature, EMPTY_SAMPLING, two_universal_hash
+using Slide.DWTA: DWTAHasher, Signature, EMPTY_SAMPLING, two_universal_hash
+using Slide: DWTA
 using Random: default_rng, randperm
 
 
@@ -24,10 +25,10 @@ using Random: default_rng, randperm
         out3 = Signature([2])
         out4 = Signature([1])
 
-        @test signature(dwta, data1, true) == out1
-        @test signature(dwta, data2, true) == out2
-        @test signature(dwta, data3, true) == out3
-        @test signature(dwta, data4, true) == out4
+        @test DWTA.signature(dwta, data1, false) == out1
+        @test DWTA.signature(dwta, data2, false) == out2
+        @test DWTA.signature(dwta, data3, false) == out3
+        @test DWTA.signature(dwta, data4, false) == out4
     end
 
     @testset "example from the paper #2" begin
@@ -51,19 +52,20 @@ using Random: default_rng, randperm
         data2 = [0, 0, 1, 0, 0, 0, 0, 0, 0]
 
         @testset "wta" begin
-            out1 = Signature([EMPTY_SAMPLING, 2, 1, EMPTY_SAMPLING, 2, EMPTY_SAMPLING])
-            out2 = Signature([EMPTY_SAMPLING, 2, EMPTY_SAMPLING, EMPTY_SAMPLING, 3, EMPTY_SAMPLING])
+            empty_idx = 1
+            out1 = Signature([empty_idx, 2, 1, empty_idx, 2, empty_idx])
+            out2 = Signature([empty_idx, 2, empty_idx, empty_idx, 3, empty_idx])
 
-            @test signature(dwta, data1, false) == out1
-            @test signature(dwta, data2, false) == out2
+            @test DWTA.signature(dwta, data1, false) == out1
+            @test DWTA.signature(dwta, data2, false) == out2
         end
 
         @testset "dwta" begin
             out1 = Signature([2, 2, 1, 2, 2, 1])
             out2 = Signature([3, 2, 2, 3, 3, 2])
 
-            @test signature(dwta, data1, true) == out1
-            @test signature(dwta, data2, true) == out2
+            @test DWTA.signature(dwta, data1, true) == out1
+            @test DWTA.signature(dwta, data2, true) == out2
         end
     end
 end
@@ -101,7 +103,7 @@ end
     rng = default_rng()
 
     function test_routine(rng, n_tables, n_bins, k, data_len)
-        dwta = initialize!(rng, UInt32(n_tables * n_bins), UInt32(k), UInt32(data_len))
+        dwta = DWTA.initialize!(rng, UInt32(n_tables * n_bins), UInt32(k), UInt32(data_len))
         size(dwta.indices_in_bin) == (k, n_tables * n_bins)
     end
 
