@@ -55,15 +55,11 @@ function train!(
     use_all_true_labels::Bool = true,
     test_parameters::Dict
 ) where {S<:AbstractScheduler}
-    push!(weight_norms, [norm(neuron.weight) for neuron in network.layers[1].neurons])
     for i = 1:n_iters
         loss = 0
         for (n, (x_batch, y_batch)) in enumerate(training_batches)
             println("Iteration $i , batch $n")
             step!(logger)
-            if n > 4
-                break
-            end
             time_stats = @timed begin
                 println("Forward")
                 if use_all_true_labels
@@ -89,8 +85,10 @@ function train!(
             elapsed_time = time_stats.time
             log_scalar!(logger, "train_step time", elapsed_time)
             if n % test_parameters["test_frequency"] == 0
+                train_accuracy = compute_accuracy(network, training_batches, test_parameters["n_train_batches"], test_parameters["topk"])
                 test_accuracy = compute_accuracy(network, test_set, test_parameters["n_test_batches"], test_parameters["topk"])
                 log_scalar!(logger, "test_acc", test_accuracy)
+                log_scalar!(logger, "train_acc", train_accuracy)
             end
         end
 

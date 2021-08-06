@@ -31,6 +31,7 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
         test_parameters = Dict(
             "test_frequency" => dataset_config["testing"]["test_freq"],
             "n_test_batches" => dataset_config["testing"]["n_batches"],
+            "n_train_batches" => dataset_config["testing"]["n_batches"],
             "topk" => dataset_config["testing"]["top_k_classes"],
         )   
 
@@ -61,6 +62,7 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
         test_parameters = Dict(
             "test_frequency" => 2,
             "n_test_batches" => 2,
+            "n_train_batches" => Int(N_ROWS / batch_size),
             "topk" => 1,
         )
     end
