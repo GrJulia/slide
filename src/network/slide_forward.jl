@@ -63,7 +63,8 @@ function forward!(
     output
 end
 
-function predict_class(x::Array{Float}, y_true::Array{Float}, network::SlideNetwork)
-    y_pred, _ = forward!(x, network, y_true)
-    return mapslices(argmax, y_pred, dims = 1)
+function predict_class(x::Array{Float}, y_true::Array{Float}, network::SlideNetwork, topk::Int = 1)
+    y_pred = forward!(x, network, y_true)
+    topk_argmax(x) = partialsortperm(x, 1:topk, rev=true)
+    return mapslices(topk_argmax, y_pred, dims = 1)
 end
