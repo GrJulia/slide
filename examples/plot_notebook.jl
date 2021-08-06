@@ -26,7 +26,8 @@ end
 begin
 	steps_accuracy = [x[1] for x in logs_dict["test_acc"]]
 	test_accuracy = [x[2] for x in logs_dict["test_acc"]]
-	train_accuracy = [x[2] for x in logs_dict["train_acc"]]
+	steps_loss = [x[1] for x in logs_dict["train_loss"]]
+	train_loss = [x[2] for x in logs_dict["train_loss"]]
 	steps_timings = [x[1] for x in logs_dict["train_step time"]]
 	timings = [x[2] for x in logs_dict["train_step time"]]
 	cumulated_timings = cumsum(timings)
@@ -36,7 +37,7 @@ end
 plot(steps_accuracy, test_accuracy)
 
 # ╔═╡ 421d1325-4a87-44a9-ad16-4d8bef408c59
-plot(steps_accuracy, train_accuracy)
+plot(steps_loss, train_loss)
 
 # ╔═╡ 8be25fad-0583-4c54-9dd3-1e935bfbaec5
 plot(steps_timings, timings)

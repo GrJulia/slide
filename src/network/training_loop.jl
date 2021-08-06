@@ -59,6 +59,9 @@ function train!(
         loss = 0
         for (n, (x_batch, y_batch)) in enumerate(training_batches)
             println("Iteration $i , batch $n")
+            if n > 2
+                break
+            end
             step!(logger)
             time_stats = @timed begin
                 println("Forward")
@@ -85,14 +88,13 @@ function train!(
             elapsed_time = time_stats.time
             log_scalar!(logger, "train_step time", elapsed_time)
             if n % test_parameters["test_frequency"] == 0
-                train_accuracy = compute_accuracy(network, training_batches, test_parameters["n_train_batches"], test_parameters["topk"])
                 test_accuracy = compute_accuracy(network, test_set, test_parameters["n_test_batches"], test_parameters["topk"])
                 log_scalar!(logger, "test_acc", test_accuracy)
-                log_scalar!(logger, "train_acc", train_accuracy)
             end
         end
 
         println("Iteration $i, Loss $(loss / length(training_batches))")
+        log_scalar!(logger, "train_loss", loss / length(training_batches))
         scheduler(i) do
             for layer in network.layers
                 update!(layer.hash_tables, layer.neurons)

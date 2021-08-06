@@ -165,7 +165,7 @@ function compute_accuracy(network::SlideNetwork, test_set, n_batch_test::Int, to
         else
             x_test, y_test = test_set[batch_id]
         end
-        class_predictions = predict_class(x_test, y_test, network)
+        class_predictions = predict_class(x_test, y_test, network, topk)
         accuracy += batch_accuracy(y_test, class_predictions)
     end
     return accuracy / n_batch_test
