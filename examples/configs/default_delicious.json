@@ -1,5 +1,5 @@
 {
-    "name": "default_delicious",
+    "name": "delicious",
     "dataset": {
         "train_path": "delicious_train",
         "test_path": "delicious_test",
@@ -10,7 +10,7 @@
     "hidden_dim": 128,
     "n_classes": 205443,
     "batch_size": 128,
-    "lr": 1e-4,
+    "lr": 1e-3,
     "n_epochs": 10,
     "use_gpu": false,
     "testing": {

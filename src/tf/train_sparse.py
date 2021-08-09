@@ -28,13 +28,14 @@ class Model(keras.Model):
             keras.layers.InputLayer(n_features, sparse=True),
             SparseDense(n_features, hidden_dim),
             keras.layers.Dense(n_classes, kernel_initializer="glorot_normal", bias_initializer="glorot_normal"),
+            keras.layers.Softmax(),
         ])
 
     def call(self, x):
         return self.model(x)
 
 
-def gen_sparse_dataset(dataset, batch_size, n_features, n_classes, n_samples=None):
+def preprocess_dataset(dataset, batch_size, n_samples)
     x_indices, x_vals, raw_ys = [], [], []
     cnt = 0
     for line in dataset.split('\n')[1:-1]:
@@ -52,6 +53,12 @@ def gen_sparse_dataset(dataset, batch_size, n_features, n_classes, n_samples=Non
     xs_indices = [x_indices[idx] for idx in perm]
     xs_vals = [x_vals[idx] for idx in perm]
     ys = [raw_ys[idx] for idx in perm]
+
+    return xs_indices, xs_vals, ys
+
+
+def gen_sparse_dataset(dataset, batch_size, n_features, n_classes, n_samples=None):
+    xs_indices, xs_vals, ys = preprocess_dataset(dataset, batch_size, n_samples)
 
     for b_idx in range(len(ys)//batch_size):
         x_indices, x_vals = [], []
@@ -131,7 +138,7 @@ class LoggerCallback(keras.callbacks.Callback):
 
 def train(config, train_f, test_f):
     model = Model(config["n_features"], config["hidden_dim"], config["n_classes"])
-    model.compile(optimizer=keras.optimizers.Adam(config["lr"]), loss=nn.softmax_cross_entropy_with_logits, run_eagerly=True)
+    model.compile(optimizer=keras.optimizers.Adam(config["lr"]), loss=keras.losses.CategoricalCrossentropy(), run_eagerly=True)
 
     train_gen_with_args = functools.partial(gen_sparse_dataset, train_f, config["batch_size"], config["n_features"], config["n_classes"])
     test_gen_with_args = functools.partial(gen_sparse_dataset, test_f, config["batch_size"], config["n_features"], config["n_classes"], n_samples=config["testing"]["n_batches"])

@@ -14,6 +14,7 @@ class Model(keras.Model):
             keras.layers.InputLayer(n_features),
             keras.layers.Dense(hidden_dim, activation='relu', kernel_initializer="glorot_normal", bias_initializer="glorot_normal"),
             keras.layers.Dense(n_classes, kernel_initializer="glorot_normal", bias_initializer="glorot_normal"),
+            keras.layers.Softmax(),
         ])
 
     def call(self, x):
@@ -131,7 +132,7 @@ class LoggerCallback(keras.callbacks.Callback):
 
 def train(config, train_f, test_f):
     model = Model(config["n_features"], config["hidden_dim"], config["n_classes"])
-    model.compile(optimizer=keras.optimizers.Adam(config["lr"]), loss=nn.softmax_cross_entropy_with_logits, run_eagerly=True)
+    model.compile(optimizer=keras.optimizers.Adam(config["lr"]), loss=keras.losses.CategoricalCrossentropy(), run_eagerly=True)
 
     train_set = SparseDataset(train_f, config["batch_size"], config["n_features"], config["n_classes"])
     test_set = SparseDataset(test_f, config["batch_size"], config["n_features"], config["n_classes"])

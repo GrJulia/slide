@@ -5,6 +5,7 @@ using DataSets
 using Conda
 
 Conda.add("tensorflow")
+Conda.add("tensorflow-gpu")
 
 pushfirst!(PyVector(pyimport("sys")."path"), "/mnt/data/code/slide/src/tf")
 

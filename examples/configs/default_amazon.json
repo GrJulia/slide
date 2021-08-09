@@ -1,5 +1,5 @@
 {
-    "name": "default_amazon",
+    "name": "amazon",
     "dataset": {
         "train_path": "amazon_train",
         "test_path": "amazon_test",
@@ -10,7 +10,7 @@
     "hidden_dim": 128,
     "n_classes": 670091,
     "batch_size": 256,
-    "lr": 1e-4,
+    "lr": 1e-3,
     "n_epochs": 10,
     "use_gpu": false,
     "testing": {
