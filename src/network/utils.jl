@@ -163,7 +163,7 @@ function compute_accuracy(
     n_batch_test::Int,
     topk::Int,
 )::Float
-    accuracy = 0.0
+    accuracy = zero(Float)
     for batch_id = 1:n_batch_test
         if typeof(test_set) == SparseDataset
             x_test, y_test = getobs(test_set, batch_id)
