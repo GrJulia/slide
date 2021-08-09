@@ -157,9 +157,14 @@ function numerical_gradient_bias(
 end
 
 
-function compute_accuracy(network::SlideNetwork, test_set, n_batch_test::Int, topk::Int)::Float
+function compute_accuracy(
+    network::SlideNetwork,
+    test_set,
+    n_batch_test::Int,
+    topk::Int,
+)::Float
     accuracy = 0.0
-    for batch_id in 1:n_batch_test
+    for batch_id = 1:n_batch_test
         if typeof(test_set) == SparseDataset
             x_test, y_test = getobs(test_set, batch_id)
         else
@@ -173,9 +178,9 @@ end
 
 function batch_accuracy(y_test::Array{Float}, class_predictions::Array{Int})::Float
     batch_size = size(y_test)[end]
-    accuracy = 0.0
-    for i in 1:batch_size
-        accuracy += sum(1 for x in y_test[:, i][class_predictions[i]] if x > 0 ; init=0.0)
+    accuracy = zero(Float)
+    for i = 1:batch_size
+        accuracy += sum(1 for x in y_test[:, i][class_predictions[i]] if x > 0; init = 0.0)
     end
     return accuracy / batch_size
 end

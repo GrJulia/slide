@@ -51,25 +51,24 @@ function train!(
     optimizer::Optimizer,
     logger::Logger;
     n_iters::Int,
-    scheduler::S = PeriodicScheduler(30),
+    scheduler::S = PeriodicScheduler(20),
     use_all_true_labels::Bool = true,
-    test_parameters::Dict
+    test_parameters::Dict,
 ) where {S<:AbstractScheduler}
     for i = 1:n_iters
         loss = 0
         for (n, (x_batch, y_batch)) in enumerate(training_batches)
             println("Iteration $i , batch $n")
-            if n > 2
-                break
-            end
             step!(logger)
             time_stats = @timed begin
                 println("Forward")
                 if use_all_true_labels
-                    y_batch_pred = forward!(x_batch, network, y_batch)
+                    forward_stats = @timed forward!(x_batch, network, y_batch)
                 else
-                    y_batch_pred = forward!(x_batch, network, nothing)
+                    forward_stats = @timed forward!(x_batch, network, nothing)
                 end
+                y_batch_pred = forward_stats.value
+                log_scalar!(logger, "forward_time", forward_stats.time)
                 last_layer_activated_neuron_ids =
                     get_active_neuron_ids(network, length(network.layers))
                 batch_loss, saved_softmax = negative_sparse_logit_cross_entropy(
@@ -88,7 +87,12 @@ function train!(
             elapsed_time = time_stats.time
             log_scalar!(logger, "train_step time", elapsed_time)
             if n % test_parameters["test_frequency"] == 0
-                test_accuracy = compute_accuracy(network, test_set, test_parameters["n_test_batches"], test_parameters["topk"])
+                test_accuracy = compute_accuracy(
+                    network,
+                    test_set,
+                    test_parameters["n_test_batches"],
+                    test_parameters["topk"],
+                )
                 log_scalar!(logger, "test_acc", test_accuracy)
             end
         end

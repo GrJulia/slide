@@ -43,7 +43,8 @@ function handle_batch_backward(
                     )
             end
             neuron.bias_gradients[i] = dz
-            neuron.weight_gradients .+= dz .* previous_activation ./ length(neuron.bias_gradients)
+            neuron.weight_gradients .+=
+                dz .* previous_activation ./ length(neuron.bias_gradients)
         end
     end
 end
