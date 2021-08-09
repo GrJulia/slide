@@ -1,5 +1,6 @@
 include("./lsh/Lsh.jl")
 include("./simhash/Simhash.jl")
+include("./dwta/DWTA.jl")
 
 module Hash
 
