@@ -43,7 +43,11 @@ function train_epoch!(model, train_loader, test_set, opt, device, config, logger
     for (it, (x, y)) in enumerate(train_loader)
         FluxTraining.step!(logger)
 
-        train_stats = @timed CUDA.@sync train_step!(model, params, opt, device, x, y)
+        train_stats = if device == gpu
+            @timed CUDA.@sync train_step!(model, params, opt, device, x, y)
+        else
+            @timed train_step!(model, params, opt, device, x, y)
+        end
 
         t1 = time_ns()
         log_scalar!(logger, "train_step + data loading time", (t1 - t0) / 1.0e9)
@@ -104,10 +108,11 @@ end
 logger = get_logger(config)
 train_loader, test_set = get_dataloaders(config)
 
-model = Chain(
-    Dense(config["n_features"], config["hidden_dim"], relu, init=Flux.glorot_normal),
-    Dense(config["hidden_dim"], config["n_classes"], init=Flux.glorot_normal),
-) |> device
+model =
+    Chain(
+        Dense(config["n_features"], config["hidden_dim"], relu, init = Flux.glorot_normal),
+        Dense(config["hidden_dim"], config["n_classes"], init = Flux.glorot_normal),
+    ) |> device
 
 opt = ADAM(config["lr"])
 
