@@ -1,5 +1,6 @@
 using Slide.Network: Batch, Float
 using Slide.Hash: AbstractLshParams
+using Slide.FluxTraining: Logger, log_scalar!, step!
 
 function build_network(network_params::Dict, batch_size::Int)::SlideNetwork
     network_layers = Vector{Layer}()
@@ -45,42 +46,59 @@ end
 
 function train!(
     training_batches,
+    test_set,
     network::SlideNetwork,
-    optimizer::Optimizer;
+    optimizer::Optimizer,
+    logger::Logger;
     n_iters::Int,
-    scheduler::S = PeriodicScheduler(10),
+    scheduler::S = PeriodicScheduler(20),
     use_all_true_labels::Bool = true,
+    test_parameters::Dict,
 ) where {S<:AbstractScheduler}
     for i = 1:n_iters
         loss = 0
         for (n, (x_batch, y_batch)) in enumerate(training_batches)
-            println("Iteration $i, batch $n")
-            start_batch_time = time()
-            println("Forward")
-            if use_all_true_labels
-                y_batch_pred = forward!(x_batch, network, y_batch)
-            else
-                y_batch_pred = forward!(x_batch, network, nothing)
+            println("Iteration $i , batch $n")
+            step!(logger)
+            time_stats = @timed begin
+                println("Forward")
+                if use_all_true_labels
+                    forward_stats = @timed forward!(x_batch, network, y_batch)
+                else
+                    forward_stats = @timed forward!(x_batch, network, nothing)
+                end
+                y_batch_pred = forward_stats.value
+                log_scalar!(logger, "forward_time", forward_stats.time)
+                last_layer_activated_neuron_ids =
+                    get_active_neuron_ids(network, length(network.layers))
+                batch_loss, saved_softmax = negative_sparse_logit_cross_entropy(
+                    y_batch_pred,
+                    y_batch,
+                    last_layer_activated_neuron_ids,
+                )
+                loss += batch_loss
+                println("Backward")
+                backward!(x_batch, y_batch_pred, y_batch, network, saved_softmax)
+                update_weight!(network, optimizer)
+                zero_neuron_attributes!(network)
             end
-            println("Froward time $(time() - start_batch_time)")
-            last_layer_activated_neuron_ids =
-                get_active_neuron_ids(network, length(network.layers))
-            batch_loss, saved_softmax = negative_sparse_logit_cross_entropy(
-                y_batch_pred,
-                y_batch,
-                last_layer_activated_neuron_ids,
-            )
-            loss += batch_loss
-            println("Backward")
-            backward!(x_batch, y_batch_pred, y_batch, network, saved_softmax)
-            println("Backward time $(time() - start_batch_time)")
-            update_weight!(network, optimizer)
-            zero_neuron_attributes!(network)
-            println("Total Batch time $(time() - start_batch_time)")
+            println("Training step done")
+
+            elapsed_time = time_stats.time
+            log_scalar!(logger, "train_step time", elapsed_time)
+            if n % test_parameters["test_frequency"] == 0
+                test_accuracy = compute_accuracy(
+                    network,
+                    test_set,
+                    test_parameters["n_test_batches"],
+                    test_parameters["topk"],
+                )
+                log_scalar!(logger, "test_acc", test_accuracy)
+            end
         end
 
-
         println("Iteration $i, Loss $(loss / length(training_batches))")
+        log_scalar!(logger, "train_loss", loss / length(training_batches))
         scheduler(i) do
             for layer in network.layers
                 update!(layer.hash_tables, layer.neurons)

@@ -1,5 +1,7 @@
 using Statistics
 using Slide.Network
+using Slide.FluxTraining: SparseDataset
+using LearnBase: getobs
 
 const Batch = Tuple{Matrix{Float},Matrix{Float}}
 
@@ -152,4 +154,33 @@ function numerical_gradient_bias(
 
     network.layers[layer_id].neurons[neuron_id].bias += epsilon
     return abs(numerical_grad - backprop_gradient)
+end
+
+
+function compute_accuracy(
+    network::SlideNetwork,
+    test_set,
+    n_batch_test::Int,
+    topk::Int,
+)::Float
+    accuracy = zero(Float)
+    for batch_id = 1:n_batch_test
+        if typeof(test_set) == SparseDataset
+            x_test, y_test = getobs(test_set, batch_id)
+        else
+            x_test, y_test = test_set[batch_id]
+        end
+        class_predictions = predict_class(x_test, y_test, network, topk)
+        accuracy += batch_accuracy(y_test, class_predictions, topk)
+    end
+    return accuracy / n_batch_test
+end
+
+function batch_accuracy(y_test::Array{Float}, class_predictions::Array{Int}, topk::Int)::Float
+    batch_size = size(y_test)[end]
+    accuracy = zero(Float)
+    for i = 1:batch_size
+        accuracy += count(x -> x > 0, y_test[:, i][class_predictions[i]]; init=zero(Float)) / topk
+    end
+    return accuracy / batch_size
 end
