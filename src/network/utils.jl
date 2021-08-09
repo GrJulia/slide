@@ -171,16 +171,16 @@ function compute_accuracy(
             x_test, y_test = test_set[batch_id]
         end
         class_predictions = predict_class(x_test, y_test, network, topk)
-        accuracy += batch_accuracy(y_test, class_predictions)
+        accuracy += batch_accuracy(y_test, class_predictions, topk)
     end
     return accuracy / n_batch_test
 end
 
-function batch_accuracy(y_test::Array{Float}, class_predictions::Array{Int})::Float
+function batch_accuracy(y_test::Array{Float}, class_predictions::Array{Int}, topk::Int)::Float
     batch_size = size(y_test)[end]
     accuracy = zero(Float)
     for i = 1:batch_size
-        accuracy += sum(1 for x in y_test[:, i][class_predictions[i]] if x > 0; init = 0.0)
+        accuracy += count(x -> x > 0, y_test[:, i][class_predictions[i]]; init=zero(Float)) / topk
     end
     return accuracy / batch_size
 end
