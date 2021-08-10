@@ -30,7 +30,8 @@ export AbstractScheduler,
     train!,
     update!,
     update_weight!,
-    zero_neuron_attributes!
+    zero_neuron_attributes!,
+    train_zygote!
 
 
 using Slide.LSH: Lsh
@@ -46,5 +47,6 @@ include("optimizer.jl")
 include("slide_forward.jl")
 include("slide_backward.jl")
 include("training_loop.jl")
+include("slide_zygote/slide_zygote_training_loop.jl")
 
 end
