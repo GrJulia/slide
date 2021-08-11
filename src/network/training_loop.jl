@@ -69,7 +69,8 @@ function train!(
                     nothing
                 end
 
-                forward_stats = @timed forward!(x_batch, network; y_true = y_batch_or_nothing)
+                forward_stats =
+                    @timed forward!(x_batch, network; y_true = y_batch_or_nothing)
                 y_batch_pred, last_layer_activated_neuron_ids = forward_stats.value
                 log_scalar!(logger, "forward_time", forward_stats.time)
 
@@ -84,7 +85,13 @@ function train!(
                     negative_sparse_logit_cross_entropy(y_batch_pred, y_batch_activated)
                 loss += batch_loss
 
-                backward_stats = @timed backward!(x_batch, y_batch_pred, y_batch_activated, network, saved_softmax)
+                backward_stats = @timed backward!(
+                    x_batch,
+                    y_batch_pred,
+                    y_batch_activated,
+                    network,
+                    saved_softmax,
+                )
 
                 log_scalar!(logger, "backward_time", backward_stats.time)
                 println("Backward time $(backward_stats.time)")

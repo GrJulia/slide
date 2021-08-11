@@ -12,32 +12,37 @@ function forward_single_sample(
     current_input = x
     activated_neuron_ids = 1:length(x)
 
-    for (l, layer) in enumerate(network.layers)
+    for (layer_idx, layer) in enumerate(network.layers)
 
         dense_input = zeros(Float, length(layer.neurons[1].weight))
         dense_input[activated_neuron_ids] = current_input
 
+        min_sampling_threshold = layer.hash_tables.min_threshold
+        sampling_ratio = layer.hash_tables.sampling_ratio
         # Get activated neurons and mark them as changed
-        curr_activated_neuron_ids = collect(
+        current_activated_neuron_ids = collect(
             retrieve(
                 layer.hash_tables.lsh,
                 @view dense_input[:];
-                threshold = max(90, length(layer.neurons) ÷ 200),
+                threshold = max(
+                    min_sampling_threshold,
+                    length(layer.neurons) ÷ sampling_ratio,
+                ),
             ),
         )
 
-        if !(isnothing(y_true)) && (l == length(network.layers))
-            union!(curr_activated_neuron_ids, findall(>(0), y_true))
+        if !(isnothing(y_true)) && (layer_idx == length(network.layers))
+            union!(current_activated_neuron_ids, findall(>(0), y_true))
         end
 
-        mark_ids!(layer.hash_tables, curr_activated_neuron_ids)
+        mark_ids!(layer.hash_tables, current_activated_neuron_ids)
 
-        layer.active_neurons[x_index] = curr_activated_neuron_ids
+        layer.active_neurons[x_index] = current_activated_neuron_ids
 
-        current_n_neurons = length(curr_activated_neuron_ids)
+        current_n_neurons = length(current_activated_neuron_ids)
         layer_output = zeros(Float, current_n_neurons)
 
-        for (i, neuron) in enumerate(@view layer.neurons[curr_activated_neuron_ids])
+        for (i, neuron) in enumerate(@view layer.neurons[current_activated_neuron_ids])
             layer_output[i] =
                 dot(current_input, view(neuron.weight, activated_neuron_ids)) + neuron.bias
         end
@@ -46,7 +51,7 @@ function forward_single_sample(
         current_input = layer_activation(layer_output)
 
         layer.output[x_index] = current_input
-        activated_neuron_ids = curr_activated_neuron_ids
+        activated_neuron_ids = current_activated_neuron_ids
     end
 end
 
@@ -79,9 +84,12 @@ function predict_class(
     y_active_pred, active_ids = forward!(x, network; y_true)
 
     y_pred = zeros(Float, size(y_true))
-    for (i, ids) in enumerate(active_ids)
+
+    @threads for i = 1:length(active_ids)
+        ids = active_ids[i]
         y_pred[ids, i] = y_active_pred[i]
     end
+
     topk_argmax(x) = partialsortperm(x, 1:topk, rev = true)
     return mapslices(topk_argmax, y_pred, dims = 1)
 end

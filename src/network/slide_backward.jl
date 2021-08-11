@@ -2,6 +2,8 @@ using Statistics: mean
 using Base.Threads: @threads
 using LinearAlgebra.BLAS: axpy!
 
+const FloatVector = AbstractVector{Float}
+
 function handle_batch_backward(
     x::T,
     y::U,
@@ -9,21 +11,21 @@ function handle_batch_backward(
     network::SlideNetwork,
     i::Int,
     saved_softmax::Vector{Float},
-) where {T<:AbstractVector{Float},P<:AbstractVector{Float},U<:AbstractVector{Float}}
+) where {T<:FloatVector,P<:FloatVector,U<:FloatVector}
     @inbounds for l = length(network.layers):-1:1
         layer = network.layers[l]
         active_neurons = layer.active_neurons[i]
 
         if l == 1
             previous_activation = x
-            prev_neurons = Vector{Id}(1:length(x))
+            previous_neurons = Vector{Id}(1:length(x))
         else
             previous_activation = network.layers[l-1].output[i]
-            prev_neurons = network.layers[l-1].active_neurons[i]
+            previous_neurons = network.layers[l-1].active_neurons[i]
         end
 
         for (k, neuron) in enumerate(view(layer.neurons, active_neurons))
-            neuron.was_active = true
+            neuron.is_active = true
             if l == length(network.layers)
                 # recall that saved_softmax's length is size(active_neurons)
                 # sum(y_true): to handle multiple labels
@@ -48,14 +50,14 @@ function handle_batch_backward(
 
             neuron.bias_gradients[i] = dz
             dz = dz / length(neuron.bias_gradients)
-            @views axpy!(dz, previous_activation, neuron.weight_gradients[prev_neurons])
+            @views axpy!(dz, previous_activation, neuron.weight_gradients[previous_neurons])
         end
     end
 end
 
 function update_weight!(network::SlideNetwork, optimizer::Optimizer)
     for layer in network.layers
-        @threads for neuron in filter(n -> n.was_active, layer.neurons)
+        @threads for neuron in filter(n -> n.is_active, layer.neurons)
             optimizer_step!(optimizer, neuron)
         end
     end
@@ -63,13 +65,13 @@ end
 
 function backward!(
     x::Matrix{Float},
-    y_pred::Vector{<:AbstractVector{Float}},
-    y_true::Vector{<:AbstractVector{Float}},
+    y_pred::Vector{<:FloatVector},
+    y_true::Vector{<:FloatVector},
     network::SlideNetwork,
-    saved_softmax::Vector{<:AbstractVector{Float}},
+    saved_softmax::Vector{<:FloatVector},
 )
     n_samples = size(x)[2]
-    @threads for i = 1:n_samples
+    @views @threads for i = 1:n_samples
         handle_batch_backward(x[:, i], y_pred[i], y_true[i], network, i, saved_softmax[i])
     end
 end

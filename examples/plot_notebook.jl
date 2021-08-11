@@ -6,11 +6,12 @@ using InteractiveUtils
 
 # ╔═╡ edd732b7-eea8-4caf-a781-64421b25246d
 begin
-	cd("/mnt/data/code/slide")
-	using Pkg; Pkg.activate(".")
-	using JSON
-	using Plots
-	plotly()
+    cd("/mnt/data/code/slide")
+    using Pkg
+    Pkg.activate(".")
+    using JSON
+    using Plots
+    plotly()
 end
 
 # ╔═╡ da3cb23d-ac31-44f8-823e-4d2a2ed818a5
@@ -18,19 +19,19 @@ log_path = "./examples/logs/default_delicious/logs.json"
 
 # ╔═╡ bed2d255-8fdc-4eb5-b5aa-7fe21f9fa42f
 begin
-	logs_raw = JSON.parsefile(log_path)
-	logs_dict = JSON.parse(logs_raw)
+    logs_raw = JSON.parsefile(log_path)
+    logs_dict = JSON.parse(logs_raw)
 end
 
 # ╔═╡ 2ba3d142-b268-41d2-8760-773a745462e0
 begin
-	steps_accuracy = [x[1] for x in logs_dict["test_acc"]]
-	test_accuracy = [x[2] for x in logs_dict["test_acc"]]
-	steps_loss = [x[1] for x in logs_dict["train_loss"]]
-	train_loss = [x[2] for x in logs_dict["train_loss"]]
-	steps_timings = [x[1] for x in logs_dict["train_step time"]]
-	timings = [x[2] for x in logs_dict["train_step time"]]
-	cumulated_timings = cumsum(timings)
+    steps_accuracy = [x[1] for x in logs_dict["test_acc"]]
+    test_accuracy = [x[2] for x in logs_dict["test_acc"]]
+    steps_loss = [x[1] for x in logs_dict["train_loss"]]
+    train_loss = [x[2] for x in logs_dict["train_loss"]]
+    steps_timings = [x[1] for x in logs_dict["train_step time"]]
+    timings = [x[2] for x in logs_dict["train_step time"]]
+    cumulated_timings = cumsum(timings)
 end
 
 # ╔═╡ 723a5cbf-6a12-4a38-8b41-320afb3ad564

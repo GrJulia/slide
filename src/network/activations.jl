@@ -1,8 +1,8 @@
-@inline sigmoid(x::Vector{Float})::Vector{Float} = one(Float) ./ (one(Float) .+ exp.(.-x))
+@inline sigmoid(x::Vector{Float})::Vector{Float} = 1 ./ (1 .+ exp.(.-x))
 
 @inline identity(x::Any)::Any = x
 
-@inline relu(x::Vector{Float})::Vector{Float} = max.(zero(Float), x)
+@inline relu(x::Vector{Float})::Vector{Float} = max.(0, x)
 
 function negative_sparse_logit_cross_entropy(
     output::Vector{<:AbstractVector{Float}},

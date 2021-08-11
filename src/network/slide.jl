@@ -1,3 +1,4 @@
+using Base: @kwdef
 using Random: default_rng
 using FLoops: ThreadedEx
 
@@ -16,34 +17,40 @@ end
 
 AdamAttributes(input_dim::Int) = AdamAttributes(zeros(input_dim), 0, zeros(input_dim), 0)
 
-mutable struct Neuron{W<:AbstractOptimizerAttributes}
+@kwdef mutable struct Neuron{W<:AbstractOptimizerAttributes}
     id::Id
     weight::Vector{Float}
     bias::Float
     weight_gradients::Vector{Float}
     bias_gradients::Vector{Float}
     optimizer_attributes::W
-    was_active::Bool
+    is_active::Bool
 end
 
 Neuron(id::Id, batch_size::Int, input_dim::Int) = Neuron(
-    id,
-    rand(Float, input_dim),
-    rand(Float),
-    zeros(Float, input_dim),
-    zeros(Float, batch_size),
-    AdamAttributes(input_dim),
-    false,
+    id = id,
+    weight = rand(Float, input_dim),
+    bias = rand(Float),
+    weight_gradients = zeros(Float, input_dim),
+    bias_gradients = zeros(Float, batch_size),
+    optimizer_attributes = AdamAttributes(input_dim),
+    is_active = false,
 )
 
-mutable struct SlideHashTables{A<:AbstractLshParams,Hasher<:AbstractHasher{SubArray{Float}}}
+@kwdef mutable struct SlideHashTables{
+    A<:AbstractLshParams,
+    Hasher<:AbstractHasher{SubArray{Float}},
+}
     lsh::SlideLsh{Hasher}
     lsh_params::A
     hashes::Matrix{Int}
     changed_ids::Set{Id}
+
+    sampling_ratio::Int = 200
+    min_threshold::Int = 90
 end
 
-struct Layer{
+@kwdef struct Layer{
     A<:AbstractLshParams,
     T<:AbstractOptimizerAttributes,
     F<:Function,
@@ -78,20 +85,25 @@ function Layer(
             Vector{Tuple{SubArray{Float},Id}},
             map(neuron -> (@view(neuron.weight[:]), neuron.id), neurons),
         );
-        executor=ThreadedEx()
+        executor = ThreadedEx(),
     )
 
-    hash_tables = SlideHashTables(lsh, lsh_params, hashes, Set{Id}())
+    hash_tables = SlideHashTables(
+        lsh = lsh,
+        lsh_params = lsh_params,
+        hashes = hashes,
+        changed_ids = Set{Id}(),
+    )
 
     undef_vec(U::DataType) = Vector{U}(undef, batch_size)
 
     Layer(
-        id,
-        neurons,
-        hash_tables,
-        layer_activation,
-        undef_vec(Vector{Id}),
-        undef_vec(Vector{Float}),
+        id = id,
+        neurons = neurons,
+        hash_tables = hash_tables,
+        layer_activation = layer_activation,
+        active_neurons = undef_vec(Vector{Id}),
+        output = undef_vec(Vector{Float}),
     )
 end
 
@@ -122,7 +134,7 @@ function update!(
             Vector{Tuple{SubArray{Float},Id}},
             map(id -> (@view(neurons[id].weight[:]), id), changed_ids),
         );
-        executor=ThreadedEx(),
+        executor = ThreadedEx(),
     )
 
     hash_tables.hashes[:, changed_ids] = new_hashes

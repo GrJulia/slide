@@ -32,7 +32,12 @@ neuron_with_id(i) = Neuron(
 @testset "HashTables" begin
     lsh = init_lsh!(MockParams(), 1, 1)
 
-    tables = SlideHashTables(lsh, MockParams(), zeros(Int, 3, 4), Set{Id}([1, 3]))
+    tables = SlideHashTables(
+        lsh = lsh,
+        lsh_params = MockParams(),
+        hashes = zeros(Int, 3, 4),
+        changed_ids = Set{Id}([1, 3]),
+    )
 
     update!(
         tables,
