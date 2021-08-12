@@ -110,7 +110,7 @@ end
 """
     add_batch!(lsh, signatures, elems)
 
-For each element extract the signature from the signatures matrix and using it 
+For each element extract the signature from the signatures matrix and using it
 insert its into the tables.
 """
 function add_batch!(
@@ -165,14 +165,18 @@ function retrieve(table::HashTable{V}, signature::Int)::Bucket{V} where {V}
 end
 
 """
-    retrieve(lsh, elem)
+    retrieve(lsh, elem; threshold=nothing)
 
 From each table similar elements to the `elem` are retrieved.
+If threshold argument is not nothing then after the count of retrieved elements
+will be higher than it no further element will be retrieved.
+
 Possible inconsistency in the SLIDE paper: Union vs Intersecion.
 """
 function retrieve(
     lsh::Lsh{K,V,Hasher},
-    key::K,
+    key::K;
+    threshold::Union{Nothing,Int} = nothing,
 )::Set{V} where {K,V,Hasher<:AbstractHasher{K}}
     signatures = compute_query_signatures(lsh.hash, key)
 
@@ -181,6 +185,10 @@ function retrieve(
     for (signature, ht) in zip(signatures, lsh.hash_tables)
         retrieved = retrieve(ht, signature)
         union!(similar_elems, retrieved)
+
+        if !isnothing(threshold) && length(similar_elems) >= threshold
+            break
+        end
     end
 
     similar_elems
