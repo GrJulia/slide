@@ -10,7 +10,7 @@
     "hidden_dim": 128,
     "n_classes": 205443,
     "batch_size": 128,
-    "lr": 1e-3,
+    "lr": 1e-4,
     "n_epochs": 10,
     "use_gpu": false,
     "testing": {

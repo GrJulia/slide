@@ -96,7 +96,7 @@ end
 
 
 config = JSON.parsefile(ARGS[1])
-config["name"] *= "_" * randstring(8)
+config["name"] *= "_flux_" * randstring(8)
 println("Name: $(config["name"])")
 
 device = if config["use_gpu"]

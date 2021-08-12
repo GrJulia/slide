@@ -51,17 +51,16 @@ class SparseDataset(keras.utils.Sequence):
     def __len__(self):
         return len(self.ys) // self.batch_size
 
-    def __getitem__(self, b_idx):
+    def __getitem__(self, batch_idx):
         (xs_indices, xs_vals) = self.xs
 
         x = np.zeros((self.batch_size, self.n_features))
         y = np.zeros((self.batch_size, self.n_classes))
-        for idx in range(self.batch_size):
-            tr_idx = b_idx * self.batch_size + idx
-            x[idx, xs_indices[tr_idx]] = xs_vals[tr_idx]
+        for i in range(self.batch_size):
+            true_idx = batch_idx * self.batch_size + i
+            x[idx, xs_indices[true_idx]] = xs_vals[true_idx]
             
-            ys = self.ys[tr_idx]
-            y[idx, ys] = 1
+            y[i, self.ys[true_idx]] = 1
         
         return x, y
 
@@ -85,13 +84,14 @@ class TestAccCallback(keras.callbacks.Callback):
             rand_indices = np.random.randint(0, len(self.test_set), self.n_batches)
         else:
             rand_indices = np.arange(self.n_batches)
-        total_acc, batch_size = 0, self.test_set.batch_size
+
+        n_true_positives, batch_size = 0, self.test_set.batch_size
         for idx in rand_indices:
             x, y = self.test_set[idx]
             out = self.model(x)
             top_class = np.argmax(out, axis=1).reshape(batch_size, 1)
-            total_acc += np.sum(np.take_along_axis(y, top_class, axis=1)) / batch_size
-        test_acc = total_acc / self.n_batches
+            n_true_positives += np.sum(np.take_along_axis(y, top_class, axis=1))
+        test_acc = total_acc / (self.n_batches * batch_size)
         return test_acc
 
 

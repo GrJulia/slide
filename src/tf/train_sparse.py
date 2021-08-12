@@ -8,6 +8,7 @@ from collections import defaultdict
 import json
 import math
 import functools
+from typing import Tuple, List
 
 
 class SparseDense(keras.layers.Layer):
@@ -35,7 +36,7 @@ class Model(keras.Model):
         return self.model(x)
 
 
-def preprocess_dataset(dataset, batch_size, n_samples)
+def preprocess_dataset(dataset_path, batch_size, n_samples) -> Tuple[List[np.ndarray], List[List[float]], List[np.ndarray]]:
     x_indices, x_vals, raw_ys = [], [], []
     cnt = 0
     for line in dataset.split('\n')[1:-1]:
@@ -60,16 +61,16 @@ def preprocess_dataset(dataset, batch_size, n_samples)
 def gen_sparse_dataset(dataset, batch_size, n_features, n_classes, n_samples=None):
     xs_indices, xs_vals, ys = preprocess_dataset(dataset, batch_size, n_samples)
 
-    for b_idx in range(len(ys)//batch_size):
+    for batch_idx in range(len(ys)//batch_size):
         x_indices, x_vals = [], []
         y = np.zeros((batch_size, n_classes))
-        for idx in range(batch_size):
-            tr_idx = b_idx * batch_size + idx
+        for i in range(batch_size):
+            true_idx = batch_idx * batch_size + i
 
-            x_indices += [[idx, x_index] for x_index in xs_indices[tr_idx]]
-            x_vals += xs_vals[tr_idx]
+            x_indices += [[i, x_index] for x_index in xs_indices[true_idx]]
+            x_vals += xs_vals[true_idx]
 
-            y[idx, ys[tr_idx]] = 1
+            y[i, ys[true_idx]] = 1
 
         yield (np.array(x_indices), np.array(x_vals), np.array([batch_size, n_features]), y)
 
@@ -89,15 +90,14 @@ class TestAccCallback(keras.callbacks.Callback):
             logs["test_acc"] = (self.cnt, self.test_epoch())
 
     def test_epoch(self):
-        total_acc, batch_size = 0, self.batch_size
-        cnt = 0
+        n_true_positives, cnt, batch_size = 0, 0, self.batch_size
         for x, y in self.test_set:
             out = self.model(x)
             top_class = np.argmax(out, axis=1).reshape(batch_size, 1)
-            total_acc += np.sum(np.take_along_axis(np.array(y), top_class, axis=1)) / batch_size
+            n_true_positives += np.sum(np.take_along_axis(np.array(y), top_class, axis=1))
             cnt += 1
         assert(cnt == self.n_batches)
-        test_acc = total_acc / self.n_batches
+        test_acc = total_acc / (self.n_batches * batch_size)
         return test_acc
 
 
