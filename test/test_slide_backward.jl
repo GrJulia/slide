@@ -1,15 +1,24 @@
 using Test
 
+using Random: seed!
+
 using Slide
 using Slide.Network
 using Slide.LshSimHashWrapper: LshSimHashParams
 using Slide.Hash: LshParams
 
+seed!(0)
 
 @testset "slide_backward" begin
+    epsilon, threshold = if Float == Float64
+        1e-5, 1e-8
+    else
+        Float32(1e-1), Float32(1e-4)
+    end
+
     n_layers = 2
     n_buckets = 10
-    batch_size = 128
+    batch_size = 1
     input_dim = 16
     output_dim = 16
 
@@ -43,16 +52,15 @@ using Slide.Hash: LshParams
                     weight_index,
                     x,
                     y_cat,
-                    0.00001,
-                ) < 1e-8
+                    epsilon,
+                ) < threshold
             end
         end
     end
-    
     for layer in network.layers
         for neuron in layer.neurons
-            @test numerical_gradient_bias(network, layer.id, neuron.id, x, y_cat, 0.00001) <
-                  1e-8
+            @test numerical_gradient_bias(network, layer.id, neuron.id, x, y_cat, epsilon) <
+                  threshold
         end
     end
 end

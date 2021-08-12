@@ -39,7 +39,7 @@ function initialize!(
         end
     end
 
-    idx_to_n_bins  = [length(bin_ids) for bin_ids in index_to_bin_ids]
+    idx_to_n_bins = [length(bin_ids) for bin_ids in index_to_bin_ids]
     n_bins_per_idx_offsets = accumulate(+, idx_to_n_bins)
     pushfirst!(n_bins_per_idx_offsets, 0)
 
@@ -65,7 +65,7 @@ function signatures(
     dwta::DWTAHasher,
     data::A,
     wta::Bool;
-    max_n_attemps=100
+    max_n_attemps = 100,
 )::Signatures where {A<:AbstractVector{<:Number}}
     n_hashes, n_bins = dwta.n_hashes, dwta.n_bins
     hashes = fill(EMPTY_SAMPLING, n_hashes)
@@ -73,7 +73,8 @@ function signatures(
     bin_cnt = fill(one(Idx), n_bins)
 
     for i in eachindex(data)
-        idx_start, idx_end = dwta.n_bins_per_idx_offsets[i] + 1, dwta.n_bins_per_idx_offsets[i+1]
+        idx_start, idx_end =
+            dwta.n_bins_per_idx_offsets[i] + 1, dwta.n_bins_per_idx_offsets[i+1]
         if idx_end - idx_start == -1 # 'idx' isn't present in any of the bins
             continue
         end

@@ -9,6 +9,8 @@ on:
 jobs:
   test:
     runs-on: ${{ matrix.os }}
+    env:
+      USE_FLOAT64: true
     strategy:
       matrix:
         julia-version: ['1.6']

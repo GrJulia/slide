@@ -94,7 +94,8 @@ function preprocess_dataset(dataset_path, shuffle)
     for line in lines[2:end-1]
         line_split = split(line)
         x = map(
-            ftr -> (parse(Int, split(ftr, ':')[1]) + 1, parse(Float, split(ftr, ':')[2])),
+            ftr ->
+                (parse(Int, split(ftr, ':')[1]) + 1, parse(Float, split(ftr, ':')[2])),
             line_split[2:end],
         )
         y = parse.(Int, split(line_split[1], ',')) .+ 1
