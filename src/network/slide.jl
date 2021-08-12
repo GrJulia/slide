@@ -25,6 +25,8 @@ AdamAttributes(input_dim::Int) = AdamAttributes(zeros(input_dim), 0, zeros(input
     bias_gradients::Vector{Float}
     optimizer_attributes::W
     is_active::Bool
+    grad_output_w::Vector
+    grad_output_b::Vector
 end
 
 Neuron(id::Id, batch_size::Int, input_dim::Int) = Neuron(
@@ -35,6 +37,8 @@ Neuron(id::Id, batch_size::Int, input_dim::Int) = Neuron(
     bias_gradients = zeros(Float, batch_size),
     optimizer_attributes = AdamAttributes(input_dim),
     is_active = false,
+    grad_output_w = resize!(Vector{Array{Float}}(), batch_size),
+    grad_output_b = resize!(Vector{Array{Float}}(), batch_size)
 )
 
 @kwdef mutable struct SlideHashTables{

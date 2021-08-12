@@ -31,8 +31,9 @@ export AbstractScheduler,
     update!,
     update_weight!,
     zero_neuron_attributes!,
-    train_zygote!
-
+    layer_forward_and_backward,
+    forward_single_sample_zygote,
+    forward_zygote!
 
 using Slide.LSH: Lsh
 using Slide: Float, Id

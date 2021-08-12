@@ -1,73 +1,92 @@
-using Slide.Network: Batch, Float
-using Slide.Hash: AbstractLshParams
-using Slide.FluxTraining: Logger, log_scalar!, step!
 using Zygote
+using LinearAlgebra
+using Flux
 
-function forward_single_sample_zygote!(
-    x,
-    network::SlideNetwork,
-    activated_neuron_ids,
-    activated_neurons_weights,
-    activated_neurons_bias,
-)
-    n_layers = length(network.layers)
-    current_input = x
-    for i = 1:n_layers
-        layer = network.layers[i]
-        current_n_neurons = length(layer.neurons)
-        layer_activation = layer.layer_activation
-        layer_output = Vector{Float}()
+relu_scalar(x) = max(0, x)
 
-        for (k, neuron_id) in enumerate(activated_neuron_ids[i])
-            current_weight = activated_neurons_weights[i][k]
-            current_bias = activated_neurons_bias[i][k]
-            current_layer_output =
-                dot(current_input, current_weight) + current_bias
-            push!(layer_output, current_layer_output)
-        end
-        current_input = layer_activation(layer_output)
-    end
-    return current_input
-end
-
-
-function train_zygote!(
-    training_batches,
-    network::SlideNetwork ;
-    n_iters::Int,
-)
-    for i = 1:n_iters
-        for (x_batch, y_batch) in training_batches
-            for k in 1:size(x_batch)[2]
-                #activated_neuron_ids = [[id for id in retrieve(layer.hash_tables.lsh, (@view x_batch[:, k]))] for layer in network.layers]
-                activated_neuron_ids = [rand(1:length(layer.neurons), 5) for layer in network.layers]
-                activated_neurons_weights = [[network.layers[i].neurons[id].weight for id in activated_neuron_ids[i]] for i in 1:length(activated_neuron_ids)]
-                activated_neurons_bias = [[network.layers[i].neurons[id].bias for id in activated_neuron_ids[i]] for i in 1:length(activated_neuron_ids)]
-                output = forward_single_sample_zygote!(x_batch[:, k], network, activated_neuron_ids, activated_neurons_weights, activated_neurons_bias)
-                loss = negative_cross_entropy_zygote(output, y_batch)
-                x_sample = x_batch[:, k]
-                grads_w, grads_b = Zygote.gradient((weight, bias) -> negative_cross_entropy_zygote(forward_single_sample_zygote!(x_sample, network, activated_neuron_ids, weight, bias), y_batch),
-                    activated_neurons_weights, activated_neurons_bias
-                )
-            end
-        end
-    end
-end
-
-function negative_cross_entropy_zygote(
-    output,
-    y_true,
-)
-    λ, argmax_output = findmax(output)
-    sparse_exp_output = map(a -> exp(a - λ), output)
-    return  - sum(
-        y_true .* (
-            (output .- λ) .- log1p(
-                sum(
-                    i == argmax_output ? 0.0 : sparse_exp_output[i] for
-                    i = 1:length(sparse_exp_output)
-                ),
+function layer_forward_and_backward(current_activated_neurons, activated_neuron_ids, current_input, layer_activation, x_index)
+    current_n_neurons = length(current_activated_neurons)
+    layer_output = zeros(Float, current_n_neurons)
+    for (i, neuron) in enumerate(current_activated_neurons)
+        layer_output_i, neurons_gradients = withjacobian(
+            (weight, bias) -> relu_scalar(dot(current_input, weight) + bias), 
+            view(neuron.weight, activated_neuron_ids),neuron.bias
             )
-        ),
-    )
+        layer_output[i] = layer_output_i[1]
+        neuron.grad_output_w[x_index] = neurons_gradients[1]
+        neuron.grad_output_b[x_index] = neurons_gradients[2]
+
+    end
+    return layer_output
+end
+
+
+function forward_single_sample_zygote(
+    x::SubArray{Float},
+    network::SlideNetwork,
+    x_index::Int;
+    y_true::Union{Nothing,SubArray{Float}} = nothing,
+)
+    current_input = x
+    activated_neuron_ids = 1:length(x)
+
+    for (layer_idx, layer) in enumerate(network.layers)
+
+        dense_input = zeros(Float, length(layer.neurons[1].weight))
+        dense_input[activated_neuron_ids] = current_input
+
+        min_sampling_threshold = layer.hash_tables.min_threshold
+        sampling_ratio = layer.hash_tables.sampling_ratio
+        # Get activated neurons and mark them as changed
+        current_activated_neuron_ids = collect(
+            retrieve(
+                layer.hash_tables.lsh,
+                @view dense_input[:];
+                threshold = max(
+                    min_sampling_threshold,
+                    length(layer.neurons) ÷ sampling_ratio,
+                ),
+            ),
+        )
+
+        if !(isnothing(y_true)) && (layer_idx == length(network.layers))
+            union!(current_activated_neuron_ids, findall(>(0), y_true))
+        end
+
+        mark_ids!(layer.hash_tables, current_activated_neuron_ids)
+
+        layer.active_neurons[x_index] = current_activated_neuron_ids
+
+        current_input = layer_forward_and_backward(
+            layer.neurons[current_activated_neuron_ids],
+            activated_neuron_ids, 
+            current_input, 
+            layer.layer_activation,
+            x_index
+        )
+
+        layer.output[x_index] = current_input
+        activated_neuron_ids = current_activated_neuron_ids
+    end
+end
+
+
+function forward_zygote!(
+    x::Array{Float},
+    network::SlideNetwork;
+    y_true::Union{Nothing,Array{Float}} = nothing,
+)::Tuple{Vector{Vector{Float}},Vector{Vector{Id}}}
+    n_samples = typeof(x) == Vector{Float} ? 1 : size(x)[end]
+    last_layer = network.layers[end]
+
+    @views for i = 1:n_samples
+        forward_single_sample_zygote(
+            x[:, i],
+            network,
+            i;
+            y_true = isnothing(y_true) ? y_true : y_true[:, i],
+        )
+    end
+
+    last_layer.output, last_layer.active_neurons
 end

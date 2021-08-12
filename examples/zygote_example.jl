@@ -80,8 +80,8 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
     logger = get_logger(dataset_config)
 
-    train_zygote!(train_loader, network ; n_iters = 1)
-    println("DONE \n")
+    # train_zygote!(train_loader, network ; n_iters = 1)
+    # println("DONE \n")
 
-    save(logger)
+    # save(logger)
 end
