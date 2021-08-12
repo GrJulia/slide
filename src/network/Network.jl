@@ -13,6 +13,7 @@ export AbstractScheduler,
     backward!,
     batch_input,
     build_network,
+    convert_neurons_to_batch,
     forward!,
     forward_single_sample,
     gradient,
@@ -36,8 +37,7 @@ export AbstractScheduler,
 using Slide.LSH: Lsh
 using Slide: Float, Id
 
-const SlideLsh{Hasher} = Lsh{SubArray{Float},Id,Hasher}
-
+include("hashtables.jl")
 include("scheduler.jl")
 include("activations.jl")
 include("slide.jl")

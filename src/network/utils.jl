@@ -3,9 +3,16 @@ using LearnBase: getobs
 using FLoops: SequentialEx
 
 using Slide.Network
+using Slide: LshBatch, Float, Id
 using Slide.FluxTraining: SparseDataset
 
 const Batch = Tuple{Matrix{Float},Matrix{Float}}
+
+function convert_neurons_to_batch(
+    neurons::A,
+)::LshBatch where {T,A<:AbstractVector{Neuron{T}}}
+    convert(LshBatch, map(neuron -> (@view(neuron.weight[:]), neuron.id), neurons))
+end
 
 function batch_input(
     x::Matrix{Float},
