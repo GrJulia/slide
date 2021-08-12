@@ -1,6 +1,6 @@
 module DWTA
 
-export DWTAHasher, Signature, initialize!, signature
+export DwtaHasher, Signature, initialize!, signature
 
 using Slide: Float
 
@@ -15,7 +15,7 @@ const EMPTY_SAMPLING_VAL = Float(-Inf)
 const ZERO_VAL = zero(Float)
 
 
-struct DWTAHasher
+struct DwtaHasher
     indices_in_bin::Matrix{Int32}
     n_hashes::UInt32
     log_n_hashes::UInt32
@@ -26,14 +26,14 @@ function initialize!(
     n_hashes::UInt32,
     k::UInt32,
     data_len::UInt32,
-)::DWTAHasher where {Rand<:AbstractRNG}
+)::DwtaHasher where {Rand<:AbstractRNG}
     n_perms = ceil(UInt32, n_hashes * k / data_len)
     perms = vcat((randperm(rng, data_len) for _ = 1:n_perms)...)
     indices_in_bin = reshape(perms[1:n_hashes*k], (k, n_hashes))
-    
+
     log_n_hashes = ceil(UInt32, log2(n_hashes))
 
-    DWTAHasher(indices_in_bin, n_hashes, log_n_hashes)
+    DwtaHasher(indices_in_bin, n_hashes, log_n_hashes)
 end
 
 """
@@ -42,16 +42,16 @@ It computes f(x) = (a*x mod 2^w) div 2^(w-M) by doing (a*x) >> (w-M), where w in
 In other words, hash is computed by deriving M highest bits.
 Link: https://en.wikipedia.org/wiki/Universal_hashing
 """
-function two_universal_hash(dwta::DWTAHasher, bin_idx::UInt32, cnt::UInt32)::UInt32
+function two_universal_hash(dwta::DwtaHasher, bin_idx::UInt32, cnt::UInt32)::UInt32
     pair_hash = (bin_idx << 6) + cnt
     return ((13557786907 * pair_hash) >>> (32 - dwta.log_n_hashes)) % dwta.n_hashes + 1
 end
 
 function signature(
-    dwta::DWTAHasher,
+    dwta::DwtaHasher,
     data::A,
     densification::Bool;
-    max_n_attemps=UInt32(100)
+    max_n_attemps = UInt32(100),
 )::Signature where {A<:AbstractVector{<:Number}}
     indices_in_bin = dwta.indices_in_bin
     n_hashes = dwta.n_hashes

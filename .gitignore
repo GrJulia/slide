@@ -29,3 +29,4 @@ examples/datasets/*
 !examples/datasets/.gitkeep
 examples/logs/*
 examples/configs/*
+**/__pycache__
