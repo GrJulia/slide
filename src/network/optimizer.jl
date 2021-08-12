@@ -1,5 +1,7 @@
 using Base: @kwdef
 
+using Slide.Network.Layers: Neuron
+
 abstract type Optimizer end
 
 function optimizer_step!(optimizer::Optimizer, neuron::Neuron)

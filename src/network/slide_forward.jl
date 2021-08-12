@@ -3,6 +3,7 @@ using FLoops: @floop, ThreadedEx
 
 using Slide.LSH: retrieve
 
+using Slide.Network.Layers: new_batch!
 
 function forward_single_sample(
     x::SubArray{Float},
@@ -93,5 +94,5 @@ function predict_class(
     end
 
     topk_argmax(x) = partialsortperm(x, 1:topk, rev = true)
-    return mapslices(topk_argmax, y_pred, dims = 1)
+    mapslices(topk_argmax, y_pred, dims = 1)
 end

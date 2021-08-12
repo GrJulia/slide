@@ -4,6 +4,7 @@ using Random: seed!
 
 using Slide
 using Slide.Network
+using Slide.Network.Layers
 using Slide.LshSimHashWrapper: LshSimHashParams
 using Slide.Hash: LshParams
 
@@ -38,7 +39,7 @@ seed!(0)
 
     x = rand(Float, input_dim, batch_size)
     y = Vector{Float}(rand(1:output_dim, batch_size))
-    network = build_network(network_params, batch_size)
+    network = build_network(network_params)
     y_cat = one_hot(y, output_dim)
     y_cat ./= sum(y_cat, dims = 1)
 

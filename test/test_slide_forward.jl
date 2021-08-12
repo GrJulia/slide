@@ -2,6 +2,7 @@ using Test
 
 using Slide
 using Slide.Network
+using Slide.Network.Layers
 using Slide.LshSimHashWrapper: LshSimHashParams
 using Slide.Hash: LshParams
 using Slide.LSH: retrieve
@@ -35,8 +36,11 @@ simparams = LshSimHashParams(common_lsh, 3, 1, 3)
         false,
     )
 
-    network =
-        SlideNetwork([Layer(1, [neuron_1, neuron_2], simparams, identity; batch_size = 1)])
+    network = SlideNetwork([SlideLayer(1, [neuron_1, neuron_2], simparams, identity)])
+
+    for layer in network.layers
+        new_batch!(layer, 1)
+    end
 
     @views begin
         @test length(network.layers) == 1
