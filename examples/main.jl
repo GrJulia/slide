@@ -7,6 +7,8 @@ using Slide.LshSimHashWrapper: LshSimHashParams, get_simhash_params
 using Slide.Hash: LshParams
 using Slide.FluxTraining
 
+Random.seed!(1);
+
 if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
     use_real_dataset = true
@@ -32,7 +34,7 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
             "test_frequency" => dataset_config["testing"]["test_freq"],
             "n_test_batches" => dataset_config["testing"]["n_batches"],
             "topk" => dataset_config["testing"]["top_k_classes"],
-        )   
+        )
 
     else
         input_dim = config.input_dim
@@ -58,11 +60,7 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
         train_loader = batch_input(x, y_cat, batch_size, drop_last)
         test_set = batch_input(x_test, y_cat_test, batch_size, drop_last)
 
-        test_parameters = Dict(
-            "test_frequency" => 2,
-            "n_test_batches" => 2,
-            "topk" => 1,
-        )
+        test_parameters = Dict("test_frequency" => 2, "n_test_batches" => 2, "topk" => 1)
     end
 
     common_lsh = LshParams(
@@ -98,7 +96,17 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
     logger = get_logger(dataset_config)
 
-    train!(train_loader, test_set, network, optimizer, logger; n_iters = 3, use_all_true_labels = true, test_parameters = test_parameters)
+    train!(
+        train_loader,
+        test_set,
+        network,
+        optimizer,
+        logger;
+        n_iters = 3,
+        scheduler = PeriodicScheduler(50),
+        use_all_true_labels = true,
+        test_parameters = test_parameters,
+    )
     println("DONE \n")
 
     save(logger)

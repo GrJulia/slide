@@ -1,5 +1,12 @@
 using Test
-using Slide.DWTA: DWTAHasher, Signatures, initialize!, signatures, EMPTY_SAMPLING, two_universal_hash, MAX_N_ATTEMPS
+using Slide.DWTA:
+    DWTAHasher,
+    Signatures,
+    initialize!,
+    signatures,
+    EMPTY_SAMPLING,
+    two_universal_hash,
+    MAX_N_ATTEMPS
 using Random: default_rng, randperm
 
 
@@ -21,7 +28,14 @@ using Random: default_rng, randperm
 
     @testset "example from the paper" begin
         out1 = Signatures([EMPTY_SAMPLING, 1, 3, EMPTY_SAMPLING, 3, EMPTY_SAMPLING])
-        out2 = Signatures([EMPTY_SAMPLING, 1, EMPTY_SAMPLING, EMPTY_SAMPLING, 2, EMPTY_SAMPLING])
+        out2 = Signatures([
+            EMPTY_SAMPLING,
+            1,
+            EMPTY_SAMPLING,
+            EMPTY_SAMPLING,
+            2,
+            EMPTY_SAMPLING,
+        ])
 
         @test signatures(dwta, data1, true) == out1
         @test signatures(dwta, data2, true) == out2
@@ -66,7 +80,8 @@ end
     function test_routine(rng, n_tables, n_bins, k, data_len)
         dwta = initialize!(rng, n_tables * n_bins, n_bins, k, data_len)
         n_indices = n_tables * n_bins * k
-        length(dwta.idxs_to_list_of_bins) == n_indices && dwta.n_bins_per_idx_offsets[end] == n_indices
+        length(dwta.idxs_to_list_of_bins) == n_indices &&
+            dwta.n_bins_per_idx_offsets[end] == n_indices
     end
 
     @testset "dense indices" begin
