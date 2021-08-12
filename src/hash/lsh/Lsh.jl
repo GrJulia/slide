@@ -9,14 +9,12 @@ using FLoops: @floop, SequentialEx
 
 """
 Supertype for hashers which can hash elements of type T.
-
 Subtypes of the `AbstractHasher{T}` should implement following methods:
 - `compute_signatures(h::AbstractHasher{T}, elem::T)::Vector{Int}`
 - `compute_query_signatures(h::AbstractHasher{T}, elem::T)::Vector{Int}`
 and in place version of those functions:
 - `compute_signatures!(h::AbstractHasher{K}, elem::K, signature <: AbstractArray{Int})
 - `compute_query_signatures!(h::AbstractHasher{K}, elem::K, signature <: AbstractArray{Int})`
-
 Most of the implementations can have `compute_query_signatures` being equal to `compute_signatures`,
 the distinction is only important for the asymmetric-LSH implementations.
 """
@@ -81,19 +79,18 @@ end
 
 """
     add!(table, signature, elem)
-
 Adds `elem` to the bucket pointed by `signature`. If the selected bucket contains
 more elements than the capacity of the bucket after addition then the oldest element
 is removed from the table (FIFO).
 """
 function add!(table::HashTable{V}, signature::Int, elem::V) where {V}
     bucket_id = compute_bucket_for_signature(signature, length(table.buckets))
+
     push!(table.buckets[bucket_id], elem)
 end
 
 """
     add!(lsh, elem)
-
 Computes the signatures of the `elem` and for each pair of table & signature
 insert element into the table to the bucket selected by signature.
 """
@@ -108,8 +105,7 @@ end
 
 """
     add_batch!(lsh, signatures, elems)
-
-For each element extract the signature from the signatures matrix and using it 
+For each element extract the signature from the signatures matrix and using it
 insert its into the tables.
 """
 function add_batch!(
@@ -126,7 +122,6 @@ end
 
 """
     add_batch!(lsh, batch, ex)
-
 For each pair of (key, elem) in the batch computes the signatures and adds elem
 to the tables. Returns matrix of the shape (length(tables), length(batch)).
 Ith column of this matrix contains computed `signatures` of the ith element from the batch.
@@ -154,7 +149,6 @@ end
 
 """
     retrieve(table, signature)
-
 Returns contents of the bucket selected by `signature`.
 """
 function retrieve(table::HashTable{V}, signature::Int)::Bucket{V} where {V}
@@ -164,14 +158,16 @@ function retrieve(table::HashTable{V}, signature::Int)::Bucket{V} where {V}
 end
 
 """
-    retrieve(lsh, elem)
-
+    retrieve(lsh, elem; threshold=nothing)
 From each table similar elements to the `elem` are retrieved.
+If threshold argument is not nothing then after the count of retrieved elements
+will be higher than it no further element will be retrieved.
 Possible inconsistency in the SLIDE paper: Union vs Intersecion.
 """
 function retrieve(
     lsh::Lsh{K,V,Hasher},
-    key::K,
+    key::K;
+    threshold::Union{Nothing,Int} = nothing,
 )::Set{V} where {K,V,Hasher<:AbstractHasher{K}}
     signatures = compute_query_signatures(lsh.hash, key)
 
@@ -180,6 +176,10 @@ function retrieve(
     for (signature, ht) in zip(signatures, lsh.hash_tables)
         retrieved = retrieve(ht, signature)
         union!(similar_elems, retrieved)
+
+        if !isnothing(threshold) && length(similar_elems) >= threshold
+            break
+        end
     end
 
     similar_elems

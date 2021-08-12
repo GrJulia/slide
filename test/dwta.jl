@@ -84,7 +84,6 @@ end
                 good = false
             end
         end
-
         res = res && all(map(n_hits -> n_hits > n_attempts * 0.8, hashes)) && good
     end
     @test res

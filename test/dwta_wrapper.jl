@@ -20,23 +20,23 @@ using Slide.LSH: compute_signatures, add!, add_batch!, retrieve
 
     @testset "LSH can handle vectors" begin
         @test @views begin
-            add!(lsh, zeros(Float64, 10)[:], 10)
+            add!(lsh, zeros(Float, 10)[:], 10)
             add_batch!(
                 lsh,
-                convert(Vector{Tuple{SubArray{Float64},Int}}, [(zeros(Float64, 10)[:], 2)]),
+                convert(Vector{Tuple{SubArray{Float},Int}}, [(zeros(Float, 10)[:], 2)]),
             )
 
-            retrieve(lsh, zeros(Float64, 10)[:]) == Set{Int}([10, 2])
+            retrieve(lsh, zeros(Float, 10)[:]) == Set{Int}([10, 2])
         end
 
         @test @views begin
-            r = rand(Float64, 10)
+            r = rand(Float, 10)
             add!(lsh, r[:], 23)
 
             retrieve(lsh, r[:]) == Set{Int}([23])
-            retrieve(lsh, (r.+23)[:]) == Set{Int}([23])
-            retrieve(lsh, (r.+0.4)[:]) == Set{Int}([23])
-            retrieve(lsh, (r.-0.014)[:]) == Set{Int}([23])
+            retrieve(lsh, (r.+Float(23))[:]) == Set{Int}([23])
+            retrieve(lsh, (r.+Float(0.4))[:]) == Set{Int}([23])
+            retrieve(lsh, (r.-Float(0.014))[:]) == Set{Int}([23])
         end
     end
 end
