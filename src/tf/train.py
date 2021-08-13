@@ -58,7 +58,7 @@ class SparseDataset(keras.utils.Sequence):
         y = np.zeros((self.batch_size, self.n_classes))
         for i in range(self.batch_size):
             true_idx = batch_idx * self.batch_size + i
-            x[idx, xs_indices[true_idx]] = xs_vals[true_idx]
+            x[i, xs_indices[true_idx]] = xs_vals[true_idx]
             
             y[i, self.ys[true_idx]] = 1
         
