@@ -47,7 +47,7 @@ end
 """
     update!(hash_tables, ids)
 
-Recomputes the hashtables for the `neurons`.
+Recompute the hashtables for the `neurons`.
 `neurons` is a vector of pairs of `(id, weight)`. Reinitializes `lsh`.
 """
 function update!(
