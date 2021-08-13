@@ -1,7 +1,6 @@
 module LshAsymmetricHasher
 
 include("./asym_hash/transformations.jl")
-include("./simhash_wrapper.jl")
 
 export AsymHasherParams
 
@@ -10,19 +9,19 @@ using Random: AbstractRNG
 
 using Slide: Float
 using Slide.LSH: AbstractHasher, Lsh
-using Slide.Hash: LshParams, AbstractLshParams
+using Slide.Hash: LshParams, AbstractLshParams, init_lsh!
+using Slide.LshSimHashWrapper: LshSimHashParams, SimhasherWrapper
 
 import Slide.Hash
 import Slide.LSH
 
 
 # Wrapper applying transformations and then calling hasher
-struct AsymHasher{H<:AbstractHasher{Vector{Float}},T<:AbstractTransformation} <:
-       AbstractHasher{SubArray{Float}}
-    hasher::H
-    transformation::T
+struct AsymHasher <: AbstractHasher{SubArray{Float}}
+    hasher::AbstractHasher{SubArray{Float}} # could be also AbstractHasher{Vector{Float}}
+    transformation::AbstractTransformation
+    n_tables::Int
 end
-
 
 function LSH.compute_signatures!(
     signatures::T,
@@ -31,7 +30,7 @@ function LSH.compute_signatures!(
 ) where {T<:AbstractArray{Int}}
     elem = transform_data(h.transformation, raw_elem)
 
-    h.hasher.compute_signatures!(signatures, h.hasher, elem)
+    LSH.compute_signatures!(signatures, h.hasher, elem)
 end
 
 function LSH.compute_signatures(h::AsymHasher, raw_elem::SubArray{Float})::Vector{Int}
@@ -60,7 +59,7 @@ end
 ) where {T<:AbstractArray{Int}}
     elem = transform_query(h.transformation, raw_elem)
 
-    h.hasher.compute_signatures!(signatures, h.hasher, elem)
+    LSH.compute_signatures!(signatures, h.hasher, elem)
 end
 
 const LshAsymHasher{Id} = Lsh{SubArray{Float},Id,AsymHasher}
@@ -78,18 +77,14 @@ function Hash.init_lsh!(
     hasher_params = asym_hasher_params.hasher_params
     lsh_params = hasher_params.lsh_params
 
-    transformation = if typeof(hasher_params) == LshSimHashParams
-        MIPStoCosineTransformation(m)
-        error("Unrecognized asym hasher params: $(typeof(hasher_params))")
-    end
+    transformation = get_transformation(typeof(hasher_params), asym_hasher_params.m)
 
-    hasher = init_lsh!(hasher_params, rng, typeof(Id))
-
+    hasher = LSH.init_hasher(hasher_params, rng)
     Lsh(
         lsh_params.n_tables,
         lsh_params.n_buckets,
         lsh_params.max_bucket_len,
-        AsymHasher(hasher, transformation),
+        AsymHasher(hasher, transformation, lsh_params.n_tables),
         SubArray{Float},
         Id,
     )

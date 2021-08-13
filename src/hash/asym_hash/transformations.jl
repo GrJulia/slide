@@ -1,15 +1,16 @@
 using LinearAlgebra
 
 using Slide: Float
+using Slide.LshSimHashWrapper: LshSimHashParams
 
 
 abstract type AbstractTransformation end
 
-function transform_data(t::AbstractTransformation, data::SubArray{Float})::Vector{Float}
+function transform_data(t::AbstractTransformation, data::SubArray{Float})::SubArray{Float}
     error("unimplemented")
 end
 
-function transform_query(t::AbstractTransformation, data::SubArray{Float})::Vector{Float}
+function transform_query(t::AbstractTransformation, data::SubArray{Float})::SubArray{Float}
     error("unimplemented")
 end
 
@@ -21,7 +22,15 @@ struct MIPStoCosineTransformation <: AbstractTransformation
     m::Int
 end
 
-function transform_data(t::MIPStoL2NNSTransformation, data::SubArray{Float})::Vector{Float}
+function get_transformation(::Type{LshSimHashParams}, m::Int)
+    return MIPStoCosineTransformation(m)
+end
+
+# function get_transformation(::Type{LshL2LshHashParams}, m::Int)
+#     return MIPStoCosineTransformation(m)
+# end
+
+function transform_data(t::MIPStoL2NNSTransformation, data::SubArray{Float})::SubArray{Float}
     data_len = length(data)
     out = Vector{Float}(undef, data_len + 2 * t.m)
     out[1:data_len] = data
@@ -34,10 +43,10 @@ function transform_data(t::MIPStoL2NNSTransformation, data::SubArray{Float})::Ve
 
     out[data_len+t.m+1:end] .= 0.5
 
-    out
+    @view out[:]
 end
 
-function transform_query(t::MIPStoL2NNSTransformation, data::SubArray{Float})::Vector{Float}
+function transform_query(t::MIPStoL2NNSTransformation, data::SubArray{Float})::SubArray{Float}
     data_len = length(data)
     out = Vector{Float}(undef, data_len + 2 * t.m)
     out[1:data_len] = data
@@ -50,10 +59,10 @@ function transform_query(t::MIPStoL2NNSTransformation, data::SubArray{Float})::V
         out[i] = curr_norm_pow
     end
 
-    out
+    @view out[:]
 end
 
-function transform_data(t::MIPStoCosineTransformation, data::SubArray{Float})::Vector{Float}
+function transform_data(t::MIPStoCosineTransformation, data::SubArray{Float})::SubArray{Float}
     data_len = length(data)
     out = Vector{Float}(undef, data_len + 2 * t.m)
     out[1:data_len] = data
@@ -66,13 +75,13 @@ function transform_data(t::MIPStoCosineTransformation, data::SubArray{Float})::V
 
     out[data_len+t.m+1:end] .= 0
 
-    out
+    @view out[:]
 end
 
 function transform_query(
     t::MIPStoCosineTransformation,
     data::SubArray{Float},
-)::Vector{Float}
+)::SubArray{Float}
     data_len = length(data)
     out = Vector{Float}(undef, data_len + 2 * t.m)
     out[1:data_len] = data
@@ -85,5 +94,5 @@ function transform_query(
         out[i] = 0.5 - curr_norm_pow
     end
 
-    out
+    @view out[:]
 end

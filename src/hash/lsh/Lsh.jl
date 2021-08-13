@@ -4,6 +4,7 @@ export AbstractHasher, Lsh, add!, retrieve
 
 using DataStructures: CircularBuffer
 using FLoops: @floop, SequentialEx
+using Random: AbstractRNG
 
 """ AbstractHasher Interface/Trait """
 
@@ -46,6 +47,9 @@ function compute_query_signatures!(
     error("unimplemented")
 end
 
+function init_hasher(params, rng::Rand)::AbstractHasher where {Rand<:AbstractRNG} # TODO: move AbstractLshParams to Lsh?
+    error("unimplemented")
+end
 
 """ LSH implementation """
 

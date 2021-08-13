@@ -1,6 +1,6 @@
 module LshSimHashWrapper
 
-export LshSimHashParams, get_simhash_params
+export LshSimHashParams, get_simhash_params, SimhasherWrapper
 
 using Base.Iterators: partition
 using Random: AbstractRNG
@@ -91,11 +91,11 @@ Initialize the LSH instance with SimHash. Ensures that all parameters
 of the LSH and SimHash are properly glued together. Ensures that the number
 of signatures produced by SimHash will match the number of hash tables in the LSH.
 """
-function Hash.init_lsh!(
+
+function LSH.init_hasher(
     sim_params::LshSimHashParams,
     rng::Rand,
-    ::Type{Id},
-)::LshSimHash where {Id,Rand<:AbstractRNG}
+)::SimhasherWrapper where {Rand<:AbstractRNG}
     lsh_params = sim_params.lsh_params
     hasher = initialize!(
         rng,
@@ -103,12 +103,20 @@ function Hash.init_lsh!(
         sim_params.sample_size,
         sim_params.vector_len,
     )
+    SimhasherWrapper(UInt8(sim_params.signature_len), hasher)
+end
 
+function Hash.init_lsh!(
+    sim_params::LshSimHashParams,
+    rng::Rand,
+    ::Type{Id},
+)::LshSimHash where {Id,Rand<:AbstractRNG}
+    lsh_params = sim_params.lsh_params
     Lsh(
         lsh_params.n_tables,
         lsh_params.n_buckets,
         lsh_params.max_bucket_len,
-        SimhasherWrapper(UInt8(sim_params.signature_len), hasher),
+        LSH.init_hasher(sim_params, rng),
         SubArray{Float},
         Id,
     )
