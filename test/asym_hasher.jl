@@ -1,6 +1,7 @@
 using Test
 using Random: default_rng
 
+using Slide: Float
 using Slide.Hash: LshParams, init_lsh!
 using Slide.LshAsymmetricHasher: LshAsymHasherParams
 using Slide.LshSimHashWrapper: LshSimHashParams
@@ -15,8 +16,9 @@ using Slide.LSH: add!, add_batch!, retrieve
     alsh_with_simhash = init_lsh!(asym_hasher_params, default_rng(), Int)
 
     @views begin
-        add!(alsh_with_simhash, zeros(Float64, 10)[:], 10)
+        r = rand(Float, 10)[:]
+        add!(alsh_with_simhash, r, 10)
         
-        println(retrieve(alsh_with_simhash, zeros(Float64, 10)[:]))
+        println(retrieve(alsh_with_simhash, r))
     end
 end
