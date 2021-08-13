@@ -64,8 +64,8 @@ end
 
 const LshAsymHasher{Id} = Lsh{SubArray{Float},Id,AsymHasher}
 
-struct LshAsymHasherParams{T<:AbstractLshParams} <: AbstractLshParams
-    hasher_params::T
+struct LshAsymHasherParams <: AbstractLshParams
+    hasher_params::AbstractLshParams
     m::Int
 end
 

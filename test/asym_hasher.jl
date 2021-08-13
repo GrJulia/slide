@@ -7,7 +7,7 @@ using Slide.LshAsymmetricHasher: LshAsymHasherParams
 using Slide.LshSimHashWrapper: LshSimHashParams
 using Slide.LSH: add!, add_batch!, retrieve
 
-
+# TODO: better tests (including tests checking if ALSH approximately solves MIPS)
 @testset "Initializing ALSH with SimHasher" begin
     lsh_params = LshParams(n_buckets = 10, max_bucket_len = 10, n_tables = 100)
     simhash_params = LshSimHashParams(lsh_params, 10, 4, 3)
@@ -15,10 +15,10 @@ using Slide.LSH: add!, add_batch!, retrieve
 
     alsh_with_simhash = init_lsh!(asym_hasher_params, default_rng(), Int)
 
-    @views begin
+    @test @views begin
         r = rand(Float, 10)[:]
         add!(alsh_with_simhash, r, 10)
 
-        println(retrieve(alsh_with_simhash, r))
+       @test retrieve(alsh_with_simhash, r) == Set{Int}([10, 1])
     end
 end

@@ -14,7 +14,7 @@ function transform_query(t::AbstractTransformation, data::SubArray{Float})::SubA
     error("unimplemented")
 end
 
-struct MIPStoL2NNSTransformation <: AbstractTransformation
+struct MIPStoNnsTransformation <: AbstractTransformation
     m::Int
 end
 
@@ -27,13 +27,10 @@ function get_transformation(::Type{LshSimHashParams}, m::Int)
 end
 
 # function get_transformation(::Type{LshL2LshHashParams}, m::Int)
-#     return MIPStoCosineTransformation(m)
+#     return MIPStoNnsTransformation(m)
 # end
 
-function transform_data(
-    t::MIPStoL2NNSTransformation,
-    data::SubArray{Float},
-)::SubArray{Float}
+function transform_data(t::MIPStoNnsTransformation, data::SubArray{Float})::SubArray{Float}
     data_len = length(data)
     out = Vector{Float}(undef, data_len + 2 * t.m)
     out[1:data_len] = data
@@ -49,10 +46,7 @@ function transform_data(
     @view out[:]
 end
 
-function transform_query(
-    t::MIPStoL2NNSTransformation,
-    data::SubArray{Float},
-)::SubArray{Float}
+function transform_query(t::MIPStoNnsTransformation, data::SubArray{Float})::SubArray{Float}
     data_len = length(data)
     out = Vector{Float}(undef, data_len + 2 * t.m)
     out[1:data_len] = data
