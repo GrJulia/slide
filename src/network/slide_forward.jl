@@ -62,10 +62,14 @@ function forward!(
     y_true::Union{Nothing,Array{Float}} = nothing,
     executor = ThreadedEx(),
 )::Tuple{Vector{Vector{Float}},Vector{Vector{Id}}}
-    n_samples = typeof(x) == Vector{Float} ? 1 : size(x)[end]
+    batch_size = typeof(x) == Vector{Float} ? 1 : size(x)[end]
     last_layer = network.layers[end]
 
-    @views @floop executor for i = 1:n_samples
+    for layer in network.layers
+        new_batch!(layer, batch_size)
+    end
+
+    @views @floop executor for i = 1:batch_size
         forward_single_sample(
             x[:, i],
             network,

@@ -32,15 +32,6 @@ function SlideLayer(
 
     lsh = init_lsh!(lsh_params, default_rng(), Id)
 
-    hashes = add_batch!(
-        lsh,
-        convert(
-            Vector{Tuple{SubArray{Float},Id}},
-            map(neuron -> (@view(neuron.weight[:]), neuron.id), neurons),
-        );
-        executor = ThreadedEx(),
-    )
-
     hash_tables = SlideHashTables(lsh_params, convert_neurons_to_batch(neurons))
 
     SlideLayer(
