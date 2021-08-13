@@ -2,7 +2,7 @@ using Slide.Network: Batch, Float
 using Slide.Network.HashTables: update!
 using Slide.Hash: AbstractLshParams
 using Slide.FluxTraining: Logger, log_scalar!, step!
-using Slide.Network.Layers: SlideLayer, Neuron, AdamAttributes, convert_neurons_to_batch
+using Slide.Network.Layers: SlideLayer, Neuron, AdamAttributes, extract_weights_and_ids
 
 
 function build_network(network_params::Dict)::SlideNetwork

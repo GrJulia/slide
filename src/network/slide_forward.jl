@@ -38,7 +38,7 @@ function forward_single_sample(
             union!(current_activated_neuron_ids, findall(>(0), y_true))
         end
 
-        layer.active_neurons[x_index] = current_activated_neuron_ids
+        layer.active_neuron_ids[x_index] = current_activated_neuron_ids
 
         current_n_neurons = length(current_activated_neuron_ids)
         layer_output = zeros(Float, current_n_neurons)
@@ -78,7 +78,7 @@ function forward!(
         )
     end
 
-    last_layer.output, last_layer.active_neurons
+    last_layer.output, last_layer.active_neuron_ids
 end
 
 function predict_class(

@@ -19,7 +19,7 @@ using Slide.Network.HashTables: SlideHashTables
     hash_tables::SlideHashTables{A,Hasher}
     layer_activation::F
 
-    active_neurons::Vector{Vector{Id}}
+    active_neuron_ids::Vector{Vector{Id}}
     output::Vector{Vector{Float}}
 end
 
@@ -32,14 +32,14 @@ function SlideLayer(
 
     lsh = init_lsh!(lsh_params, default_rng(), Id)
 
-    hash_tables = SlideHashTables(lsh_params, convert_neurons_to_batch(neurons))
+    hash_tables = SlideHashTables(lsh_params, extract_weights_and_ids(neurons))
 
     SlideLayer(
         id = id,
         neurons = neurons,
         hash_tables = hash_tables,
         layer_activation = layer_activation,
-        active_neurons = Vector{Vector{Id}}(),
+        active_neuron_ids = Vector{Vector{Id}}(),
         output = Vector{Vector{Float}}(),
     )
 end
@@ -51,7 +51,7 @@ function new_batch!(
     batch_size::Int;
     executor = ThreadedEx(),
 ) where {A,T,F,H}
-    resize!(layer.active_neurons, batch_size)
+    resize!(layer.active_neuron_ids, batch_size)
     resize!(layer.output, batch_size)
 
     @floop executor for neuron in layer.neurons

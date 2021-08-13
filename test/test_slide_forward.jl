@@ -46,7 +46,7 @@ simparams = LshSimHashParams(common_lsh, 3, 1, 3)
         @test length(network.layers) == 1
         @testset "forward single sample" begin
             forward_single_sample(x[:, 1], network, 1)
-            active_neurons = network.layers[1].active_neurons[1]
+            active_neurons = network.layers[1].active_neuron_ids[1]
             @test network.layers[1].output[1] == [6.0, 1.0][active_neurons]
         end
         @test retrieve(network.layers[1].hash_tables.lsh, x[:, 1]) == Set{Int}([1, 2])
