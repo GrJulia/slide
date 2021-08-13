@@ -28,7 +28,7 @@ function forward_single_sample(
                 @view dense_input[:];
                 threshold = max(
                     min_sampling_threshold,
-                    length(layer.neurons) ÷ sampling_ratio,
+                    floor(Int, length(layer.neurons) * sampling_ratio),
                 ),
             ),
         )

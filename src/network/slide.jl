@@ -67,7 +67,7 @@ function Layer(
 
     hash_tables = SlideHashTables(
         lsh_params,
-        convert_neurons_to_batch(neurons),
+        extract_weights_and_ids(neurons),
     )
 
     undef_vec(U::DataType) = Vector{U}(undef, batch_size)

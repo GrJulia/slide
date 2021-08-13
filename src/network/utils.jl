@@ -8,7 +8,7 @@ using Slide.FluxTraining: SparseDataset
 
 const Batch = Tuple{Matrix{Float},Matrix{Float}}
 
-function convert_neurons_to_batch(
+function extract_weights_and_ids(
     neurons::A,
 )::LshBatch where {T,A<:AbstractVector{Neuron{T}}}
     convert(LshBatch, map(neuron -> (@view(neuron.weight[:]), neuron.id), neurons))

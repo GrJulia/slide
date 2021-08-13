@@ -20,7 +20,7 @@ const SlideLsh{Hasher} = Lsh{SubArray{Float},Id,Hasher}
     lsh::SlideLsh{Hasher}
     lsh_params::A
 
-    sampling_ratio::Int = 200
+    sampling_ratio::Float = Float(1 / 200)
     min_threshold::Int = 90
 end
 
@@ -45,7 +45,7 @@ function SlideHashTables(
 end
 
 """
-    update!(hash_tables, ids)
+    update!(hash_tables, neurons)
 
 Recompute the hashtables for the `neurons`.
 `neurons` is a vector of pairs of `(id, weight)`. Reinitializes `lsh`.
