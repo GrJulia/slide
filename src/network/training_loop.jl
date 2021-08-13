@@ -1,6 +1,8 @@
-using Slide.Network: Batch, Float
+using Slide.Network: Batch, Float, extract_weights_and_ids
+using Slide.Network.HashTables: update!
 using Slide.Hash: AbstractLshParams
 using Slide.FluxTraining: Logger, log_scalar!, step!
+
 
 function build_network(network_params::Dict, batch_size::Int)::SlideNetwork
     network_layers = Vector{Layer}()
@@ -120,7 +122,13 @@ function train!(
 
             scheduler(n) do
                 for layer in network.layers
-                    update!(layer.hash_tables, layer.neurons)
+                    htable_update_stats = @timed update!(
+                        layer.hash_tables,
+                        extract_weights_and_ids(layer.neurons),
+                    )
+
+                    println("Hashtable $(layer.id) updated in $(htable_update_stats.time)")
+                    log_scalar!(logger, "hashtable_$(layer.id)", ht_update_stats.time)
                 end
                 optimizer_end_epoch_step!(optimizer)
             end

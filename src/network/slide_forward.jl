@@ -20,14 +20,15 @@ function forward_single_sample(
 
         min_sampling_threshold = layer.hash_tables.min_threshold
         sampling_ratio = layer.hash_tables.sampling_ratio
-        # Get activated neurons and mark them as changed
+
+        # Get activated neurons
         current_activated_neuron_ids = collect(
             retrieve(
                 layer.hash_tables.lsh,
                 @view dense_input[:];
                 threshold = max(
                     min_sampling_threshold,
-                    length(layer.neurons) ÷ sampling_ratio,
+                    floor(Int, length(layer.neurons) * sampling_ratio),
                 ),
             ),
         )
@@ -35,8 +36,6 @@ function forward_single_sample(
         if !(isnothing(y_true)) && (layer_idx == length(network.layers))
             union!(current_activated_neuron_ids, findall(>(0), y_true))
         end
-
-        mark_ids!(layer.hash_tables, current_activated_neuron_ids)
 
         layer.active_neurons[x_index] = current_activated_neuron_ids
 
