@@ -1,6 +1,7 @@
-using LinearAlgebra
+using LinearAlgebra: dot
+using FLoops: @floop, ThreadedEx
+
 using Slide.LSH: retrieve
-using Base.Threads: @threads
 
 
 function forward_single_sample(
@@ -59,11 +60,12 @@ function forward!(
     x::Array{Float},
     network::SlideNetwork;
     y_true::Union{Nothing,Array{Float}} = nothing,
+    executor = ThreadedEx(),
 )::Tuple{Vector{Vector{Float}},Vector{Vector{Id}}}
     n_samples = typeof(x) == Vector{Float} ? 1 : size(x)[end]
     last_layer = network.layers[end]
 
-    @views @threads for i = 1:n_samples
+    @views @floop executor for i = 1:n_samples
         forward_single_sample(
             x[:, i],
             network,
@@ -79,13 +81,14 @@ function predict_class(
     x::Array{Float},
     y_true::Array{Float},
     network::SlideNetwork,
-    topk::Int = 1,
+    topk::Int = 1;
+    executor = ThreadedEx(),
 )
     y_active_pred, active_ids = forward!(x, network; y_true)
 
     y_pred = zeros(Float, size(y_true))
 
-    @threads for i = 1:length(active_ids)
+    @floop executor for i = 1:length(active_ids)
         ids = active_ids[i]
         y_pred[ids, i] = y_active_pred[i]
     end

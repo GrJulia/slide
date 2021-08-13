@@ -1,5 +1,4 @@
-using Statistics: mean
-using Base.Threads: @threads
+using FLoops: @floop, ThreadedEx
 using LinearAlgebra.BLAS: axpy!
 
 const FloatVector = AbstractVector{Float}
@@ -55,9 +54,13 @@ function handle_batch_backward(
     end
 end
 
-function update_weight!(network::SlideNetwork, optimizer::Optimizer)
+function update_weight!(
+    network::SlideNetwork,
+    optimizer::Optimizer;
+    executor = ThreadedEx(),
+)
     for layer in network.layers
-        @threads for neuron in filter(n -> n.is_active, layer.neurons)
+        @floop executor for neuron in filter(n -> n.is_active, layer.neurons)
             optimizer_step!(optimizer, neuron)
         end
     end
@@ -68,10 +71,11 @@ function backward!(
     y_pred::Vector{<:FloatVector},
     y_true::Vector{<:FloatVector},
     network::SlideNetwork,
-    saved_softmax::Vector{<:FloatVector},
+    saved_softmax::Vector{<:FloatVector};
+    executor = ThreadedEx(),
 )
     n_samples = size(x)[2]
-    @views @threads for i = 1:n_samples
+    @views @floop executor for i = 1:n_samples
         handle_batch_backward(x[:, i], y_pred[i], y_true[i], network, i, saved_softmax[i])
     end
 end
