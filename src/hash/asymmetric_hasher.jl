@@ -17,7 +17,7 @@ using Slide: LshSimHashParams
 import Slide.Hash
 import Slide.LSH
 
-
+# Wrapper applying transformations and then calling hasher
 struct AsymHasher <: AbstractHasher{SubArray{Float}}
     hasher<:AbstractHasher{Vector{Float}}
     transformation<:AbstractTransformation
