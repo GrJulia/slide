@@ -33,15 +33,19 @@ end
 function transform_data(t::MipsToNnsTransformation, data::SubArray{Float})::SubArray{Float}
     data_len = length(data)
     out = Vector{Float}(undef, data_len + 2 * t.m)
-    out[1:data_len] = data
+
+    base, first_tail, second_tail =
+        1:data_len, data_len+1:data_len+t.m, data_len+t.m+1:data_len+2*t.m
+
+    out[base] = data
 
     curr_norm_pow = norm(data)
-    for i = data_len+1:data_len+t.m
+    for i in first_tail
         curr_norm_pow ^= 2
         out[i] = curr_norm_pow
     end
 
-    out[data_len+t.m+1:end] .= 0.5
+    out[second_tail] .= 0.5
 
     @view out[:]
 end
@@ -49,12 +53,16 @@ end
 function transform_query(t::MipsToNnsTransformation, data::SubArray{Float})::SubArray{Float}
     data_len = length(data)
     out = Vector{Float}(undef, data_len + 2 * t.m)
-    out[1:data_len] = data
 
-    out[data_len+1:data_len+t.m] .= 0.5
+    base, first_tail, second_tail =
+        1:data_len, data_len+1:data_len+t.m, data_len+t.m+1:data_len+2*t.m
+
+    out[base] = data
+
+    out[first_tail] .= 0.5
 
     curr_norm_pow = norm(data)
-    for i = data_len+t.m+1:data_len+2*t.m
+    for i in second_tail
         curr_norm_pow ^= 2
         out[i] = curr_norm_pow
     end
@@ -68,15 +76,19 @@ function transform_data(
 )::SubArray{Float}
     data_len = length(data)
     out = Vector{Float}(undef, data_len + 2 * t.m)
-    out[1:data_len] = data
+
+    base, first_tail, second_tail =
+        1:data_len, data_len+1:data_len+t.m, data_len+t.m+1:data_len+2*t.m
+
+    out[base] = data
 
     curr_norm_pow = norm(data)
-    for i = data_len+1:data_len+t.m
+    for i in first_tail
         curr_norm_pow ^= 2
         out[i] = 0.5 - curr_norm_pow
     end
 
-    out[data_len+t.m+1:end] .= 0
+    out[second_tail] .= 0
 
     @view out[:]
 end
@@ -87,12 +99,16 @@ function transform_query(
 )::SubArray{Float}
     data_len = length(data)
     out = Vector{Float}(undef, data_len + 2 * t.m)
-    out[1:data_len] = data
 
-    out[data_len+1:data_len+t.m] .= 0
+    base, first_tail, second_tail =
+        1:data_len, data_len+1:data_len+t.m, data_len+t.m+1:data_len+2*t.m
+
+    out[base] = data
+
+    out[first_tail] .= 0
 
     curr_norm_pow = norm(data)
-    for i = data_len+t.m+1:data_len+2*t.m
+    for i in second_tail
         curr_norm_pow ^= 2
         out[i] = 0.5 - curr_norm_pow
     end
