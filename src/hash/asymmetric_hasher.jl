@@ -10,7 +10,7 @@ using Random: AbstractRNG
 using Slide: Float
 using Slide.LSH: AbstractHasher, Lsh
 using Slide.Hash: LshParams, AbstractLshParams, init_lsh!
-using Slide.LshSimHashWrapper: LshSimHashParams, SimhasherWrapper
+using Slide.LshSimHashWrapper: LshSimHashParams
 
 import Slide.Hash
 import Slide.LSH

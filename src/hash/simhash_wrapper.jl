@@ -1,6 +1,6 @@
 module LshSimHashWrapper
 
-export LshSimHashParams, get_simhash_params, SimhasherWrapper
+export LshSimHashParams, get_simhash_params
 
 using Base.Iterators: partition
 using Random: AbstractRNG
