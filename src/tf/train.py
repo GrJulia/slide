@@ -91,7 +91,7 @@ class TestAccCallback(keras.callbacks.Callback):
             out = self.model(x)
             top_class = np.argmax(out, axis=1).reshape(batch_size, 1)
             n_true_positives += np.sum(np.take_along_axis(y, top_class, axis=1))
-        test_acc = total_acc / (self.n_batches * batch_size)
+        test_acc = n_true_positives / (self.n_batches * batch_size)
         return test_acc
 
 
