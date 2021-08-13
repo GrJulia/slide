@@ -19,8 +19,9 @@ end
 end
 
 function optimizer_step!(optimizer::AdamOptimizer, neuron::Neuron)
-    dw = mean(neuron.weight_gradients, dims = 2)[:, 1]
+    dw = neuron.weight_gradients
     db = mean(neuron.bias_gradients)
+
     adam_attributes = neuron.optimizer_attributes
     adam_attributes.m_dw =
         optimizer.beta_1 .* adam_attributes.m_dw .+ (1 - optimizer.beta_1) .* dw

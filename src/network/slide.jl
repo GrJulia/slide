@@ -1,4 +1,7 @@
+using Base: @kwdef
 using Random: default_rng
+using FLoops: ThreadedEx
+
 using Slide.LSH: Lsh, AbstractHasher, add_batch!
 using Slide.Hash: AbstractLshParams, init_lsh!
 
@@ -14,38 +17,40 @@ end
 
 AdamAttributes(input_dim::Int) = AdamAttributes(zeros(input_dim), 0, zeros(input_dim), 0)
 
-mutable struct Neuron{W<:AbstractOptimizerAttributes}
+@kwdef mutable struct Neuron{W<:AbstractOptimizerAttributes}
     id::Id
     weight::Vector{Float}
     bias::Float
-    active_inputs::Array{Id}
-    activation_inputs::Array{Float}
-    pre_activation_inputs::Array{Float}
-    weight_gradients::Matrix{Float}
+    weight_gradients::Vector{Float}
     bias_gradients::Vector{Float}
     optimizer_attributes::W
+    is_active::Bool
 end
 
 Neuron(id::Id, batch_size::Int, input_dim::Int) = Neuron(
-    id,
-    rand(Float, input_dim),
-    rand(Float),
-    zeros(Id, batch_size),
-    zeros(Float, batch_size),
-    zeros(Float, batch_size),
-    zeros(Float, input_dim, batch_size),
-    zeros(Float, batch_size),
-    AdamAttributes(input_dim),
+    id = id,
+    weight = rand(Float, input_dim),
+    bias = rand(Float),
+    weight_gradients = zeros(Float, input_dim),
+    bias_gradients = zeros(Float, batch_size),
+    optimizer_attributes = AdamAttributes(input_dim),
+    is_active = false,
 )
 
-mutable struct SlideHashTables{A<:AbstractLshParams,Hasher<:AbstractHasher{SubArray{Float}}}
+@kwdef mutable struct SlideHashTables{
+    A<:AbstractLshParams,
+    Hasher<:AbstractHasher{SubArray{Float}},
+}
     lsh::SlideLsh{Hasher}
     lsh_params::A
     hashes::Matrix{Int}
     changed_ids::Set{Id}
+
+    sampling_ratio::Int = 200
+    min_threshold::Int = 90
 end
 
-struct Layer{
+@kwdef struct Layer{
     A<:AbstractLshParams,
     T<:AbstractOptimizerAttributes,
     F<:Function,
@@ -55,6 +60,9 @@ struct Layer{
     neurons::Vector{Neuron{T}}
     hash_tables::SlideHashTables{A,Hasher}
     layer_activation::F
+
+    active_neurons::Vector{Vector{Id}}
+    output::Vector{Vector{Float}}
 end
 
 struct SlideNetwork
@@ -65,7 +73,8 @@ function Layer(
     id::Id,
     neurons::Vector{Neuron{T}},
     lsh_params::A,
-    layer_activation::F,
+    layer_activation::F;
+    batch_size = 128,
 ) where {A<:AbstractLshParams,T<:AbstractOptimizerAttributes,F<:Function}
 
     lsh = init_lsh!(lsh_params, default_rng(), Id)
@@ -75,12 +84,27 @@ function Layer(
         convert(
             Vector{Tuple{SubArray{Float},Id}},
             map(neuron -> (@view(neuron.weight[:]), neuron.id), neurons),
-        ),
+        );
+        executor = ThreadedEx(),
     )
 
-    hash_tables = SlideHashTables(lsh, lsh_params, hashes, Set{Id}())
+    hash_tables = SlideHashTables(
+        lsh = lsh,
+        lsh_params = lsh_params,
+        hashes = hashes,
+        changed_ids = Set{Id}(),
+    )
 
-    Layer(id, neurons, hash_tables, layer_activation)
+    undef_vec(U::DataType) = Vector{U}(undef, batch_size)
+
+    Layer(
+        id = id,
+        neurons = neurons,
+        hash_tables = hash_tables,
+        layer_activation = layer_activation,
+        active_neurons = undef_vec(Vector{Id}),
+        output = undef_vec(Vector{Float}),
+    )
 end
 
 
@@ -96,7 +120,8 @@ function update!(
 ) where {A<:AbstractLshParams,Hasher<:AbstractHasher{SubArray{Float}},T}
     lsh = init_lsh!(hash_tables.lsh_params, default_rng(), Id)
 
-    changed_ids = collect(hash_tables.changed_ids)
+    # crashes anyway...
+    changed_ids = [x for x in hash_tables.changed_ids]
     unchanged_neurons = filter(n -> !(n.id in changed_ids), neurons)
     unchanged_ids = map(n -> n.id, unchanged_neurons)
 
@@ -108,7 +133,8 @@ function update!(
         convert(
             Vector{Tuple{SubArray{Float},Id}},
             map(id -> (@view(neurons[id].weight[:]), id), changed_ids),
-        ),
+        );
+        executor = ThreadedEx(),
     )
 
     hash_tables.hashes[:, changed_ids] = new_hashes
