@@ -18,7 +18,7 @@ using Slide.LSH: add!, add_batch!, retrieve
     @views begin
         r = rand(Float, 10)[:]
         add!(alsh_with_simhash, r, 10)
-        
+
         println(retrieve(alsh_with_simhash, r))
     end
 end

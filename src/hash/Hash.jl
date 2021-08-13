@@ -25,5 +25,4 @@ init_lsh!() = error("unimplemented")
 end # Hash
 
 include("./simhash_wrapper.jl")
-include("./dwta_wrapper.jl")
 include("./asymmetric_hasher.jl")

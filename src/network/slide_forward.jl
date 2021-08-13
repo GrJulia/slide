@@ -7,16 +7,9 @@ using Slide.LSH: retrieve
 function forward_single_sample(
     x::SubArray{Float},
     network::SlideNetwork,
-<<<<<<< HEAD
-    x_index::Int,
-    y_true::Union{Nothing,SubArray{Float}} = nothing,
-)::Vector{Float}
-    n_layers = length(network.layers)
-=======
     x_index::Int;
     y_true::Union{Nothing,SubArray{Float}} = nothing,
 )
->>>>>>> main
     current_input = x
     activated_neuron_ids = 1:length(x)
 
@@ -65,16 +58,10 @@ end
 
 function forward!(
     x::Array{Float},
-<<<<<<< HEAD
-    network::SlideNetwork,
-    y_true::Union{Nothing,Array{Float}} = nothing,
-)
-=======
     network::SlideNetwork;
     y_true::Union{Nothing,Array{Float}} = nothing,
     executor = ThreadedEx(),
 )::Tuple{Vector{Vector{Float}},Vector{Vector{Id}}}
->>>>>>> main
     n_samples = typeof(x) == Vector{Float} ? 1 : size(x)[end]
     last_layer = network.layers[end]
 

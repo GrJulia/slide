@@ -30,7 +30,10 @@ end
 #     return MIPStoCosineTransformation(m)
 # end
 
-function transform_data(t::MIPStoL2NNSTransformation, data::SubArray{Float})::SubArray{Float}
+function transform_data(
+    t::MIPStoL2NNSTransformation,
+    data::SubArray{Float},
+)::SubArray{Float}
     data_len = length(data)
     out = Vector{Float}(undef, data_len + 2 * t.m)
     out[1:data_len] = data
@@ -46,7 +49,10 @@ function transform_data(t::MIPStoL2NNSTransformation, data::SubArray{Float})::Su
     @view out[:]
 end
 
-function transform_query(t::MIPStoL2NNSTransformation, data::SubArray{Float})::SubArray{Float}
+function transform_query(
+    t::MIPStoL2NNSTransformation,
+    data::SubArray{Float},
+)::SubArray{Float}
     data_len = length(data)
     out = Vector{Float}(undef, data_len + 2 * t.m)
     out[1:data_len] = data
@@ -62,7 +68,10 @@ function transform_query(t::MIPStoL2NNSTransformation, data::SubArray{Float})::S
     @view out[:]
 end
 
-function transform_data(t::MIPStoCosineTransformation, data::SubArray{Float})::SubArray{Float}
+function transform_data(
+    t::MIPStoCosineTransformation,
+    data::SubArray{Float},
+)::SubArray{Float}
     data_len = length(data)
     out = Vector{Float}(undef, data_len + 2 * t.m)
     out[1:data_len] = data
