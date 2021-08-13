@@ -30,7 +30,7 @@ function initialize!(
     n_perms = ceil(UInt32, n_hashes * k / data_len)
     perms = vcat((randperm(rng, data_len) for _ = 1:n_perms)...)
     indices_in_bin = reshape(perms[1:n_hashes*k], (k, n_hashes))
-    
+
     log_n_hashes = ceil(UInt32, log2(n_hashes))
 
     DWTAHasher(indices_in_bin, n_hashes, log_n_hashes)
@@ -51,7 +51,7 @@ function signature(
     dwta::DWTAHasher,
     data::A,
     densification::Bool;
-    max_n_attemps=UInt32(100)
+    max_n_attemps = UInt32(100),
 )::Signature where {A<:AbstractVector{<:Number}}
     indices_in_bin = dwta.indices_in_bin
     n_hashes = dwta.n_hashes

@@ -28,15 +28,15 @@ using Slide.LSH: compute_signatures, add!, add_batch!, retrieve
 
             retrieve(lsh, zeros(Float64, 10)[:]) == Set{Int}([10, 2])
         end
-        
+
         @test @views begin
             r = rand(Float64, 10)
             add!(lsh, r[:], 23)
 
             retrieve(lsh, r[:]) == Set{Int}([23])
-            retrieve(lsh, (r .+ 23)[:]) == Set{Int}([23])
-            retrieve(lsh, (r .+ 0.4)[:]) == Set{Int}([23])
-            retrieve(lsh, (r .- 0.014)[:]) == Set{Int}([23])
+            retrieve(lsh, (r.+23)[:]) == Set{Int}([23])
+            retrieve(lsh, (r.+0.4)[:]) == Set{Int}([23])
+            retrieve(lsh, (r.-0.014)[:]) == Set{Int}([23])
         end
     end
 end

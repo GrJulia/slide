@@ -8,9 +8,7 @@ using Random: default_rng, randperm
     @testset "example from the paper #1" begin
         n_hashes, log_n_hashes, data_len = 1, 1, 4
         indices_in_bin = Matrix{Int32}(undef, (3, 1))
-        indices = [
-            [4, 1, 2],
-        ]
+        indices = [[4, 1, 2]]
         indices_in_bin[:, 1] = indices[1]
 
         dwta = DWTAHasher(indices_in_bin, n_hashes, log_n_hashes)
@@ -34,16 +32,9 @@ using Random: default_rng, randperm
     @testset "example from the paper #2" begin
         n_hashes, log_n_hashes, data_len = 6, 3, 2
         indices_in_bin = Matrix{Int32}(undef, (3, 6))
-        indices = [
-            [2, 1, 8],
-            [5, 3, 9],
-            [6, 2, 4],
-            [8, 9, 1],
-            [1, 7, 3],
-            [2, 4, 5],
-        ]
+        indices = [[2, 1, 8], [5, 3, 9], [6, 2, 4], [8, 9, 1], [1, 7, 3], [2, 4, 5]]
         for i = 1:6
-            indices_in_bin[:, i] = indices[i] 
+            indices_in_bin[:, i] = indices[i]
         end
 
         dwta = DWTAHasher(indices_in_bin, n_hashes, log_n_hashes)
@@ -88,7 +79,7 @@ end
                 hashes[hash] += 1
                 bin_hashes[hash] += 1
             end
-            
+
             if any(map(n_hits -> n_hits > 2 * ceil(n_attempts / n_hashes), bin_hashes))
                 good = false
             end

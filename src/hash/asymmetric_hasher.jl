@@ -1,6 +1,7 @@
 module LshAsymmetricHasher
 
-include("./transformations.jl")
+include("./asym_hash/transformations.jl")
+include("./simhash_wrapper.jl")
 
 export AsymHasherParams
 
@@ -10,23 +11,22 @@ using Random: AbstractRNG
 using Slide: Float
 using Slide.LSH: AbstractHasher, Lsh
 using Slide.Hash: LshParams, AbstractLshParams
-using Slide.L2Lsh
-using Slide: LshL2LshParams
-using Slide: LshSimHashParams
 
 import Slide.Hash
 import Slide.LSH
 
+
 # Wrapper applying transformations and then calling hasher
-struct AsymHasher <: AbstractHasher{SubArray{Float}}
-    hasher<:AbstractHasher{Vector{Float}}
-    transformation<:AbstractTransformation
+struct AsymHasher{H<:AbstractHasher{Vector{Float}},T<:AbstractTransformation} <:
+       AbstractHasher{SubArray{Float}}
+    hasher::H
+    transformation::T
 end
 
 
 function LSH.compute_signatures!(
     signatures::T,
-    h::AsymmHasher,
+    h::AsymHasher,
     raw_elem::SubArray{Float},
 ) where {T<:AbstractArray{Int}}
     elem = transform_data(h.transformation, raw_elem)
@@ -34,10 +34,7 @@ function LSH.compute_signatures!(
     h.hasher.compute_signatures!(signatures, h.hasher, elem)
 end
 
-function LSH.compute_signatures(
-    h::AsymHasher,
-    raw_elem::SubArray{Float},
-)::Vector{Int}
+function LSH.compute_signatures(h::AsymHasher, raw_elem::SubArray{Float})::Vector{Int}
     signatures = Vector{Int}(undef, h.n_tables)
 
     LSH.compute_signatures!(signatures, h, raw_elem)
@@ -66,10 +63,10 @@ end
     h.hasher.compute_signatures!(signatures, h.hasher, elem)
 end
 
-const LshAsymmetricHasher{Id} = Lsh{SubArray{Float},Id,AsymmetricHasher}
+const LshAsymHasher{Id} = Lsh{SubArray{Float},Id,AsymHasher}
 
-struct LshAsymcHasherParams <: AbstractLshParams
-    hasher_params<:AbstractLshParams
+struct LshAsymHasherParams{T<:AbstractLshParams} <: AbstractLshParams
+    hasher_params::T
     m::Int
 end
 
@@ -83,14 +80,11 @@ function Hash.init_lsh!(
 
     transformation = if typeof(hasher_params) == LshSimHashParams
         MIPStoCosineTransformation(m)
-    elseif typeof(hasher_params) == LshL2LshParams
-        MIPStoL2NNSTransformation(m)
-    else
-        error("Incorrect hasher params: $(typeof(hasher_params))")
+        error("Unrecognized asym hasher params: $(typeof(hasher_params))")
     end
 
     hasher = init_lsh!(hasher_params, rng, typeof(Id))
-    
+
     Lsh(
         lsh_params.n_tables,
         lsh_params.n_buckets,
@@ -101,8 +95,6 @@ function Hash.init_lsh!(
     )
 end
 
-function get_asym_hasher_params(
-)::Vector{AsymHasherParams}
-end
+function get_asym_hasher_params()::Vector{AsymHasherParams} end
 
-end # LshDWTAWrapper
+end # LshAsymmetricHasher

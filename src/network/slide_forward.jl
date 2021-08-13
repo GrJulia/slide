@@ -6,7 +6,7 @@ function forward_single_sample(
     x::SubArray{Float},
     network::SlideNetwork,
     x_index::Int,
-    y_true::Union{Nothing, SubArray{Float}} = nothing,
+    y_true::Union{Nothing,SubArray{Float}} = nothing,
 )::Vector{Float}
     n_layers = length(network.layers)
     current_input = x
@@ -46,7 +46,7 @@ end
 function forward!(
     x::Array{Float},
     network::SlideNetwork,
-    y_true::Union{Nothing, Array{Float}} = nothing,
+    y_true::Union{Nothing,Array{Float}} = nothing,
 )
     n_samples = typeof(x) == Vector{Float} ? 1 : size(x)[end]
     output = zeros(length(network.layers[end].neurons), n_samples)

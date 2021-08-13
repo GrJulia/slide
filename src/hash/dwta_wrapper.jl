@@ -26,9 +26,9 @@ end
     bin_hashes::A,
     log_n_indices_per_bin::UInt8,
 )::Int where {T<:Number,A<:AbstractVector{T}}
-        map(enumerate(bin_hashes)) do (i, h)
-            (h-1) << ((i-1)*log_n_indices_per_bin)
-        end |> sum
+    map(enumerate(bin_hashes)) do (i, h)
+        (h - 1) << ((i - 1) * log_n_indices_per_bin)
+    end |> sum
 end
 
 function LSH.compute_signatures!(
@@ -40,14 +40,12 @@ function LSH.compute_signatures!(
     raw_signature_chunks = partition(raw_signature, h.n_bins)
 
     @inbounds for (i, bin_hashes) in enumerate(raw_signature_chunks)
-        signatures[i] = compute_signature_from_k_bins_hashes(bin_hashes, h.log_n_indices_per_bin)
+        signatures[i] =
+            compute_signature_from_k_bins_hashes(bin_hashes, h.log_n_indices_per_bin)
     end
 end
 
-function LSH.compute_signatures(
-    h::DWTAHasherWrapper,
-    elem::SubArray{Float},
-)::Vector{Int}
+function LSH.compute_signatures(h::DWTAHasherWrapper, elem::SubArray{Float})::Vector{Int}
     signatures = Vector{Int}(undef, h.n_tables)
 
     LSH.compute_signatures!(signatures, h, elem)
@@ -100,7 +98,13 @@ function Hash.init_lsh!(
         lsh_params.n_tables,
         lsh_params.n_buckets,
         lsh_params.max_bucket_len,
-        DWTAHasherWrapper(hasher, lsh_params.n_tables, dwta_params.n_bins, log_n_indices_per_bin, dwta_params.densification),
+        DWTAHasherWrapper(
+            hasher,
+            lsh_params.n_tables,
+            dwta_params.n_bins,
+            log_n_indices_per_bin,
+            dwta_params.densification,
+        ),
         SubArray{Float},
         Id,
     )
@@ -122,13 +126,13 @@ function get_dwta_params(
             n_bins,
             n_indices_per_bin,
             prev_n_neurons,
-            dwta_params.densification
+            dwta_params.densification,
         )
         push!(lsh_params, dwtaparams)
         prev_n_neurons = n_neurons
     end
 
-lsh_params
+    lsh_params
 end
 
 end # LshDWTAWrapper

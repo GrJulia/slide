@@ -69,7 +69,10 @@ function transform_data(t::MIPStoCosineTransformation, data::SubArray{Float})::V
     out
 end
 
-function transform_query(t::MIPStoCosineTransformation, data::SubArray{Float})::Vector{Float}
+function transform_query(
+    t::MIPStoCosineTransformation,
+    data::SubArray{Float},
+)::Vector{Float}
     data_len = length(data)
     out = Vector{Float}(undef, data_len + 2 * t.m)
     out[1:data_len] = data
