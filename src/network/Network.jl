@@ -5,15 +5,11 @@ export AbstractScheduler,
     AdamAttributes,
     AdamOptimizer,
     Batch,
-    Layer,
-    Neuron,
     Optimizer,
-    OptimizerAttributes,
     SlideNetwork,
     backward!,
     batch_input,
     build_network,
-    extract_weights_and_ids,
     forward!,
     forward_single_sample,
     gradient,
@@ -27,17 +23,19 @@ export AbstractScheduler,
     PeriodicScheduler,
     predict_class,
     relu,
+    reset!,
     sparse_logit_cross_entropy,
     train!,
     update!,
-    update_weight!,
-    zero_neuron_attributes!
+    update_weight!
 
 
 using Slide.LSH: Lsh
 using Slide: Float, Id
 
 include("hashtables.jl")
+include("layers/Layers.jl")
+
 include("scheduler.jl")
 include("activations.jl")
 include("slide.jl")

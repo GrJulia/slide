@@ -3,6 +3,7 @@ using FLoops: @floop, ThreadedEx
 
 using Slide.LSH: retrieve
 
+using Slide.Network.Layers: new_batch!
 
 function forward_single_sample(
     x::SubArray{Float},
@@ -37,7 +38,7 @@ function forward_single_sample(
             union!(current_activated_neuron_ids, findall(>(0), y_true))
         end
 
-        layer.active_neurons[x_index] = current_activated_neuron_ids
+        layer.active_neuron_ids[x_index] = current_activated_neuron_ids
 
         current_n_neurons = length(current_activated_neuron_ids)
         layer_output = zeros(Float, current_n_neurons)
@@ -61,10 +62,14 @@ function forward!(
     y_true::Union{Nothing,Array{Float}} = nothing,
     executor = ThreadedEx(),
 )::Tuple{Vector{Vector{Float}},Vector{Vector{Id}}}
-    n_samples = typeof(x) == Vector{Float} ? 1 : size(x)[end]
+    batch_size = typeof(x) == Vector{Float} ? 1 : size(x)[end]
     last_layer = network.layers[end]
 
-    @views @floop executor for i = 1:n_samples
+    for layer in network.layers
+        new_batch!(layer, batch_size)
+    end
+
+    @views @floop executor for i = 1:batch_size
         forward_single_sample(
             x[:, i],
             network,
@@ -73,7 +78,7 @@ function forward!(
         )
     end
 
-    last_layer.output, last_layer.active_neurons
+    last_layer.output, last_layer.active_neuron_ids
 end
 
 function predict_class(
@@ -93,5 +98,5 @@ function predict_class(
     end
 
     topk_argmax(x) = partialsortperm(x, 1:topk, rev = true)
-    return mapslices(topk_argmax, y_pred, dims = 1)
+    mapslices(topk_argmax, y_pred, dims = 1)
 end

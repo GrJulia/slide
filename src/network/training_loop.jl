@@ -1,11 +1,13 @@
-using Slide.Network: Batch, Float, extract_weights_and_ids
+using Slide.Network: Batch, Float
 using Slide.Network.HashTables: update!
 using Slide.Hash: AbstractLshParams
 using Slide.FluxTraining: Logger, log_scalar!, step!
+using Slide.Network.Layers: SlideLayer, Neuron, AdamAttributes, extract_weights_and_ids
 
 
-function build_network(network_params::Dict, batch_size::Int)::SlideNetwork
-    network_layers = Vector{Layer}()
+function build_network(network_params::Dict)::SlideNetwork
+    network_layers = Vector{SlideLayer}()
+
     for layer_id = 1:network_params["n_layers"]
         if layer_id == 1
             layer_input_dim = network_params["input_dim"]
@@ -16,36 +18,32 @@ function build_network(network_params::Dict, batch_size::Int)::SlideNetwork
         layer = build_layer(
             layer_input_dim,
             layer_output_dim,
-            batch_size,
             layer_id,
             network_params["layer_activations"][layer_id],
             network_params["lsh_params"][layer_id],
         )
         push!(network_layers, layer)
     end
-    return SlideNetwork(network_layers)
+
+    SlideNetwork(network_layers)
 end
 
 function build_layer(
     input_dim,
     output_dim,
-    batch_size,
     layer_id,
     layer_activation,
     lsh_params::T,
 ) where {T<:AbstractLshParams}
     neurons = Vector{Neuron{AdamAttributes}}()
+
     for neuron_id = 1:output_dim
-        push!(neurons, Neuron(neuron_id, batch_size, input_dim))
+        push!(neurons, Neuron(neuron_id, input_dim))
     end
-    return Layer(
-        layer_id,
-        neurons,
-        lsh_params,
-        activation_name_to_function[layer_activation];
-        batch_size = batch_size,
-    )
+
+    SlideLayer(layer_id, neurons, lsh_params, activation_name_to_function[layer_activation])
 end
+
 
 function train!(
     training_batches,
@@ -98,10 +96,8 @@ function train!(
                 log_scalar!(logger, "backward_time", backward_stats.time)
                 println("Backward time $(backward_stats.time)")
 
-                update_stats = @timed begin
-                    update_weight!(network, optimizer)
-                    zero_neuron_attributes!(network)
-                end
+                update_stats = @timed update_weight!(network, optimizer)
+
 
                 log_scalar!(logger, "update_time", update_stats.time)
                 println("Update time $(update_stats.time)")
