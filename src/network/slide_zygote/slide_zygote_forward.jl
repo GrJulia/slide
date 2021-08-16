@@ -1,17 +1,25 @@
 using Zygote
 using LinearAlgebra
 using Flux
+using FLoops: @floop, ThreadedEx
 
 relu_scalar(x) = max(0, x)
 
-function layer_forward_and_backward(current_activated_neurons, activated_neuron_ids, current_input, layer_activation, x_index)
+function layer_forward_and_backward(
+    current_activated_neurons,
+    activated_neuron_ids,
+    current_input,
+    layer_activation,
+    x_index,
+)
     current_n_neurons = length(current_activated_neurons)
     layer_output = zeros(Float, current_n_neurons)
     for (i, neuron) in enumerate(current_activated_neurons)
         layer_output_i, neurons_gradients = withjacobian(
-            (weight, bias) -> relu_scalar(dot(current_input, weight) + bias), 
-            view(neuron.weight, activated_neuron_ids),neuron.bias
-            )
+            (weight, bias) -> relu_scalar(dot(current_input, weight) + bias),
+            view(neuron.weight, activated_neuron_ids),
+            neuron.bias,
+        )
         layer_output[i] = layer_output_i[1]
         neuron.grad_output_w[x_index] = neurons_gradients[1][1, :]
         neuron.grad_output_b[x_index] = neurons_gradients[2][1]
@@ -58,10 +66,10 @@ function forward_single_sample_zygote(
 
         current_input = layer_forward_and_backward(
             layer.neurons[current_activated_neuron_ids],
-            activated_neuron_ids, 
-            current_input, 
+            activated_neuron_ids,
+            current_input,
             layer.layer_activation,
-            x_index
+            x_index,
         )
 
         layer.output[x_index] = current_input
@@ -74,6 +82,7 @@ function forward_zygote!(
     x::Array{Float},
     network::SlideNetwork;
     y_true::Union{Nothing,Array{Float}} = nothing,
+    executor = ThreadedEx(),
 )::Tuple{Vector{Vector{Float}},Vector{Vector{Id}}}
     batch_size = typeof(x) == Vector{Float} ? 1 : size(x)[end]
     last_layer = network.layers[end]
@@ -82,7 +91,7 @@ function forward_zygote!(
         new_batch!(layer, batch_size)
     end
 
-    @views for i = 1:batch_size
+    @views @floop executor for i = 1:batch_size
         forward_single_sample_zygote(
             x[:, i],
             network,
