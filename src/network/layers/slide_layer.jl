@@ -21,6 +21,9 @@ using Slide.Network.HashTables: SlideHashTables
 
     active_neuron_ids::Vector{Vector{Id}}
     output::Vector{Vector{Float}}
+
+    weights_gradients
+    biases_gradients
 end
 
 function SlideLayer(
@@ -41,6 +44,8 @@ function SlideLayer(
         layer_activation = layer_activation,
         active_neuron_ids = Vector{Vector{Id}}(),
         output = Vector{Vector{Float}}(),
+        weights_gradients = Vector{Array{Float}}(),
+        biases_gradients = Vector{Array{Float}}(),
     )
 end
 
@@ -53,6 +58,8 @@ function new_batch!(
 ) where {A,T,F,H}
     resize!(layer.active_neuron_ids, batch_size)
     resize!(layer.output, batch_size)
+    resize!(layer.weights_gradients, batch_size)
+    resize!(layer.biases_gradients, batch_size)
 
     @floop executor for neuron in layer.neurons
         reset!(neuron, batch_size)
