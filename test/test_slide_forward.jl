@@ -2,6 +2,7 @@ using Test
 
 using Slide
 using Slide.Network
+using Slide.Network.Layers
 using Slide.LshSimHashWrapper: LshSimHashParams
 using Slide.Hash: LshParams
 using Slide.LSH: retrieve
@@ -35,14 +36,17 @@ simparams = LshSimHashParams(common_lsh, 3, 1, 3)
         false,
     )
 
-    network =
-        SlideNetwork([Layer(1, [neuron_1, neuron_2], simparams, identity; batch_size = 1)])
+    network = SlideNetwork([SlideLayer(1, [neuron_1, neuron_2], simparams, identity)])
+
+    for layer in network.layers
+        new_batch!(layer, 1)
+    end
 
     @views begin
         @test length(network.layers) == 1
         @testset "forward single sample" begin
             forward_single_sample(x[:, 1], network, 1)
-            active_neurons = network.layers[1].active_neurons[1]
+            active_neurons = network.layers[1].active_neuron_ids[1]
             @test network.layers[1].output[1] == [6.0, 1.0][active_neurons]
         end
         @test retrieve(network.layers[1].hash_tables.lsh, x[:, 1]) == Set{Int}([1, 2])

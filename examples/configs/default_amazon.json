@@ -1,5 +1,5 @@
 {
-    "name": "default_amazon",
+    "name": "amazon",
     "dataset": {
         "train_path": "amazon_train",
         "test_path": "amazon_test",

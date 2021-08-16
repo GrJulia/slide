@@ -11,7 +11,7 @@ Random.seed!(1);
 
 if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
-    use_real_dataset = true
+    use_real_dataset = false
 
     # Building parameters configuration
 
@@ -89,7 +89,7 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
     # Data processing and training loop
     println("Data loaded, building network..........")
 
-    network = build_network(network_params, batch_size)
+    network = build_network(network_params)
 
     learning_rate = 0.001
     optimizer = AdamOptimizer(eta = learning_rate)
