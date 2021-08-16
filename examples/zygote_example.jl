@@ -73,14 +73,17 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
     # Data processing and training loop
     println("Data loaded, building network..........")
 
-    network = build_network(network_params, batch_size)
+    network = build_network(network_params)
 
     learning_rate = 0.001
     optimizer = AdamOptimizer(eta = learning_rate)
 
-    logger = get_logger(dataset_config)
+    # first_batch = train_loader[1]
+    # forward_zygote!(first_batch[1], network, y_true=first_batch[2]);
 
-    # train_zygote!(train_loader, network ; n_iters = 1)
+    # logger = get_logger(dataset_config)
+
+    train_zygote!(train_loader, network, optimizer ; n_iters = 1)
     # println("DONE \n")
 
     # save(logger)

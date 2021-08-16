@@ -30,7 +30,8 @@ export AbstractScheduler,
     update_weight!,
     layer_forward_and_backward,
     forward_single_sample_zygote,
-    forward_zygote!
+    forward_zygote!,
+    train_zygote!
 
 
 using Slide.LSH: Lsh

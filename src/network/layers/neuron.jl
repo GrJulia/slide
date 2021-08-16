@@ -21,6 +21,8 @@ AdamAttributes(input_dim::Int) = AdamAttributes(zeros(input_dim), 0, zeros(input
     bias_gradients::Vector{Float}
     optimizer_attributes::W
     is_active::Bool
+    grad_output_w 
+    grad_output_b
 end
 
 Neuron(id::Id, input_dim::Int) = Neuron(
@@ -31,13 +33,19 @@ Neuron(id::Id, input_dim::Int) = Neuron(
     bias_gradients = Vector{Float}(),
     optimizer_attributes = AdamAttributes(input_dim),
     is_active = false,
+    grad_output_w = Vector{Array{Float}}(),
+    grad_output_b = Vector{Float}()
 )
 
 function reset!(neuron::Neuron{T}, batch_size::Int) where {T}
-    resize!(neuron.bias_gradients, batch_size)
+    resize!(neuron.grad_output_w, batch_size)
+    resize!(neuron.grad_output_b, batch_size)
+    neuron.grad_output_b =
+        fill!(neuron.grad_output_b, zero(eltype(neuron.grad_output_b)))
 
     neuron.weight_gradients =
         fill!(neuron.weight_gradients, zero(eltype(neuron.weight_gradients)))
+    resize!(neuron.bias_gradients, batch_size)
     neuron.bias_gradients =
         fill!(neuron.bias_gradients, zero(eltype(neuron.bias_gradients)))
     neuron.is_active = false
