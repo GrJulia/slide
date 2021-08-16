@@ -2,10 +2,14 @@ using Slide.Network
 
 function train_zygote!(
     training_batches,
+    test_set,
     network::SlideNetwork,
-    optimizer::Optimizer ;
+    optimizer::Optimizer,
+    logger::Logger;
     n_iters::Int,
-    use_all_true_labels::Bool = true
+    scheduler::S = PeriodicScheduler(15),
+    use_all_true_labels::Bool = true,
+    test_parameters::Dict,
 )
     for i = 1:n_iters
         for (n, (x_batch, y_batch)) in enumerate(training_batches)

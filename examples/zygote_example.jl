@@ -78,12 +78,9 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
     learning_rate = 0.001
     optimizer = AdamOptimizer(eta = learning_rate)
 
-    # first_batch = train_loader[1]
-    # forward_zygote!(first_batch[1], network, y_true=first_batch[2]);
+    logger = get_logger(dataset_config)
 
-    # logger = get_logger(dataset_config)
-
-    train_zygote!(train_loader, network, optimizer ; n_iters = 1)
+    train_zygote!(train_loader, test_set, network, optimizer, logger ; n_iters = 1, test_parameters=test_parameters)
     # println("DONE \n")
 
     # save(logger)
