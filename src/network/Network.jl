@@ -31,7 +31,9 @@ export AbstractScheduler,
     layer_forward_and_backward,
     forward_single_sample_zygote,
     forward_zygote!,
-    train_zygote!
+    train_zygote!,
+    backward_zygote!,
+    handle_batch_backward_zygote!
 
 
 using Slide.LSH: Lsh
@@ -49,5 +51,7 @@ include("slide_forward.jl")
 include("slide_backward.jl")
 include("training_loop.jl")
 include("slide_zygote/slide_zygote_training_loop.jl")
+include("slide_zygote/slide_zygote_forward.jl")
+include("slide_zygote/slide_zygote_backward.jl")
 
 end
