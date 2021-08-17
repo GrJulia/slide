@@ -34,16 +34,12 @@ end
 
 function SlideLayer(
     id::Id,
-    input_dim,
-    output_dim,
+    input_dim::Int,
+    output_dim::Int,
     lsh_params::A,
     layer_activation::F,
-    opt_attr::Opt
-) where {
-    A<:AbstractLshParams,
-    F<:Function,
-    Opt<:AbstractOptimizerAttributes,
-}
+    opt_attr::Opt,
+) where {A<:AbstractLshParams,F<:Function,Opt<:AbstractOptimizerAttributes}
     weights = rand(Float, input_dim, output_dim)
     hash_tables = SlideHashTables(lsh_params, extract_weights_and_ids(weights))
 
@@ -58,7 +54,7 @@ function SlideLayer(
         bias_gradients = zeros(Float, output_dim, 1),
         weight_gradients = zeros(Float, input_dim, output_dim),
         is_neuron_active = zeros(Bool, output_dim),
-        opt_attr = opt_attr
+        opt_attr = opt_attr,
     )
 end
 

@@ -44,7 +44,7 @@ seed!(0)
     y_cat ./= sum(y_cat, dims = 1)
 
     for layer in network.layers
-        for neuron_id in 1:size(layer.weights, 2)
+        for neuron_id = 1:size(layer.weights, 2)
             for weight_index = 1:size(layer.weights, 1)
                 @test numerical_gradient_weights(
                     network,
@@ -59,7 +59,7 @@ seed!(0)
         end
     end
     for layer in network.layers
-        for neuron_id in 1:size(layer.weights, 2)
+        for neuron_id = 1:size(layer.weights, 2)
             @test numerical_gradient_bias(network, layer.id, neuron_id, x, y_cat, epsilon) <
                   threshold
         end

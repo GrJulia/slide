@@ -80,7 +80,7 @@ function numerical_gradient_weights(
     y_check_active_1 = select_by_ids(y_check, activated_neurons_1)
     loss_1, _ = negative_sparse_logit_cross_entropy(y_check_pred_1, y_check_active_1)
 
-    network.layers[layer_id].weights[weight_index, neuron_id] -= 2*epsilon
+    network.layers[layer_id].weights[weight_index, neuron_id] -= 2 * epsilon
     y_check_pred_2, activated_neurons_2 =
         forward!(x_check, network; y_true = y_check, executor = SequentialEx())
     y_check_active_2 = select_by_ids(y_check, activated_neurons_2)
@@ -124,7 +124,7 @@ function numerical_gradient_bias(
     y_check_active_1 = select_by_ids(y_check, activated_neurons_1)
     loss_1, _ = negative_sparse_logit_cross_entropy(y_check_pred_1, y_check_active_1)
 
-    network.layers[layer_id].biases[neuron_id] -= 2*epsilon
+    network.layers[layer_id].biases[neuron_id] -= 2 * epsilon
     y_check_pred_2, activated_neurons_2 =
         forward!(x_check, network; y_true = y_check, executor = SequentialEx())
     y_check_active_2 = select_by_ids(y_check, activated_neurons_2)

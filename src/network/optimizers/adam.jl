@@ -41,14 +41,17 @@ function optimizer_step!(
 
     @views begin
         @. adam_attributes.m_dw[:, neuron_id] =
-            optimizer.beta_1 * adam_attributes.m_dw[:, neuron_id] + (1 - optimizer.beta_1) * dw
+            optimizer.beta_1 * adam_attributes.m_dw[:, neuron_id] +
+            (1 - optimizer.beta_1) * dw
         adam_attributes.m_db[neuron_id] =
             optimizer.beta_1 * adam_attributes.m_db[neuron_id] + (1 - optimizer.beta_1) * db
 
         @. adam_attributes.v_dw[:, neuron_id] =
-            optimizer.beta_2 * adam_attributes.v_dw[:, neuron_id] + (1 - optimizer.beta_2) * (dw .^ 2)
+            optimizer.beta_2 * adam_attributes.v_dw[:, neuron_id] +
+            (1 - optimizer.beta_2) * (dw .^ 2)
         adam_attributes.v_db[neuron_id] =
-            optimizer.beta_2 * adam_attributes.v_db[neuron_id] + (1 - optimizer.beta_2) * (db^2)
+            optimizer.beta_2 * adam_attributes.v_db[neuron_id] +
+            (1 - optimizer.beta_2) * (db^2)
 
         t = optimizer.t[]
 

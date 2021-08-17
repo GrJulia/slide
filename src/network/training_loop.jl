@@ -42,7 +42,7 @@ function build_layer(
         output_dim,
         lsh_params,
         activation_name_to_function[layer_activation],
-        AdamAttributes(input_dim, output_dim)
+        AdamAttributes(input_dim, output_dim),
     )
 end
 
