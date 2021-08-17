@@ -38,22 +38,24 @@ function optimizer_step!(
     dw = weight_gradients
     db = mean(bias_gradients)
 
-    @. adam_attributes.m_dw[:, neuron_id] =
-        optimizer.beta_1 * adam_attributes.m_dw[:, neuron_id] + (1 - optimizer.beta_1) * dw
-    adam_attributes.m_db[neuron_id] =
-        optimizer.beta_1 * adam_attributes.m_db[neuron_id] + (1 - optimizer.beta_1) * db
+    @views begin
+        @. adam_attributes.m_dw[:, neuron_id] =
+            optimizer.beta_1 * adam_attributes.m_dw[:, neuron_id] + (1 - optimizer.beta_1) * dw
+        adam_attributes.m_db[neuron_id] =
+            optimizer.beta_1 * adam_attributes.m_db[neuron_id] + (1 - optimizer.beta_1) * db
 
-    @. adam_attributes.v_dw[:, neuron_id] =
-        optimizer.beta_2 * adam_attributes.v_dw[:, neuron_id] + (1 - optimizer.beta_2) * (dw .^ 2)
-    adam_attributes.v_db[neuron_id] =
-        optimizer.beta_2 * adam_attributes.v_db[neuron_id] + (1 - optimizer.beta_2) * (db^2)
+        @. adam_attributes.v_dw[:, neuron_id] =
+            optimizer.beta_2 * adam_attributes.v_dw[:, neuron_id] + (1 - optimizer.beta_2) * (dw .^ 2)
+        adam_attributes.v_db[neuron_id] =
+            optimizer.beta_2 * adam_attributes.v_db[neuron_id] + (1 - optimizer.beta_2) * (db^2)
 
-    t = optimizer.t[]
+        t = optimizer.t[]
 
-    corr_momentum_dw = adam_attributes.m_dw[:, neuron_id] ./ (1 - optimizer.beta_1^t)
-    corr_momentum_db = adam_attributes.m_db[neuron_id] / (1 - optimizer.beta_1^t)
-    corr_velocity_dw = adam_attributes.v_dw[:, neuron_id] ./ (1 - optimizer.beta_2^t)
-    corr_velocity_db = adam_attributes.v_db[neuron_id] / (1 - optimizer.beta_2^t)
+        corr_momentum_dw = adam_attributes.m_dw[:, neuron_id] ./ (1 - optimizer.beta_1^t)
+        corr_momentum_db = adam_attributes.m_db[neuron_id] / (1 - optimizer.beta_1^t)
+        corr_velocity_dw = adam_attributes.v_dw[:, neuron_id] ./ (1 - optimizer.beta_2^t)
+        corr_velocity_db = adam_attributes.v_db[neuron_id] / (1 - optimizer.beta_2^t)
+    end
 
     @. weight -=
         optimizer.eta * (corr_momentum_dw / (sqrt(corr_velocity_dw) + optimizer.epsilon))
