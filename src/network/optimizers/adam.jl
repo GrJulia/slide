@@ -1,7 +1,8 @@
 using Base: @kwdef
 using Statistics: mean
+using LinearAlgebra.BLAS: axpy!
 
-using Slide: Float, Id
+using Slide: Float, Id, FloatVector
 
 
 struct AdamAttributes <: AbstractOptimizerAttributes
@@ -30,11 +31,11 @@ function optimizer_step!(
     optimizer::AdamOptimizer,
     adam_attributes::AdamAttributes,
     neuron_id::Id,
-    weight,
+    weight::T,
     bias::Ref{Float},
-    weight_gradients,
-    bias_gradients,
-)
+    weight_gradients::U,
+    bias_gradients::P,
+) where {T<:FloatVector,P<:FloatVector,U<:FloatVector}
     dw = weight_gradients
     db = mean(bias_gradients)
 

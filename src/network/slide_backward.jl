@@ -1,11 +1,9 @@
 using FLoops: @floop, ThreadedEx
 using LinearAlgebra.BLAS: axpy!, dot
 
-
+using Slide: FloatVector
 using Slide.Network.Layers: prep_backprop!
 using Slide.Network.Optimizers: AbstractOptimizer, optimizer_step!, AdamAttributes
-
-const FloatVector = AbstractVector{Float}
 
 function handle_batch_backward(
     x::T,
