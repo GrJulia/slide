@@ -3,14 +3,14 @@ using LinearAlgebra: dot
 using Slide.LSH: retrieve
 
 
-const Return = Tuple{Vector{Float},Vector{Id}}
+const SlideOutput = Tuple{Vector{Float},Vector{Id}}
 
 function forward_single_sample!(
     layer::SlideLayer{A,F,H,O},
     input::U,
     x_index::Int,
     ::Nothing,
-)::Return where {A,F,H,O,U<:AbstractVector{Float}}
+)::SlideOutput where {A,F,H,O,U<:AbstractVector{Float}}
     current_activated_neuron_ids = _get_active_ids(layer, input, Id[])
 
     _forward!(layer, input, current_activated_neuron_ids, :, x_index)
@@ -21,7 +21,7 @@ function forward_single_sample!(
     input::U,
     x_index::Int,
     y_true::Vector{Id},
-)::Return where {A,F,H,O,U<:AbstractVector{Float}}
+)::SlideOutput where {A,F,H,O,U<:AbstractVector{Float}}
     current_activated_neuron_ids = _get_active_ids(layer, input, y_true)
 
     _forward!(layer, input, current_activated_neuron_ids, :, x_index)
@@ -32,7 +32,7 @@ end
     input::Tuple{U,P},
     x_index::Int,
     ::Nothing,
-)::Return where {A,F,H,O,U<:AbstractVector{Float},P<:AbstractVector{Id}}
+)::SlideOutput where {A,F,H,O,U<:AbstractVector{Float},P<:AbstractVector{Id}}
     forward_single_sample!(layer, input, x_index, Id[])
 end
 
@@ -41,7 +41,7 @@ function forward_single_sample!(
     input::Tuple{U,P},
     x_index::Int,
     y_true::Vector{Id},
-)::Return where {A,F,H,O,U<:AbstractVector{Float},P<:AbstractVector{Id}}
+)::SlideOutput where {A,F,H,O,U<:AbstractVector{Float},P<:AbstractVector{Id}}
     current_input, activated_neuron_ids = input
 
     dense_input = zeros(Float, size(layer.weights, 1))
