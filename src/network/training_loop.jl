@@ -3,7 +3,7 @@ using Slide.Network.HashTables: update!
 using Slide.Hash: AbstractLshParams
 using Slide.FluxTraining: Logger, log_scalar!, step!
 using Slide.Network.Layers: SlideLayer, extract_weights_and_ids
-using Slide.Network.Optimizers: AdamAttributes, optimizer_end_epoch_step!
+using Slide.Network.Optimizers: AbstractOptimizer, AdamAttributes, optimizer_end_epoch_step!
 
 
 function build_network(network_params::Dict)::SlideNetwork
@@ -51,13 +51,13 @@ function train!(
     training_batches,
     test_set,
     network::SlideNetwork,
-    optimizer,
+    optimizer::Opt,
     logger::Logger;
     n_iters::Int,
     scheduler::S = PeriodicScheduler(15),
     use_all_true_labels::Bool = true,
     test_parameters::Dict,
-) where {S<:AbstractScheduler}
+) where {S<:AbstractScheduler,Opt<:AbstractOptimizer}
     for i = 1:n_iters
         loss = 0
         for (n, (x_batch, y_batch)) in enumerate(training_batches)
