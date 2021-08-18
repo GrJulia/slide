@@ -2,66 +2,75 @@ using Base: @kwdef
 using Random: default_rng
 using FLoops: ThreadedEx, @floop
 
-using Slide: Float, Id
+using Slide: Float, Id, LshBatch
 using Slide.Hash: AbstractLshParams, init_lsh!
 using Slide.LSH: Lsh, AbstractHasher, add_batch!
 using Slide.Network.HashTables: SlideHashTables
+using Slide.Network.Optimizers: AbstractOptimizerAttributes
 
 
-@kwdef struct SlideLayer{
+@kwdef mutable struct SlideLayer{
     A<:AbstractLshParams,
-    T<:AbstractOptimizerAttributes,
     F<:Function,
     Hasher<:AbstractHasher{SubArray{Float}},
+    Opt<:AbstractOptimizerAttributes,
 } <: AbstractLayer
     id::Id
-    neurons::Vector{Neuron{T}}
+    biases::Vector{Float}
+    weights::Matrix{Float}
+
     hash_tables::SlideHashTables{A,Hasher}
     layer_activation::F
 
     active_neuron_ids::Vector{Vector{Id}}
     output::Vector{Vector{Float}}
 
-    weights_gradients
-    biases_gradients
+    bias_gradients::Matrix{Float}
+    weight_gradients::Matrix{Float}
+    is_neuron_active::Vector{Bool}
+
+    opt_attr::Opt
 end
 
 function SlideLayer(
     id::Id,
-    neurons::Vector{Neuron{T}},
+    input_dim::Int,
+    output_dim::Int,
     lsh_params::A,
     layer_activation::F,
-) where {A<:AbstractLshParams,T<:AbstractOptimizerAttributes,F<:Function}
-
-    lsh = init_lsh!(lsh_params, default_rng(), Id)
-
-    hash_tables = SlideHashTables(lsh_params, extract_weights_and_ids(neurons))
+    opt_attr::Opt,
+) where {A<:AbstractLshParams,F<:Function,Opt<:AbstractOptimizerAttributes}
+    weights = rand(Float, input_dim, output_dim)
+    hash_tables = SlideHashTables(lsh_params, extract_weights_and_ids(weights))
 
     SlideLayer(
         id = id,
-        neurons = neurons,
+        weights = weights,
+        biases = rand(Float, output_dim),
         hash_tables = hash_tables,
         layer_activation = layer_activation,
         active_neuron_ids = Vector{Vector{Id}}(),
         output = Vector{Vector{Float}}(),
-        weights_gradients = Vector{Array{Float}}(),
-        biases_gradients = Vector{Array{Float}}(),
+        bias_gradients = zeros(Float, output_dim, 1),
+        weight_gradients = zeros(Float, input_dim, output_dim),
+        is_neuron_active = zeros(Bool, output_dim),
+        opt_attr = opt_attr,
     )
 end
 
 new_batch!(::AbstractLayer, ::Int) = nothing
 
-function new_batch!(
-    layer::SlideLayer{A,T,F,H},
-    batch_size::Int;
-    executor = ThreadedEx(),
-) where {A,T,F,H}
+function new_batch!(layer::SlideLayer{A,F,H,O}, batch_size::Int) where {A,F,H,O}
     resize!(layer.active_neuron_ids, batch_size)
     resize!(layer.output, batch_size)
-    resize!(layer.weights_gradients, batch_size)
-    resize!(layer.biases_gradients, batch_size)
+    fill!(layer.is_neuron_active, 0)
+end
 
-    @floop executor for neuron in layer.neurons
-        reset!(neuron, batch_size)
-    end
+function prep_backprop!(layer::SlideLayer{A,F,H,O}, batch_size::Int) where {A,F,H,O}
+    fill!(layer.weight_gradients, 0)
+    layer.bias_gradients = zeros(Float, length(layer.biases), batch_size)
+end
+
+function extract_weights_and_ids(weights::A)::LshBatch where {A<:AbstractMatrix{Float}}
+    convert(LshBatch, map(i -> (@view(weights[:, i]), i), 1:size(weights, 2)))
 end

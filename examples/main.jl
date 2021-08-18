@@ -7,6 +7,7 @@ using Slide.ZygoteNetwork
 using Slide.LshSimHashWrapper: LshSimHashParams, get_simhash_params
 using Slide.Hash: LshParams
 using Slide.FluxTraining
+using Slide.Network.Optimizers: AdamOptimizer
 
 Random.seed!(1);
 
@@ -106,7 +107,7 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
             optimizer,
             logger;
             n_iters = 1,
-            scheduler = PeriodicScheduler(50),
+            scheduler = PeriodicScheduler(5),
             use_all_true_labels = true,
             test_parameters = test_parameters,
         )
@@ -118,7 +119,7 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
             optimizer,
             logger;
             n_iters = 3,
-            scheduler = PeriodicScheduler(50),
+            scheduler = PeriodicScheduler(5),
             use_all_true_labels = true,
             test_parameters = test_parameters,
         )

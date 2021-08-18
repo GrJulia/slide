@@ -4,7 +4,6 @@ using FLoops: SequentialEx
 
 using Slide.Network
 using Slide: Float, Id
-using Slide.Network.Layers: Neuron
 using Slide.FluxTraining: SparseDataset
 
 const Batch = Tuple{Matrix{Float},Matrix{Float}}
@@ -72,16 +71,16 @@ function numerical_gradient_weights(
         probs;
         executor = SequentialEx(),
     )
-    backprop_gradient = copy(network.layers[layer_id].neurons[neuron_id].weight_gradients)
+    backprop_gradient = copy(network.layers[layer_id].weight_gradients[:, neuron_id])
 
     # Computing numerical weight gradient
-    network.layers[layer_id].neurons[neuron_id].weight[weight_index] += epsilon
+    network.layers[layer_id].weights[weight_index, neuron_id] += epsilon
     y_check_pred_1, activated_neurons_1 =
         forward!(x_check, network; y_true = y_check, executor = SequentialEx())
     y_check_active_1 = select_by_ids(y_check, activated_neurons_1)
     loss_1, _ = negative_sparse_logit_cross_entropy(y_check_pred_1, y_check_active_1)
 
-    network.layers[layer_id].neurons[neuron_id].weight[weight_index] -= 2 * epsilon
+    network.layers[layer_id].weights[weight_index, neuron_id] -= 2 * epsilon
     y_check_pred_2, activated_neurons_2 =
         forward!(x_check, network; y_true = y_check, executor = SequentialEx())
     y_check_active_2 = select_by_ids(y_check, activated_neurons_2)
@@ -89,7 +88,7 @@ function numerical_gradient_weights(
 
     numerical_grad = (loss_1 - loss_2) / (2 * epsilon)
 
-    network.layers[layer_id].neurons[neuron_id].weight[weight_index] += epsilon
+    network.layers[layer_id].weights[weight_index, neuron_id] += epsilon
 
     abs(numerical_grad - backprop_gradient[weight_index])
 end
@@ -116,16 +115,16 @@ function numerical_gradient_bias(
         probs;
         executor = SequentialEx(),
     )
-    backprop_gradient = mean(network.layers[layer_id].neurons[neuron_id].bias_gradients)
+    backprop_gradient = mean(network.layers[layer_id].bias_gradients[neuron_id, :])
 
     # Computing numerical bias gradient
-    network.layers[layer_id].neurons[neuron_id].bias += epsilon
+    network.layers[layer_id].biases[neuron_id] += epsilon
     y_check_pred_1, activated_neurons_1 =
         forward!(x_check, network; y_true = y_check, executor = SequentialEx())
     y_check_active_1 = select_by_ids(y_check, activated_neurons_1)
     loss_1, _ = negative_sparse_logit_cross_entropy(y_check_pred_1, y_check_active_1)
 
-    network.layers[layer_id].neurons[neuron_id].bias -= 2 * epsilon
+    network.layers[layer_id].biases[neuron_id] -= 2 * epsilon
     y_check_pred_2, activated_neurons_2 =
         forward!(x_check, network; y_true = y_check, executor = SequentialEx())
     y_check_active_2 = select_by_ids(y_check, activated_neurons_2)
@@ -133,7 +132,7 @@ function numerical_gradient_bias(
 
     numerical_grad = (loss_1 - loss_2) / (2 * epsilon)
 
-    network.layers[layer_id].neurons[neuron_id].bias += epsilon
+    network.layers[layer_id].biases[neuron_id] += epsilon
 
     abs(numerical_grad - backprop_gradient)
 end

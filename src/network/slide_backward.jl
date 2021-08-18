@@ -1,7 +1,9 @@
 using FLoops: @floop, ThreadedEx
-using LinearAlgebra.BLAS: axpy!
+using LinearAlgebra.BLAS: axpy!, dot
 
-const FloatVector = AbstractVector{Float}
+using Slide: FloatVector
+using Slide.Network.Layers: prep_backprop!
+using Slide.Network.Optimizers: AbstractOptimizer, optimizer_step!, AdamAttributes
 
 function handle_batch_backward(
     x::T,
@@ -23,8 +25,8 @@ function handle_batch_backward(
             previous_neurons = network.layers[l-1].active_neuron_ids[i]
         end
 
-        for (k, neuron) in enumerate(view(layer.neurons, active_neurons))
-            neuron.is_active = true
+        for (k, neuron_id) in enumerate(active_neurons)
+            layer.is_neuron_active[neuron_id] = true
             if l == length(network.layers)
                 # recall that saved_softmax's length is size(active_neurons)
                 # sum(y_true): to handle multiple labels
@@ -37,31 +39,47 @@ function handle_batch_backward(
             else
                 # we could only sum over the active neurons in layer l+1, but
                 # here, if a neuron is not active, we're just summing 0
-                da = sum(
-                    next_neuron.bias_gradients[i] * next_neuron.weight[neuron.id] for
-                    next_neuron in view(
-                        network.layers[l+1].neurons,
-                        network.layers[l+1].active_neuron_ids[i],
-                    )
-                )
+                next_layer = network.layers[l+1]
+                next_layer_active_neurons_ids = next_layer.active_neuron_ids[i]
+
+                b_gradients =
+                    @view next_layer.bias_gradients[next_layer_active_neurons_ids, i]
+                n_weights =
+                    @view next_layer.weights[neuron_id, next_layer_active_neurons_ids]
+
+                da = sum(b_gradients .* n_weights)
                 dz = da * gradient(typeof(layer.layer_activation), layer.output[i][k])
             end
 
-            neuron.bias_gradients[i] = dz
-            dz = dz / length(neuron.bias_gradients)
-            @views axpy!(dz, previous_activation, neuron.weight_gradients[previous_neurons])
+            layer.bias_gradients[neuron_id, i] = dz
+            dz = dz / length(layer.bias_gradients[neuron_id, :])
+            @views axpy!(
+                dz,
+                previous_activation,
+                layer.weight_gradients[previous_neurons, neuron_id],
+            )
         end
     end
 end
 
 function update_weight!(
     network::SlideNetwork,
-    optimizer::Optimizer;
+    optimizer::Opt;
     executor = ThreadedEx(),
-)
+) where {Opt<:AbstractOptimizer}
     for layer in network.layers
-        @floop executor for neuron in filter(n -> n.is_active, layer.neurons)
-            optimizer_step!(optimizer, neuron)
+        @floop executor for (id, is_active) in enumerate(layer.is_neuron_active)
+            !is_active && continue
+
+            @views optimizer_step!(
+                optimizer,
+                layer.opt_attr,
+                id,
+                layer.weights[:, id],
+                Ref(layer.biases[id]),
+                layer.weight_gradients[:, id],
+                layer.bias_gradients[id, :],
+            )
         end
     end
 end
@@ -74,8 +92,13 @@ function backward!(
     saved_softmax::Vector{<:FloatVector};
     executor = ThreadedEx(),
 )
-    n_samples = size(x)[2]
-    @views @floop executor for i = 1:n_samples
+    batch_size = size(x)[2]
+
+    for layer in network.layers
+        prep_backprop!(layer, batch_size)
+    end
+
+    @views @floop executor for i = 1:batch_size
         handle_batch_backward(x[:, i], y_pred[i], y_true[i], network, i, saved_softmax[i])
     end
 end
