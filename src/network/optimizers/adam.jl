@@ -48,7 +48,7 @@ function optimizer_step!(
 
         @. adam_attributes.v_dw[:, neuron_id] =
             optimizer.beta_2 * adam_attributes.v_dw[:, neuron_id] +
-            (1 - optimizer.beta_2) * (dw .^ 2)
+            (1 - optimizer.beta_2) * (dw^2)
         adam_attributes.v_db[neuron_id] =
             optimizer.beta_2 * adam_attributes.v_db[neuron_id] +
             (1 - optimizer.beta_2) * (db^2)
