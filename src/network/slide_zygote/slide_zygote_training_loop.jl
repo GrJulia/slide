@@ -1,22 +1,28 @@
 using Slide.Network
 using Slide.ZygoteNetwork
 using Slide.FluxTraining
-using Slide.Network: compute_accuracy
+using Slide.Network: compute_accuracy, forward!
+using Slide.Network.Optimizers
+using Slide.Network.Layers: SlideLayer, extract_weights_and_ids
+using Slide.Network.Optimizers: AbstractOptimizer, AdamAttributes, optimizer_end_epoch_step!
+using Slide.Network.HashTables: update!
 
 function train_zygote!(
     training_batches,
     test_set,
     network::SlideNetwork,
-    optimizer::Optimizer,
+    optimizer::Opt,
     logger::Logger;
     n_iters::Int,
     scheduler::S = PeriodicScheduler(15),
     use_all_true_labels::Bool = true,
     test_parameters::Dict,
-) where {S<:AbstractScheduler}
+) where {S<:AbstractScheduler,Opt<:AbstractOptimizer}
     for i = 1:n_iters
+        loss = 0
         for (n, (x_batch, y_batch)) in enumerate(training_batches)
             println("Iteration $i , batch $n")
+            step!(logger)
 
             time_stats = @timed begin
                 y_batch_or_nothing = if use_all_true_labels
@@ -25,14 +31,11 @@ function train_zygote!(
                     nothing
                 end
 
-                forward_stats = @timed forward_zygote!(
-                    x_batch,
-                    network;
-                    y_true = y_batch_or_nothing,
-                )
+                forward_stats =
+                    @timed forward!(x_batch, network; y_true = y_batch_or_nothing)
                 y_batch_pred, last_layer_activated_neuron_ids = forward_stats.value
-
                 log_scalar!(logger, "forward_time", forward_stats.time)
+
                 println("Forward time $(forward_stats.time)")
 
                 y_batch_activated = [
@@ -51,6 +54,7 @@ function train_zygote!(
                 println("Backward time $(backward_stats.time)")
 
                 update_stats = @timed update_weight!(network, optimizer)
+
 
                 log_scalar!(logger, "update_time", update_stats.time)
                 println("Update time $(update_stats.time)")
@@ -73,7 +77,7 @@ function train_zygote!(
                 for layer in network.layers
                     htable_update_stats = @timed update!(
                         layer.hash_tables,
-                        extract_weights_and_ids(layer.neurons),
+                        extract_weights_and_ids(layer.weights),
                     )
 
                     println("Hashtable $(layer.id) updated in $(htable_update_stats.time)")
@@ -81,9 +85,9 @@ function train_zygote!(
                 end
                 optimizer_end_epoch_step!(optimizer)
             end
-
         end
 
-        println("Iteration $i done")
+        println("Iteration $i, Loss $(loss / length(training_batches))")
+        log_scalar!(logger, "train_loss", loss / length(training_batches))
     end
 end

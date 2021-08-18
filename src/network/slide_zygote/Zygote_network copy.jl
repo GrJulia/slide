@@ -2,6 +2,8 @@ module ZygoteNetwork
 
 
 export layer_forward_and_backward,
+    forward_single_sample_zygote,
+    forward_zygote!,
     train_zygote!,
     backward_zygote!,
     handle_batch_backward_zygote!
