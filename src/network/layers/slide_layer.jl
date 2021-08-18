@@ -66,7 +66,7 @@ function new_batch!(layer::SlideLayer{A,F,H,O}, batch_size::Int) where {A,F,H,O}
     fill!(layer.is_neuron_active, 0)
 end
 
-function prep_backprop!(layer::SlideLayer{A,F,H,O}, batch_size::Int) where {A,F,H,O}
+function zero_grads!(layer::SlideLayer{A,F,H,O}, batch_size::Int) where {A,F,H,O}
     fill!(layer.weight_gradients, 0)
     layer.bias_gradients = zeros(Float, length(layer.biases), batch_size)
 end

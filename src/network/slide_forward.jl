@@ -1,6 +1,6 @@
 using FLoops: @floop, ThreadedEx
 
-using Slide.Network.Layers: new_batch!, forward_single_sample!
+using Slide.Network.Layers: forward_single_sample!
 
 
 function forward!(
@@ -12,9 +12,7 @@ function forward!(
     batch_size = typeof(x) == Vector{Float} ? 1 : size(x)[end]
     last_layer = network.layers[end]
 
-    for layer in network.layers
-        new_batch!(layer, batch_size)
-    end
+    new_batch!(network, batch_size)
 
     @views @floop executor for i = 1:batch_size
         input = x[:, i]

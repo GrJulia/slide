@@ -11,7 +11,7 @@ function forward_single_sample!(
     x_index::Int,
     ::Nothing,
 )::SlideOutput where {A,F,H,O,U<:AbstractVector{Float}}
-    current_active_neuron_ids  = _get_active_ids(layer, input, Id[])
+    current_active_neuron_ids = _get_active_ids(layer, input, Id[])
 
     _forward!(layer, input, current_active_neuron_ids, :, x_index)
 end
@@ -61,8 +61,12 @@ end
 function _get_active_ids(layer, dense_input, y_true)
     htables = layer.hash_tables
 
-    max_neurons = max(htables.min_threshold, floor(Int, size(layer.weights, 2) * htables.sampling_ratio))
-    current_active_neuron_ids = collect(retrieve(htables.lsh, @view (dense_input[:]); threshold = max_neurons))
+    max_neurons = max(
+        htables.min_threshold,
+        floor(Int, size(layer.weights, 2) * htables.sampling_ratio),
+    )
+    current_active_neuron_ids =
+        collect(retrieve(htables.lsh, @view (dense_input[:]); threshold = max_neurons))
     union!(current_active_neuron_ids, y_true)
 
     current_active_neuron_ids

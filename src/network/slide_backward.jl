@@ -2,7 +2,6 @@ using FLoops: @floop, ThreadedEx
 using LinearAlgebra.BLAS: axpy!
 
 using Slide: FloatVector
-using Slide.Network.Layers: prep_backprop!
 using Slide.Network.Optimizers: AbstractOptimizer, optimizer_step!, AdamAttributes
 
 function handle_batch_backward(
@@ -94,9 +93,7 @@ function backward!(
 )
     batch_size = size(x)[2]
 
-    for layer in network.layers
-        prep_backprop!(layer, batch_size)
-    end
+    zero_grads!(network, batch_size)
 
     @views @floop executor for i = 1:batch_size
         handle_batch_backward(x[:, i], y_pred[i], y_true[i], network, i, saved_softmax[i])
