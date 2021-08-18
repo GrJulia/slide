@@ -4,6 +4,7 @@ using Flux
 using Flux.Losses: logitcrossentropy
 using FLoops: @floop, ThreadedEx
 
+const FloatVector = AbstractVector{Float}
 
 function handle_batch_backward_zygote!(
     x::T,

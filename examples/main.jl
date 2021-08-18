@@ -3,6 +3,7 @@ using Random
 
 using Slide
 using Slide.Network
+using Slide.ZygoteNetwork
 using Slide.LshSimHashWrapper: LshSimHashParams, get_simhash_params
 using Slide.Hash: LshParams
 using Slide.FluxTraining
@@ -12,6 +13,7 @@ Random.seed!(1);
 if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
     use_real_dataset = false
+    with_zygote = true
 
     # Building parameters configuration
 
@@ -96,17 +98,31 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
     logger = get_logger(dataset_config)
 
-    train!(
-        train_loader,
-        test_set,
-        network,
-        optimizer,
-        logger;
-        n_iters = 3,
-        scheduler = PeriodicScheduler(50),
-        use_all_true_labels = true,
-        test_parameters = test_parameters,
-    )
+    if with_zygote
+        train_zygote!(
+            train_loader,
+            test_set,
+            network,
+            optimizer,
+            logger;
+            n_iters = 1,
+            scheduler = PeriodicScheduler(50),
+            use_all_true_labels = true,
+            test_parameters = test_parameters,
+        )
+    else
+        train!(
+            train_loader,
+            test_set,
+            network,
+            optimizer,
+            logger;
+            n_iters = 3,
+            scheduler = PeriodicScheduler(50),
+            use_all_true_labels = true,
+            test_parameters = test_parameters,
+        )
+    end
     println("DONE \n")
 
     save(logger)

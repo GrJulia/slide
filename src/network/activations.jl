@@ -4,6 +4,8 @@
 
 @inline relu(x::Vector{Float})::Vector{Float} = max.(0, x)
 
+@inline relu(x::Float)::Float = max(0, x)
+
 function negative_sparse_logit_cross_entropy(
     output::Vector{<:AbstractVector{Float}},
     y_true::Vector{<:AbstractVector{Float}},

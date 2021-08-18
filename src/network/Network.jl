@@ -10,6 +10,7 @@ export AbstractScheduler,
     backward!,
     batch_input,
     build_network,
+    compute_accuracy,
     forward!,
     forward_single_sample,
     gradient,
@@ -27,13 +28,7 @@ export AbstractScheduler,
     sparse_logit_cross_entropy,
     train!,
     update!,
-    update_weight!,
-    layer_forward_and_backward,
-    forward_single_sample_zygote,
-    forward_zygote!,
-    train_zygote!,
-    backward_zygote!,
-    handle_batch_backward_zygote!
+    update_weight!
 
 
 using Slide.LSH: Lsh
@@ -50,8 +45,5 @@ include("optimizer.jl")
 include("slide_forward.jl")
 include("slide_backward.jl")
 include("training_loop.jl")
-include("slide_zygote/slide_zygote_training_loop.jl")
-include("slide_zygote/slide_zygote_forward.jl")
-include("slide_zygote/slide_zygote_backward.jl")
 
 end

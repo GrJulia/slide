@@ -1,4 +1,7 @@
 using Slide.Network
+using Slide.ZygoteNetwork
+using Slide.FluxTraining
+using Slide.Network: compute_accuracy
 
 function train_zygote!(
     training_batches,

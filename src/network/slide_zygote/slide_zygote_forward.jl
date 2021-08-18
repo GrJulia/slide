@@ -3,7 +3,8 @@ using LinearAlgebra
 using Flux
 using FLoops: @floop, ThreadedEx
 
-relu_scalar(x) = max(0, x)
+using Slide.LSH: retrieve
+using Slide.Network.Layers: new_batch!
 
 function layer_forward_and_backward(
     current_activated_neurons,
@@ -12,30 +13,20 @@ function layer_forward_and_backward(
     layer_activation,
     x_index,
 )
-    # current_n_neurons = length(current_activated_neurons)
-    # layer_output = zeros(Float, current_n_neurons)
-    # for (i, neuron) in enumerate(current_activated_neurons)
-    #     layer_output_i, neurons_gradients = withjacobian(
-    #         (weight, bias) -> relu_scalar(dot(current_input, weight) + bias),
-    #         view(neuron.weight, activated_neuron_ids),
-    #         neuron.bias,
-    #     )
-    #     layer_output[i] = layer_output_i[1]
-    #     neuron.grad_output_w[x_index] = neurons_gradients[1][1, :]
-    #     neuron.grad_output_b[x_index] = neurons_gradients[2][1]
-
-    # end
-    weights = hcat([view(neuron.weight, activated_neuron_ids) for neuron in current_activated_neurons]...)'
-    biases = hcat([neuron.bias for neuron in current_activated_neurons]...)'
-    # println("WEIGHTS :", size(weights))
-    # println("BIASES :", size(biases))
-    # println("INPUT :", size(current_input))
-    # println("RESULT :", size(weights * current_input.+ biases))
-    layer_output, neurons_gradients = withjacobian(
-            (w, b) -> relu((w * current_input .+ b)[:, 1]),
-            weights, biases
+    current_n_neurons = length(current_activated_neurons)
+    layer_output = zeros(Float, current_n_neurons)
+    for (i, neuron) in enumerate(current_activated_neurons)
+        layer_output_i, neurons_gradients = withjacobian(
+            (weight, bias) -> layer_activation(dot(current_input, weight) + bias),
+            view(neuron.weight, activated_neuron_ids),
+            neuron.bias,
         )
-    return layer_output, neurons_gradients
+        layer_output[i] = layer_output_i[1]
+        neuron.grad_output_w[x_index] = neurons_gradients[1][1, :]
+        neuron.grad_output_b[x_index] = neurons_gradients[2][1]
+
+    end
+    return layer_output
 end
 
 
@@ -74,15 +65,13 @@ function forward_single_sample_zygote(
 
         layer.active_neuron_ids[x_index] = current_activated_neuron_ids
 
-        current_input, neurons_gradients = layer_forward_and_backward(
+        current_input = layer_forward_and_backward(
             layer.neurons[current_activated_neuron_ids],
             activated_neuron_ids,
             current_input,
             layer.layer_activation,
             x_index,
         )
-        layer.weights_gradients[x_index] = neurons_gradients[1]
-        layer.biases_gradients[x_index] = neurons_gradients[2]
 
         layer.output[x_index] = current_input
         activated_neuron_ids = current_activated_neuron_ids
