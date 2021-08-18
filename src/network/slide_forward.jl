@@ -21,7 +21,14 @@ function forward!(
         for layer in network.layers[1:end-1]
             input = forward_single_sample!(layer, input, i, nothing)
         end
-        forward_single_sample!(last_layer, input, i, findall(>(0), y_true[:, i]))
+
+        maybe_y_true_idxs = if !isnothing(y_true)
+            findall(>(0), y_true[:, i])
+        else
+            nothing
+        end
+
+        forward_single_sample!(last_layer, input, i, maybe_y_true_idxs)
     end
 
     last_layer.output, last_layer.active_neuron_ids
