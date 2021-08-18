@@ -1,6 +1,6 @@
 using FLoops: @floop, ThreadedEx
 
-using Slide.Network.Layers: new_batch!, forward_single_sample!
+using Slide.Network.Layers: forward_single_sample!
 
 
 function forward!(
@@ -12,16 +12,21 @@ function forward!(
     batch_size = typeof(x) == Vector{Float} ? 1 : size(x)[end]
     last_layer = network.layers[end]
 
-    for layer in network.layers
-        new_batch!(layer, batch_size)
-    end
+    new_batch!(network, batch_size)
 
     @views @floop executor for i = 1:batch_size
         input = x[:, i]
         for layer in network.layers[1:end-1]
             input = forward_single_sample!(layer, input, i, nothing)
         end
-        forward_single_sample!(last_layer, input, i, findall(>(0), y_true[:, i]))
+
+        maybe_y_true_idxs = if !isnothing(y_true)
+            findall(>(0), y_true[:, i])
+        else
+            nothing
+        end
+
+        forward_single_sample!(last_layer, input, i, maybe_y_true_idxs)
     end
 
     last_layer.output, last_layer.active_neuron_ids
