@@ -2,7 +2,8 @@ using Slide.Network: Batch, Float
 using Slide.Network.HashTables: update!
 using Slide.Hash: AbstractLshParams
 using Slide.FluxTraining: Logger, log_scalar!, step!
-using Slide.Network.Layers: SlideLayer, Neuron, AdamAttributes, extract_weights_and_ids
+using Slide.Network.Layers: SlideLayer, extract_weights_and_ids
+using Slide.Network.Optimizers: AbstractOptimizer, AdamAttributes, optimizer_end_epoch_step!
 
 
 function build_network(network_params::Dict)::SlideNetwork
@@ -35,13 +36,14 @@ function build_layer(
     layer_activation,
     lsh_params::T,
 ) where {T<:AbstractLshParams}
-    neurons = Vector{Neuron{AdamAttributes}}()
-
-    for neuron_id = 1:output_dim
-        push!(neurons, Neuron(neuron_id, input_dim))
-    end
-
-    SlideLayer(layer_id, neurons, lsh_params, activation_name_to_function[layer_activation])
+    SlideLayer(
+        layer_id,
+        input_dim,
+        output_dim,
+        lsh_params,
+        activation_name_to_function[layer_activation],
+        AdamAttributes(input_dim, output_dim),
+    )
 end
 
 
@@ -49,13 +51,13 @@ function train!(
     training_batches,
     test_set,
     network::SlideNetwork,
-    optimizer::Optimizer,
+    optimizer::Opt,
     logger::Logger;
     n_iters::Int,
     scheduler::S = PeriodicScheduler(15),
     use_all_true_labels::Bool = true,
     test_parameters::Dict,
-) where {S<:AbstractScheduler}
+) where {S<:AbstractScheduler,Opt<:AbstractOptimizer}
     for i = 1:n_iters
         loss = 0
         for (n, (x_batch, y_batch)) in enumerate(training_batches)
@@ -120,11 +122,11 @@ function train!(
                 for layer in network.layers
                     htable_update_stats = @timed update!(
                         layer.hash_tables,
-                        extract_weights_and_ids(layer.neurons),
+                        extract_weights_and_ids(layer.weights),
                     )
 
                     println("Hashtable $(layer.id) updated in $(htable_update_stats.time)")
-                    log_scalar!(logger, "hashtable_$(layer.id)", ht_update_stats.time)
+                    log_scalar!(logger, "hashtable_$(layer.id)", htable_update_stats.time)
                 end
                 optimizer_end_epoch_step!(optimizer)
             end
