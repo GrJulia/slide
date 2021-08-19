@@ -6,11 +6,11 @@ using FLoops: @floop, ThreadedEx
 
 const FloatVector = AbstractVector{Float}
 
-function slide_loss(y_true, output)
+function slide_loss(y_true::T, output::U)::Float where {T<:FloatVector,U<:FloatVector}
     logitcrossentropy(y_true, softmax(output))
 end
 
-function full_forward(x, parameters)
+function full_forward(x::T, parameters::Vector{Tuple{Matrix{Float}, Vector{Float}}}) where {T<:FloatVector}
     current_input = x
     for p in parameters
         current_input = p[1]' * current_input + p[2]
@@ -26,7 +26,7 @@ function handle_batch_backward_zygote!(
     i::Int,
 ) where {T<:FloatVector,P<:FloatVector,U<:FloatVector}
 
-    parameters = []
+    parameters = Vector{Tuple{Matrix{Float}, Vector{Float}}}()
     for (k, layer) in enumerate(network.layers)
         if k == 1
             push!(
@@ -51,7 +51,7 @@ function handle_batch_backward_zygote!(
     end
 
     slide_gradients =
-        Zygote.gradient((p) -> slide_loss(y_true, full_forward(x, p)), parameters)[1]
+        Zygote.gradient(p -> slide_loss(y_true, full_forward(x, p)), parameters)[1]
 
     for (k, layer) in enumerate(network.layers)
         if k == 1
