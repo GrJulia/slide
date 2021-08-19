@@ -2,9 +2,7 @@ module ZygoteNetwork
 
 
 export layer_forward_and_backward,
-    train_zygote!,
-    backward_zygote!,
-    handle_batch_backward_zygote!
+    train_zygote!, backward_zygote!, handle_batch_backward_zygote!
 
 using Slide: Float, Id
 

@@ -29,27 +29,43 @@ function handle_batch_backward_zygote!(
     parameters = []
     for (k, layer) in enumerate(network.layers)
         if k == 1
-            push!(parameters, (layer.weights[:, layer.active_neuron_ids[i]], layer.biases[layer.active_neuron_ids[i]]))
+            push!(
+                parameters,
+                (
+                    layer.weights[:, layer.active_neuron_ids[i]],
+                    layer.biases[layer.active_neuron_ids[i]],
+                ),
+            )
         else
-            push!(parameters, (layer.weights[network.layers[k - 1].active_neuron_ids[i], layer.active_neuron_ids[i]], layer.biases[layer.active_neuron_ids[i]]))
+            push!(
+                parameters,
+                (
+                    layer.weights[
+                        network.layers[k-1].active_neuron_ids[i],
+                        layer.active_neuron_ids[i],
+                    ],
+                    layer.biases[layer.active_neuron_ids[i]],
+                ),
+            )
         end
     end
 
-    slide_gradients = Zygote.gradient(
-        (p) -> slide_loss(y_true, full_forward(x, p)),
-        parameters
-    )[1]
+    slide_gradients =
+        Zygote.gradient((p) -> slide_loss(y_true, full_forward(x, p)), parameters)[1]
 
     for (k, layer) in enumerate(network.layers)
         if k == 1
             layer.weight_gradients[:, layer.active_neuron_ids[i]] += slide_gradients[k][1]
             layer.bias_gradients[layer.active_neuron_ids[i]] += slide_gradients[k][2]
         else
-            layer.weight_gradients[network.layers[k - 1].active_neuron_ids[i], layer.active_neuron_ids[i]] += slide_gradients[k][1]
+            layer.weight_gradients[
+                network.layers[k-1].active_neuron_ids[i],
+                layer.active_neuron_ids[i],
+            ] += slide_gradients[k][1]
             layer.bias_gradients[layer.active_neuron_ids[i]] += slide_gradients[k][2]
         end
-        
-    end    
+
+    end
 end
 
 
