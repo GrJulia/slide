@@ -49,11 +49,9 @@ function handle_batch_backward_zygote!(
             )
         end
     end
-
     slide_gradients =
         Zygote.gradient(p -> slide_loss(y_true, full_forward(x, p)), parameters)[1]
-
-    for (k, layer) in enumerate(network.layers)
+    @views for (k, layer) in enumerate(network.layers)
         if k == 1
             layer.weight_gradients[:, layer.active_neuron_ids[i]] += slide_gradients[k][1]
             layer.bias_gradients[layer.active_neuron_ids[i]] += slide_gradients[k][2]
