@@ -55,16 +55,20 @@ function optimizer_step!(
 
         t = optimizer.t[]
 
-        corr_momentum_dw = adam_attributes.m_dw[:, neuron_id] ./ (1 - optimizer.beta_1^t)
         corr_momentum_db = adam_attributes.m_db[neuron_id] / (1 - optimizer.beta_1^t)
-        corr_velocity_dw = adam_attributes.v_dw[:, neuron_id] ./ (1 - optimizer.beta_2^t)
         corr_velocity_db = adam_attributes.v_db[neuron_id] / (1 - optimizer.beta_2^t)
-    end
 
-    @. weight -=
-        optimizer.eta * (corr_momentum_dw / (sqrt(corr_velocity_dw) + optimizer.epsilon))
-    bias[] -=
-        optimizer.eta * (corr_momentum_db / (sqrt(corr_velocity_db) + optimizer.epsilon))
+        @. weight -=
+            optimizer.eta * (
+                (adam_attributes.m_dw[:, neuron_id] / (1 - optimizer.beta_1^t)) / (
+                    sqrt(adam_attributes.v_dw[:, neuron_id] / (1 - optimizer.beta_2^t)) +
+                    optimizer.epsilon
+                )
+            )
+        bias[] -=
+            optimizer.eta *
+            (corr_momentum_db / (sqrt(corr_velocity_db) + optimizer.epsilon))
+    end
 end
 
 function optimizer_end_epoch_step!(optimizer::AdamOptimizer)

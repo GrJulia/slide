@@ -1,7 +1,5 @@
 @inline sigmoid(x::Vector{Float})::Vector{Float} = 1 ./ (1 .+ exp.(.-x))
 
-@inline identity(x::Any)::Any = x
-
 @inline relu(x::Vector{Float})::Vector{Float} = max.(0, x)
 
 function negative_sparse_logit_cross_entropy(
@@ -61,10 +59,19 @@ end
     probabilities * ratio_positve_labels_sampled - labels
 end
 
-@inline function gradient(::Type{typeof(relu)}, x::Float)
-    Float(x > 0)
+@inline function gradient(
+    ::Type{typeof(negative_sparse_logit_cross_entropy)},
+    labels,
+    probabilities,
+    ratio_positve_labels_sampled,
+)
+    @. probabilities .* ratio_positve_labels_sampled .- labels
 end
 
-@inline function gradient(::Type{typeof(identity)}, x::Float)
-    one(Float)
+@inline function gradient(::Type{typeof(relu)}, x)
+    map(z -> Float(z > 0), x)
+end
+
+@inline function gradient(::Type{typeof(identity)}, x)
+    ones(Float, length(x))
 end

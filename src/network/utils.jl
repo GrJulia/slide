@@ -115,7 +115,7 @@ function numerical_gradient_bias(
         probs;
         executor = SequentialEx(),
     )
-    backprop_gradient = mean(network.layers[layer_id].bias_gradients[neuron_id, :])
+    backprop_gradient = mean(network.layers[layer_id].bias_gradients[:, neuron_id])
 
     # Computing numerical bias gradient
     network.layers[layer_id].biases[neuron_id] += epsilon
