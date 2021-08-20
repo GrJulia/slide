@@ -8,6 +8,7 @@ export AbstractScheduler,
     batch_input,
     build_layer,
     build_network,
+    compute_accuracy,
     forward!,
     forward_single_sample,
     gradient,
@@ -37,6 +38,7 @@ include("activations.jl")
 include("slide.jl")
 include("utils.jl")
 include("slide_forward.jl")
+include("slide_zygote/slide_zygote_backward.jl")
 include("slide_backward.jl")
 include("training_loop.jl")
 

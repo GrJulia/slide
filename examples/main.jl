@@ -13,6 +13,7 @@ Random.seed!(1);
 if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
     use_real_dataset = false
+    use_zygote = false
 
     # Building parameters configuration
 
@@ -103,11 +104,13 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
         network,
         optimizer,
         logger;
-        n_iters = 10,
+        n_iters = 3,
         scheduler = PeriodicScheduler(5),
         use_all_true_labels = true,
         test_parameters = test_parameters,
+        use_zygote = use_zygote,
     )
+
     println("DONE \n")
 
     save(logger)
