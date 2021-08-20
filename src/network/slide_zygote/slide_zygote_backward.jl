@@ -5,15 +5,16 @@ using Flux.Losses: logitcrossentropy
 using FLoops: @floop, ThreadedEx
 
 const FloatVector = AbstractVector{Float}
+const LayerTrainableParams = Vector{Tuple{Matrix{Float}, Vector{Float}}}
 
 function slide_loss(y_true::T, output::U)::Float where {T<:FloatVector,U<:FloatVector}
     logitcrossentropy(y_true, softmax(output))
 end
 
-function full_forward(x::T, parameters::Vector{Tuple{Matrix{Float}, Vector{Float}}}) where {T<:FloatVector}
+function full_forward(x::T, parameters::LayerTrainableParams) where {T<:FloatVector}
     current_input = x
-    for p in parameters
-        current_input = p[1]' * current_input + p[2]
+    for (W, b) in parameters
+        current_input = W' * current_input + b
     end
     return current_input
 end
@@ -25,18 +26,12 @@ function handle_batch_backward_zygote!(
     i::Int,
 ) where {T<:FloatVector,P<:FloatVector}
 
-    parameters = Vector{Tuple{Matrix{Float}, Vector{Float}}}()
+    parameters = LayerTrainableParams()
     prev_active_neuron_ids = (:)
     @views for layer in network.layers
-        push!(
-            parameters,
-            (
-                layer.weights[
-                    prev_active_neuron_ids,
-                    layer.active_neuron_ids[i],
-                ],
-                layer.biases[layer.active_neuron_ids[i]],
-            ),
+        active_neuron_ids = layer.active_neuron_ids[i]
+        push!(parameters, (layer.weights[prev_active_neuron_ids,  active_neuron_ids],
+         layer.biases[active_neuron_ids])
         )
         
         prev_active_neuron_ids = layer.active_neuron_ids[i]
@@ -44,15 +39,16 @@ function handle_batch_backward_zygote!(
     slide_gradients =
         Zygote.gradient(p -> slide_loss(y_true, full_forward(x, p)), parameters)[1]
     @views for (k, layer) in enumerate(network.layers)
+        w_grad, b_grad = slide_gradients[k]
         if k == 1
-            layer.weight_gradients[:, layer.active_neuron_ids[i]] += slide_gradients[k][1]
-            layer.bias_gradients[layer.active_neuron_ids[i]] += slide_gradients[k][2]
+            layer.weight_gradients[:, layer.active_neuron_ids[i]] += w_grad
+            layer.bias_gradients[layer.active_neuron_ids[i]] += b_grad
         else
             layer.weight_gradients[
                 network.layers[k-1].active_neuron_ids[i],
                 layer.active_neuron_ids[i],
-            ] += slide_gradients[k][1]
-            layer.bias_gradients[layer.active_neuron_ids[i]] += slide_gradients[k][2]
+            ] += w_grad
+            layer.bias_gradients[layer.active_neuron_ids[i]] += b_grad
         end
 
     end
@@ -65,8 +61,8 @@ function backward_zygote!(
     network::SlideNetwork,
     executor = ThreadedEx(),
 )
-    n_samples = size(x)[2]
-    @views @floop executor for i = 1:n_samples
+    batch_size = size(x)[2]
+    @views @floop executor for i = 1:batch_size
         handle_batch_backward_zygote!(x[:, i], y_true[i], network, i)
     end
 end

@@ -1,5 +1,5 @@
 using FLoops: @floop, ThreadedEx
-using LinearAlgebra.BLAS: axpy!, dot
+using LinearAlgebra.BLAS: axpy!
 
 using Slide: FloatVector
 using Slide.Network.Optimizers: AbstractOptimizer, optimizer_step!, AdamAttributes
