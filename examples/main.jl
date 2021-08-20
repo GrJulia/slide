@@ -13,7 +13,7 @@ Random.seed!(1);
 if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
     use_real_dataset = false
-    use_zygote = true
+    use_zygote = false
 
     # Building parameters configuration
 
