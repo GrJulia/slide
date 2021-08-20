@@ -3,6 +3,7 @@ using LinearAlgebra
 using Flux
 using Flux.Losses: logitcrossentropy
 using FLoops: @floop, ThreadedEx
+using Slide.Network: SlideNetwork
 
 const FloatVector = AbstractVector{Float}
 const LayerTrainableParams = Vector{Tuple{Matrix{Float}, Vector{Float}}}

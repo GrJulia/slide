@@ -57,6 +57,7 @@ function train!(
     scheduler::S = PeriodicScheduler(15),
     use_all_true_labels::Bool = true,
     test_parameters::Dict,
+    use_zygote::Bool = false,
 ) where {S<:AbstractScheduler,Opt<:AbstractOptimizer}
     for i = 1:n_iters
         loss = 0
@@ -87,14 +88,22 @@ function train!(
                     negative_sparse_logit_cross_entropy(y_batch_pred, y_batch_activated)
                 loss += batch_loss
 
-                backward_stats = @timed backward!(
+                if use_zygote
+                    backward_stats = @timed backward_zygote!(
                     x_batch,
-                    y_batch_pred,
                     y_batch_activated,
                     network,
-                    saved_softmax,
                 )
-
+                else
+                    backward_stats = @timed backward!(
+                        x_batch,
+                        y_batch_pred,
+                        y_batch_activated,
+                        network,
+                        saved_softmax,
+                    )
+                end
+                
                 log_scalar!(logger, "backward_time", backward_stats.time)
                 println("Backward time $(backward_stats.time)")
 
