@@ -45,7 +45,6 @@ function train_zygote!(
 
                 backward_stats = @timed backward_zygote!(
                     x_batch,
-                    y_batch_pred,
                     y_batch_activated,
                     network,
                 )

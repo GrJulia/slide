@@ -20,34 +20,26 @@ end
 
 function handle_batch_backward_zygote!(
     x::T,
-    y::U,
     y_true::P,
     network::SlideNetwork,
     i::Int,
-) where {T<:FloatVector,P<:FloatVector,U<:FloatVector}
+) where {T<:FloatVector,P<:FloatVector}
 
     parameters = Vector{Tuple{Matrix{Float}, Vector{Float}}}()
-    for (k, layer) in enumerate(network.layers)
-        if k == 1
-            push!(
-                parameters,
-                (
-                    layer.weights[:, layer.active_neuron_ids[i]],
-                    layer.biases[layer.active_neuron_ids[i]],
-                ),
-            )
-        else
-            push!(
-                parameters,
-                (
-                    layer.weights[
-                        network.layers[k-1].active_neuron_ids[i],
-                        layer.active_neuron_ids[i],
-                    ],
-                    layer.biases[layer.active_neuron_ids[i]],
-                ),
-            )
-        end
+    prev_active_neuron_ids = (:)
+    @views for layer in network.layers
+        push!(
+            parameters,
+            (
+                layer.weights[
+                    prev_active_neuron_ids,
+                    layer.active_neuron_ids[i],
+                ],
+                layer.biases[layer.active_neuron_ids[i]],
+            ),
+        )
+        
+        prev_active_neuron_ids = layer.active_neuron_ids[i]
     end
     slide_gradients =
         Zygote.gradient(p -> slide_loss(y_true, full_forward(x, p)), parameters)[1]
@@ -69,13 +61,12 @@ end
 
 function backward_zygote!(
     x::Matrix{Float},
-    y_pred::Vector{<:FloatVector},
     y_true::Vector{<:FloatVector},
     network::SlideNetwork,
     executor = ThreadedEx(),
 )
     n_samples = size(x)[2]
     @views @floop executor for i = 1:n_samples
-        handle_batch_backward_zygote!(x[:, i], y_pred[i], y_true[i], network, i)
+        handle_batch_backward_zygote!(x[:, i], y_true[i], network, i)
     end
 end
