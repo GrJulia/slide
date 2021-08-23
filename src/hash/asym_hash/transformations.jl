@@ -9,14 +9,14 @@ abstract type AbstractTransformation end
 function transform_data(
     t::T,
     data::K,
-)::L where {T<:AbstractTransformation,K<:AbstractArray{Float},L<:AbstractArray{Float}}
+)::L where {T<:AbstractTransformation,K<:FloatVector,L<:FloatVector}
     error("unimplemented")
 end
 
 function transform_query(
     t::T,
     data::K,
-)::L where {T<:AbstractTransformation,K<:AbstractArray{Float},L<:AbstractArray{Float}}
+)::L where {T<:AbstractTransformation,K<:FloatVector,L<:FloatVector}
     error("unimplemented")
 end
 
@@ -64,7 +64,7 @@ function transform_data(t::MipsToNnsTransformation, data::K)::Vector{Float} wher
     out
 end
 
-function transform_query(t::MipsToNnsTransformation, data::SubVector{Float})::Vector{Float}
+function transform_query(t::MipsToNnsTransformation, data::K)::Vector{Float} where {K<:FloatVector}
     data_len = length(data)
     out = Vector{Float}(undef, data_len + 2 * t.m)
 
@@ -87,7 +87,7 @@ end
 Implementations based on the sections 4 and 5 of the paper "Improved Asymmetric Locality Sensitive Hashing (ALSH) for Maximum Inner Product Search (MIPS)".
 Link: https://arxiv.org/pdf/1410.5410.pdf
 """
-function transform_data(t::MipsToCosineTransformation, data::SubVector{Float})::Vector{Float}
+function transform_data(t::MipsToCosineTransformation, data::K)::Vector{Float} where {K<:FloatVector}
     data_len = length(data)
     out = zeros(Float, data_len + 2 * t.m)
 
@@ -106,8 +106,8 @@ end
 
 function transform_query(
     t::MipsToCosineTransformation,
-    data::SubVector{Float},
-)::Vector{Float}
+    data::K,
+)::Vector{Float} where {K<:FloatVector}
     data_len = length(data)
     out = zeros(Float, data_len + 2 * t.m)
 
