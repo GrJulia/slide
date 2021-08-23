@@ -29,12 +29,12 @@ using Slide.LSH: Lsh
 using Slide: Float, Id
 
 include("hashtables.jl")
+include("activations.jl")
 
 include("optimizers/Optimizers.jl")
 include("layers/Layers.jl")
 
 include("scheduler.jl")
-include("activations.jl")
 include("slide.jl")
 include("utils.jl")
 include("slide_forward.jl")
