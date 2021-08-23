@@ -68,7 +68,7 @@ end
 
 function zero_grads!(layer::SlideLayer{A,F,H,O}, batch_size::Int) where {A,F,H,O}
     fill!(layer.weight_gradients, 0)
-    layer.bias_gradients = zeros(Float, batch_size, length(layer.biases))
+    layer.bias_gradients = zeros(Float, length(layer.biases), batch_size)
 end
 
 function extract_weights_and_ids(weights::A)::LshBatch where {A<:AbstractMatrix{Float}}
