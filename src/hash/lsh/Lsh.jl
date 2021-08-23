@@ -6,6 +6,8 @@ using DataStructures: CircularBuffer
 using FLoops: @floop, SequentialEx
 using Random: AbstractRNG
 
+using Slide: Float
+
 """ AbstractHasher Interface/Trait """
 
 """
@@ -47,7 +49,11 @@ function compute_query_signatures!(
     error("unimplemented")
 end
 
-function init_hasher(params, rng::Rand)::AbstractHasher where {Rand<:AbstractRNG} # TODO: move AbstractLshParams to Lsh?
+function init_hasher(
+    params,
+    rng::Rand,
+    ::Type{K},
+)::AbstractHasher where {Rand<:AbstractRNG,K<:AbstractArray{Float}} # TODO: move AbstractLshParams to Lsh?
     error("unimplemented")
 end
 

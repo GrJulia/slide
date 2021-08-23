@@ -18,7 +18,7 @@ import Slide.LSH
 
 # Wrapper applying transformations and then calling hasher
 struct AsymHasher <: AbstractHasher{SubArray{Float}}
-    hasher::AbstractHasher{SubArray{Float}} # could be also AbstractHasher{Vector{Float}} but it requires changes in simhash
+    hasher::AbstractHasher{Vector{Float}}
     transformation::AbstractTransformation
     n_tables::Int
 end
@@ -79,7 +79,7 @@ function Hash.init_lsh!(
 
     transformation = get_transformation(typeof(hasher_params), asym_hasher_params.m)
 
-    hasher = LSH.init_hasher(hasher_params, rng)
+    hasher = LSH.init_hasher(hasher_params, rng, Vector{Float})
     Lsh(
         lsh_params.n_tables,
         lsh_params.n_buckets,
