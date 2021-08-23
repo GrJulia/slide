@@ -1,53 +1,39 @@
 module DWTA
 
+export DwtaHasher, Signature, initialize!, signature
+
+using Slide: Float
+
 using Random: shuffle, rand, AbstractRNG, randperm
 using IterTools
 
-const Idx = UInt16
-const BinId = UInt16
+const Idx = UInt8
 
-const Signatures = Vector{Idx}
+const Signature = Vector{Idx}
 const EMPTY_SAMPLING = zero(Idx)
-const EMPTY_SAMPLING_VAL = Float32(-Inf)
-const ZERO_VAL = zero(Float32)
+const EMPTY_SAMPLING_VAL = Float(-Inf)
+const ZERO_VAL = zero(Float)
 
 
-struct DWTAHasher
-    index_to_bin_ids::Vector{BinId}
-    n_bins_per_idx_offsets::Vector{UInt16}
-    n_hashes::Int
-    log_n_hashes::Int32
-    n_bins::Int
+struct DwtaHasher
+    indices_in_bin::Matrix{Int32}
+    n_hashes::UInt32
+    log_n_hashes::UInt32
 end
 
 function initialize!(
     rng::Rand,
-    n_hashes::Int,
-    n_bins::Int,
-    k::Int,
-    data_len::Int,
-)::DWTAHasher where {Rand<:AbstractRNG}
-    perms = hcat((randperm(rng, data_len) for _ = 1:n_hashes)...)
-    sampled_indices = @view perms[1:k, :]
+    n_hashes::UInt32,
+    k::UInt32,
+    data_len::UInt32,
+)::DwtaHasher where {Rand<:AbstractRNG}
+    n_perms = ceil(UInt32, n_hashes * k / data_len)
+    perms = vcat((randperm(rng, data_len) for _ = 1:n_perms)...)
+    indices_in_bin = reshape(perms[1:n_hashes*k], (k, n_hashes))
 
-    index_to_bin_ids = [Vector{BinId}() for _ = 1:data_len]
+    log_n_hashes = ceil(UInt32, log2(n_hashes))
 
-    # To each idx assign list of bins which include this idx
-    for bin_id = 1:n_hashes
-        @views for i in sampled_indices[:, bin_id]
-            push!(index_to_bin_ids[i], bin_id)
-        end
-    end
-
-    idx_to_n_bins = [length(bin_ids) for bin_ids in index_to_bin_ids]
-    n_bins_per_idx_offsets = accumulate(+, idx_to_n_bins)
-    pushfirst!(n_bins_per_idx_offsets, 0)
-
-    index_to_bin_ids = collect(Iterators.flatten(index_to_bin_ids))
-
-    log_n_hashes = ceil(Int32, log2(n_hashes))
-
-    DWTAHasher(index_to_bin_ids, n_bins_per_idx_offsets, n_hashes, log_n_hashes, n_bins)
+    DwtaHasher(indices_in_bin, n_hashes, log_n_hashes)
 end
 
 """
@@ -56,55 +42,43 @@ It computes f(x) = (a*x mod 2^w) div 2^(w-M) by doing (a*x) >> (w-M), where w in
 In other words, hash is computed by deriving M highest bits.
 Link: https://en.wikipedia.org/wiki/Universal_hashing
 """
-function two_universal_hash(dwta::DWTAHasher, bin_id::Int32, cnt::Int32)::Int32
-    pair_hash = (bin_id << 6) + cnt
+function two_universal_hash(dwta::DwtaHasher, bin_idx::UInt32, cnt::UInt32)::UInt32
+    pair_hash = (bin_idx << 6) + cnt
     return ((13557786907 * pair_hash) >>> (32 - dwta.log_n_hashes)) % dwta.n_hashes + 1
 end
 
-function signatures(
-    dwta::DWTAHasher,
+function signature(
+    dwta::DwtaHasher,
     data::A,
-    wta::Bool;
-    max_n_attemps = 100,
-)::Signatures where {A<:AbstractVector{<:Number}}
-    n_hashes, n_bins = dwta.n_hashes, dwta.n_bins
-    hashes = fill(EMPTY_SAMPLING, n_hashes)
-    max_vals_in_bins = fill(EMPTY_SAMPLING_VAL, n_hashes)
-    bin_cnt = fill(one(Idx), n_bins)
+    densification::Bool;
+    max_n_attemps = UInt32(100),
+)::Signature where {A<:AbstractVector{<:Number}}
+    indices_in_bin = dwta.indices_in_bin
+    n_hashes = dwta.n_hashes
+    hashes = fill!(Signature(undef, n_hashes), EMPTY_SAMPLING)
 
-    for i in eachindex(data)
-        idx_start, idx_end =
-            dwta.n_bins_per_idx_offsets[i] + 1, dwta.n_bins_per_idx_offsets[i+1]
-        if idx_end - idx_start == -1 # 'idx' isn't present in any of the bins
-            continue
-        end
-
-        val = data[i]
-        # iterate over all bins which include index $i
-        for bin_id in dwta.index_to_bin_ids[idx_start:idx_end]
-            if val > max_vals_in_bins[bin_id] && val != ZERO_VAL
-                max_vals_in_bins[bin_id] = val
-                hashes[bin_id] = bin_cnt[bin_id]
-            end
-            bin_cnt[bin_id] += 1
+    for i = 1:n_hashes
+        hashes[i] = argmax(view(data, indices_in_bin[:, i]))
+        if densification && data[indices_in_bin[hashes[i], i]] == ZERO_VAL
+            hashes[i] = EMPTY_SAMPLING
         end
     end
 
-    if wta
+    if !densification
         return hashes
     end
 
-    out_hashes = fill(EMPTY_SAMPLING, n_hashes)
-    for bin_id = one(Int32):n_hashes
-        curr_id, cnt = bin_id, zero(Int32)
+    out_hashes = Signature(undef, n_hashes)
+    for bin_idx = one(UInt32):n_hashes
+        curr_idx, cnt = bin_idx, zero(UInt32)
         while hashes[curr_idx] == EMPTY_SAMPLING
-            cnt += 1
-            curr_id = two_universal_hash(dwta, bin_id, cnt)
+            cnt += one(UInt32)
+            curr_idx = two_universal_hash(dwta, bin_idx, cnt)
             if cnt > min(n_hashes, max_n_attemps)
                 break
             end
         end
-        out_hashes[bin_id] = hashes[curr_id]
+        out_hashes[bin_idx] = hashes[curr_idx]
     end
 
     out_hashes

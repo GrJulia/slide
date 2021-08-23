@@ -1,3 +1,5 @@
+using Test
+
 using Slide.LSH: AbstractHasher, Lsh, add!, retrieve, add_batch!
 import Slide.LSH
 

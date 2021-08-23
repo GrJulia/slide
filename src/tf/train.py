@@ -12,8 +12,9 @@ class Model(keras.Model):
         super(Model, self).__init__()
         self.model = keras.Sequential([
             keras.layers.InputLayer(n_features),
-            keras.layers.Dense(hidden_dim, activation='relu'),
-            keras.layers.Dense(n_classes),
+            keras.layers.Dense(hidden_dim, activation='relu', kernel_initializer="glorot_normal", bias_initializer="glorot_normal"),
+            keras.layers.Dense(n_classes, kernel_initializer="glorot_normal", bias_initializer="glorot_normal"),
+            keras.layers.Softmax(),
         ])
 
     def call(self, x):
@@ -50,17 +51,16 @@ class SparseDataset(keras.utils.Sequence):
     def __len__(self):
         return len(self.ys) // self.batch_size
 
-    def __getitem__(self, b_idx):
+    def __getitem__(self, batch_idx):
         (xs_indices, xs_vals) = self.xs
 
         x = np.zeros((self.batch_size, self.n_features))
         y = np.zeros((self.batch_size, self.n_classes))
-        for idx in range(self.batch_size):
-            tr_idx = b_idx * self.batch_size + idx
-            x[idx, xs_indices[tr_idx]] = xs_vals[tr_idx]
+        for i in range(self.batch_size):
+            true_idx = batch_idx * self.batch_size + i
+            x[i, xs_indices[true_idx]] = xs_vals[true_idx]
             
-            ys = self.ys[tr_idx]
-            y[idx, ys] = 1
+            y[i, self.ys[true_idx]] = 1
         
         return x, y
 
@@ -84,13 +84,14 @@ class TestAccCallback(keras.callbacks.Callback):
             rand_indices = np.random.randint(0, len(self.test_set), self.n_batches)
         else:
             rand_indices = np.arange(self.n_batches)
-        total_acc, batch_size = 0, self.test_set.batch_size
+
+        n_true_positives, batch_size = 0, self.test_set.batch_size
         for idx in rand_indices:
             x, y = self.test_set[idx]
             out = self.model(x)
             top_class = np.argmax(out, axis=1).reshape(batch_size, 1)
-            total_acc += np.sum(np.take_along_axis(y, top_class, axis=1)) / batch_size
-        test_acc = total_acc / self.n_batches
+            n_true_positives += np.sum(np.take_along_axis(y, top_class, axis=1))
+        test_acc = n_true_positives / (self.n_batches * batch_size)
         return test_acc
 
 
@@ -131,7 +132,7 @@ class LoggerCallback(keras.callbacks.Callback):
 
 def train(config, train_f, test_f):
     model = Model(config["n_features"], config["hidden_dim"], config["n_classes"])
-    model.compile(optimizer=keras.optimizers.Adam(config["lr"]), loss=nn.softmax_cross_entropy_with_logits, run_eagerly=True)
+    model.compile(optimizer=keras.optimizers.Adam(config["lr"]), loss=keras.losses.CategoricalCrossentropy(), run_eagerly=True)
 
     train_set = SparseDataset(train_f, config["batch_size"], config["n_features"], config["n_classes"])
     test_set = SparseDataset(test_f, config["batch_size"], config["n_features"], config["n_classes"])

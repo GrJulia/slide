@@ -1,5 +1,5 @@
 {
-    "name": "default_delicious",
+    "name": "delicious",
     "dataset": {
         "train_path": "delicious_train",
         "test_path": "delicious_test",

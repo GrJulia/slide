@@ -2,17 +2,13 @@ module Network
 
 
 export AbstractScheduler,
-    AdamAttributes,
-    AdamOptimizer,
     Batch,
-    Layer,
-    Neuron,
-    Optimizer,
-    OptimizerAttributes,
     SlideNetwork,
     backward!,
     batch_input,
+    build_layer,
     build_network,
+    compute_accuracy,
     forward!,
     forward_single_sample,
     gradient,
@@ -21,29 +17,28 @@ export AbstractScheduler,
     numerical_gradient_bias,
     numerical_gradient_weights,
     one_hot,
-    optimizer_end_epoch_step!,
-    optimizer_step!,
     PeriodicScheduler,
     predict_class,
     relu,
     sparse_logit_cross_entropy,
     train!,
-    update!,
-    update_weight!,
-    zero_neuron_attributes!
+    update_weight!
 
 
 using Slide.LSH: Lsh
 using Slide: Float, Id
 
-const SlideLsh{Hasher} = Lsh{SubArray{Float},Id,Hasher}
+include("hashtables.jl")
+include("activations.jl")
+
+include("optimizers/Optimizers.jl")
+include("layers/Layers.jl")
 
 include("scheduler.jl")
-include("activations.jl")
 include("slide.jl")
 include("utils.jl")
-include("optimizer.jl")
 include("slide_forward.jl")
+include("slide_zygote/slide_zygote_backward.jl")
 include("slide_backward.jl")
 include("training_loop.jl")
 

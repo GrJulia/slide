@@ -1,67 +1,29 @@
 using FLoops: @floop, ThreadedEx
-using LinearAlgebra.BLAS: axpy!
+using Base.Threads: nthreads, threadid
 
-const FloatVector = AbstractVector{Float}
+using Slide: FloatVector
+using Slide.Network.Optimizers: AbstractOptimizer, optimizer_step!, AdamAttributes
+using Slide.Network.Layers: backward_single_sample!, backward_single_sample_with_output!
 
-function handle_batch_backward(
-    x::T,
-    y::U,
-    y_true::P,
-    network::SlideNetwork,
-    i::Int,
-    saved_softmax::Vector{Float},
-) where {T<:FloatVector,P<:FloatVector,U<:FloatVector}
-    @inbounds for l = length(network.layers):-1:1
-        layer = network.layers[l]
-        active_neurons = layer.active_neurons[i]
-
-        if l == 1
-            previous_activation = x
-            previous_neurons = Vector{Id}(1:length(x))
-        else
-            previous_activation = network.layers[l-1].output[i]
-            previous_neurons = network.layers[l-1].active_neurons[i]
-        end
-
-        for (k, neuron) in enumerate(view(layer.neurons, active_neurons))
-            neuron.is_active = true
-            if l == length(network.layers)
-                # recall that saved_softmax's length is size(active_neurons)
-                # sum(y_true): to handle multiple labels
-                dz = gradient(
-                    typeof(negative_sparse_logit_cross_entropy),
-                    y_true[k],
-                    saved_softmax[k],
-                    sum(y_true),
-                )
-            else
-                # we could only sum over the active neurons in layer l+1, but
-                # here, if a neuron is not active, we're just summing 0
-                da = sum(
-                    next_neuron.bias_gradients[i] * next_neuron.weight[neuron.id] for
-                    next_neuron in view(
-                        network.layers[l+1].neurons,
-                        network.layers[l+1].active_neurons[i],
-                    )
-                )
-                dz = da * gradient(typeof(layer.layer_activation), layer.output[i][k])
-            end
-
-            neuron.bias_gradients[i] = dz
-            dz = dz / length(neuron.bias_gradients)
-            @views axpy!(dz, previous_activation, neuron.weight_gradients[previous_neurons])
-        end
-    end
-end
 
 function update_weight!(
     network::SlideNetwork,
-    optimizer::Optimizer;
+    optimizer::Opt;
     executor = ThreadedEx(),
-)
+) where {Opt<:AbstractOptimizer}
     for layer in network.layers
-        @floop executor for neuron in filter(n -> n.is_active, layer.neurons)
-            optimizer_step!(optimizer, neuron)
+        @floop executor for (id, is_active) in enumerate(layer.is_neuron_active)
+            !is_active && continue
+
+            @views optimizer_step!(
+                optimizer,
+                layer.opt_attr,
+                id,
+                layer.weights[:, id],
+                Ref(layer.biases[id]),
+                layer.weight_gradients[:, id],
+                layer.bias_gradients[id, :],
+            )
         end
     end
 end
@@ -74,8 +36,37 @@ function backward!(
     saved_softmax::Vector{<:FloatVector};
     executor = ThreadedEx(),
 )
-    n_samples = size(x)[2]
-    @views @floop executor for i = 1:n_samples
-        handle_batch_backward(x[:, i], y_pred[i], y_true[i], network, i, saved_softmax[i])
+    batch_size = size(x)[2]
+
+    zero_grads!(network, batch_size)
+
+    max_size = maximum(map(l -> length(l.biases), network.layers))
+    tmp_grad_arrays = Array{Float}(undef, max_size, nthreads())
+
+    @views @floop executor for i = 1:batch_size
+        tmp_grad_arrays[1:length(y_true[i]), threadid()] = gradient(
+            typeof(negative_sparse_logit_cross_entropy),
+            y_true[i],
+            saved_softmax[i],
+            sum(y_true[i]),
+        )
+        for layer in network.layers[2:end]
+            prev_layer = network.layers[layer.id-1]
+            backward_single_sample_with_output!(
+                layer = layer,
+                grads = tmp_grad_arrays[:, threadid()],
+                layer_input = (prev_layer.output[i], prev_layer.active_neuron_ids[i]),
+                output_grads = tmp_grad_arrays[:, threadid()],
+                x_index = i,
+            )
+        end
+
+        first_layer = network.layers[1]
+        backward_single_sample!(
+            layer = first_layer,
+            grads = tmp_grad_arrays[:, threadid()],
+            layer_input = x[:, i],
+            x_index = i,
+        )
     end
 end

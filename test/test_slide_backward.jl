@@ -4,6 +4,7 @@ using Random: seed!
 
 using Slide
 using Slide.Network
+using Slide.Network.Layers
 using Slide.LshSimHashWrapper: LshSimHashParams
 using Slide.Hash: LshParams
 
@@ -38,17 +39,17 @@ seed!(0)
 
     x = rand(Float, input_dim, batch_size)
     y = Vector{Float}(rand(1:output_dim, batch_size))
-    network = build_network(network_params, batch_size)
+    network = build_network(network_params)
     y_cat = one_hot(y, output_dim)
     y_cat ./= sum(y_cat, dims = 1)
 
     for layer in network.layers
-        for neuron in layer.neurons
-            for weight_index = 1:length(neuron.weight)
+        for neuron_id = 1:size(layer.weights, 2)
+            for weight_index = 1:size(layer.weights, 1)
                 @test numerical_gradient_weights(
                     network,
                     layer.id,
-                    neuron.id,
+                    neuron_id,
                     weight_index,
                     x,
                     y_cat,
@@ -58,8 +59,8 @@ seed!(0)
         end
     end
     for layer in network.layers
-        for neuron in layer.neurons
-            @test numerical_gradient_bias(network, layer.id, neuron.id, x, y_cat, epsilon) <
+        for neuron_id = 1:size(layer.weights, 2)
+            @test numerical_gradient_bias(network, layer.id, neuron_id, x, y_cat, epsilon) <
                   threshold
         end
     end

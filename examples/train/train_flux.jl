@@ -6,6 +6,7 @@ using Statistics
 using Random
 using LearnBase
 using NNlib
+using CUDA
 
 using Slide.FluxTraining
 
@@ -23,8 +24,10 @@ function accuracy(out::Matrix{Float32}, labels::Matrix{Float32}, top_k::Int)
     return acc / batch_size
 end
 
-function train_step!(model, params, opt, x::Matrix{Float32}, y::Matrix{Float32})
+function train_step!(model, params, opt, device, x::Matrix{Float32}, y::Matrix{Float32})
     loss = zero(Float32)
+    x = device(x)
+    y = device(y)
     grads = gradient(params) do
         out = model(x)
         loss = logitcrossentropy(out, y)
@@ -34,13 +37,17 @@ function train_step!(model, params, opt, x::Matrix{Float32}, y::Matrix{Float32})
     return loss
 end
 
-function train_epoch!(model, train_loader, test_set, opt, config, logger)
+function train_epoch!(model, train_loader, test_set, opt, device, config, logger)
     n_iters, total_loss, t0, params =
         convert(Int, length(train_loader)), zero(Float32), time_ns(), Flux.params(model)
     for (it, (x, y)) in enumerate(train_loader)
         FluxTraining.step!(logger)
 
-        train_stats = @timed train_step!(model, params, opt, x, y)
+        train_stats = if device == gpu
+            @timed CUDA.@sync train_step!(model, params, opt, device, x, y)
+        else
+            @timed train_step!(model, params, opt, device, x, y)
+        end
 
         t1 = time_ns()
         log_scalar!(logger, "train_step + data loading time", (t1 - t0) / 1.0e9)
@@ -49,7 +56,6 @@ function train_epoch!(model, train_loader, test_set, opt, config, logger)
         total_loss += loss
 
         log_scalar!(logger, "train_step time", train_stats[2])
-        log_scalar!(logger, "train_step gc time", train_stats[4])
         log_scalar!(logger, "train_loss", loss, true)
 
         if it % config["testing"]["test_freq"] == 0
@@ -72,7 +78,8 @@ function test_epoch(model, test_set, logger, config)
     total_loss, acc = zero(Float32), zero(Float32)
     for idx in rand_indices
         x, y = LearnBase.getobs(test_set, idx)
-        out = model(x)
+        x = device(x)
+        out = model(x) |> cpu
         loss = logitcrossentropy(out, y)
         acc += accuracy(out, y, config["top_k_classes"])
         total_loss += loss
@@ -89,16 +96,23 @@ end
 
 
 config = JSON.parsefile(ARGS[1])
-config["name"] *= "_" * randstring(8)
+config["name"] *= "_flux_" * randstring(8)
 println("Name: $(config["name"])")
+
+device = if config["use_gpu"]
+    gpu
+else
+    cpu
+end
 
 logger = get_logger(config)
 train_loader, test_set = get_dataloaders(config)
 
-model = Chain(
-    Dense(config["n_features"], config["hidden_dim"], relu),
-    Dense(config["hidden_dim"], config["n_classes"]),
-)
+model =
+    Chain(
+        Dense(config["n_features"], config["hidden_dim"], relu, init = Flux.glorot_normal),
+        Dense(config["hidden_dim"], config["n_classes"], init = Flux.glorot_normal),
+    ) |> device
 
 opt = ADAM(config["lr"])
 
@@ -107,6 +121,7 @@ Flux.@epochs config["n_epochs"] train_epoch!(
     train_loader,
     test_set,
     opt,
+    device,
     config,
     logger,
 )

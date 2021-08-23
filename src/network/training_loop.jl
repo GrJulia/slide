@@ -1,9 +1,14 @@
 using Slide.Network: Batch, Float
+using Slide.Network.HashTables: update!
 using Slide.Hash: AbstractLshParams
 using Slide.FluxTraining: Logger, log_scalar!, step!
+using Slide.Network.Layers: SlideLayer, extract_weights_and_ids
+using Slide.Network.Optimizers: AbstractOptimizer, AdamAttributes, optimizer_end_epoch_step!
 
-function build_network(network_params::Dict, batch_size::Int)::SlideNetwork
-    network_layers = Vector{Layer}()
+
+function build_network(network_params::Dict)::SlideNetwork
+    network_layers = Vector{SlideLayer}()
+
     for layer_id = 1:network_params["n_layers"]
         if layer_id == 1
             layer_input_dim = network_params["input_dim"]
@@ -14,48 +19,46 @@ function build_network(network_params::Dict, batch_size::Int)::SlideNetwork
         layer = build_layer(
             layer_input_dim,
             layer_output_dim,
-            batch_size,
             layer_id,
             network_params["layer_activations"][layer_id],
             network_params["lsh_params"][layer_id],
         )
         push!(network_layers, layer)
     end
-    return SlideNetwork(network_layers)
+
+    SlideNetwork(network_layers)
 end
 
 function build_layer(
     input_dim,
     output_dim,
-    batch_size,
     layer_id,
     layer_activation,
     lsh_params::T,
 ) where {T<:AbstractLshParams}
-    neurons = Vector{Neuron{AdamAttributes}}()
-    for neuron_id = 1:output_dim
-        push!(neurons, Neuron(neuron_id, batch_size, input_dim))
-    end
-    return Layer(
+    SlideLayer(
         layer_id,
-        neurons,
+        input_dim,
+        output_dim,
         lsh_params,
-        activation_name_to_function[layer_activation];
-        batch_size = batch_size,
+        activation_name_to_function[layer_activation],
+        AdamAttributes(input_dim, output_dim),
     )
 end
+
 
 function train!(
     training_batches,
     test_set,
     network::SlideNetwork,
-    optimizer::Optimizer,
+    optimizer::Opt,
     logger::Logger;
     n_iters::Int,
     scheduler::S = PeriodicScheduler(15),
     use_all_true_labels::Bool = true,
     test_parameters::Dict,
-) where {S<:AbstractScheduler}
+    use_zygote::Bool = false,
+) where {S<:AbstractScheduler,Opt<:AbstractOptimizer}
     for i = 1:n_iters
         loss = 0
         for (n, (x_batch, y_batch)) in enumerate(training_batches)
@@ -85,21 +88,27 @@ function train!(
                     negative_sparse_logit_cross_entropy(y_batch_pred, y_batch_activated)
                 loss += batch_loss
 
-                backward_stats = @timed backward!(
+                if use_zygote
+                    backward_stats = @timed backward_zygote!(
                     x_batch,
-                    y_batch_pred,
                     y_batch_activated,
                     network,
-                    saved_softmax,
                 )
-
+                else
+                    backward_stats = @timed backward!(
+                        x_batch,
+                        y_batch_pred,
+                        y_batch_activated,
+                        network,
+                        saved_softmax,
+                    )
+                end
+                
                 log_scalar!(logger, "backward_time", backward_stats.time)
                 println("Backward time $(backward_stats.time)")
 
-                update_stats = @timed begin
-                    update_weight!(network, optimizer)
-                    zero_neuron_attributes!(network)
-                end
+                update_stats = @timed update_weight!(network, optimizer)
+
 
                 log_scalar!(logger, "update_time", update_stats.time)
                 println("Update time $(update_stats.time)")
@@ -120,7 +129,13 @@ function train!(
 
             scheduler(n) do
                 for layer in network.layers
-                    update!(layer.hash_tables, layer.neurons)
+                    htable_update_stats = @timed update!(
+                        layer.hash_tables,
+                        extract_weights_and_ids(layer.weights),
+                    )
+
+                    println("Hashtable $(layer.id) updated in $(htable_update_stats.time)")
+                    log_scalar!(logger, "hashtable_$(layer.id)", htable_update_stats.time)
                 end
                 optimizer_end_epoch_step!(optimizer)
             end

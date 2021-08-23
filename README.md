@@ -1,4 +1,10 @@
-# slide
+<p align="center">
+    <a href="https://github.com/GrJulia/slide">
+        <img src="logo.png">
+    </a>
+</p>
+
+# SLiDE
 Julia implementation of Sublinear Deep Learning Engine
 
 ## Running tests

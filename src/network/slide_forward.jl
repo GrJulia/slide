@@ -1,60 +1,7 @@
-using LinearAlgebra: dot
 using FLoops: @floop, ThreadedEx
 
-using Slide.LSH: retrieve
+using Slide.Network.Layers: forward_single_sample!
 
-
-function forward_single_sample(
-    x::SubArray{Float},
-    network::SlideNetwork,
-    x_index::Int;
-    y_true::Union{Nothing,SubArray{Float}} = nothing,
-)
-    current_input = x
-    activated_neuron_ids = 1:length(x)
-
-    for (layer_idx, layer) in enumerate(network.layers)
-
-        dense_input = zeros(Float, length(layer.neurons[1].weight))
-        dense_input[activated_neuron_ids] = current_input
-
-        min_sampling_threshold = layer.hash_tables.min_threshold
-        sampling_ratio = layer.hash_tables.sampling_ratio
-        # Get activated neurons and mark them as changed
-        current_activated_neuron_ids = collect(
-            retrieve(
-                layer.hash_tables.lsh,
-                @view dense_input[:];
-                threshold = max(
-                    min_sampling_threshold,
-                    length(layer.neurons) ÷ sampling_ratio,
-                ),
-            ),
-        )
-
-        if !(isnothing(y_true)) && (layer_idx == length(network.layers))
-            union!(current_activated_neuron_ids, findall(>(0), y_true))
-        end
-
-        mark_ids!(layer.hash_tables, current_activated_neuron_ids)
-
-        layer.active_neurons[x_index] = current_activated_neuron_ids
-
-        current_n_neurons = length(current_activated_neuron_ids)
-        layer_output = zeros(Float, current_n_neurons)
-
-        for (i, neuron) in enumerate(@view layer.neurons[current_activated_neuron_ids])
-            layer_output[i] =
-                dot(current_input, view(neuron.weight, activated_neuron_ids)) + neuron.bias
-        end
-
-        layer_activation = layer.layer_activation
-        current_input = layer_activation(layer_output)
-
-        layer.output[x_index] = current_input
-        activated_neuron_ids = current_activated_neuron_ids
-    end
-end
 
 function forward!(
     x::Array{Float},
@@ -62,19 +9,27 @@ function forward!(
     y_true::Union{Nothing,Array{Float}} = nothing,
     executor = ThreadedEx(),
 )::Tuple{Vector{Vector{Float}},Vector{Vector{Id}}}
-    n_samples = typeof(x) == Vector{Float} ? 1 : size(x)[end]
+    batch_size = typeof(x) == Vector{Float} ? 1 : size(x)[end]
     last_layer = network.layers[end]
 
-    @views @floop executor for i = 1:n_samples
-        forward_single_sample(
-            x[:, i],
-            network,
-            i;
-            y_true = isnothing(y_true) ? y_true : y_true[:, i],
-        )
+    new_batch!(network, batch_size)
+
+    @views @floop executor for i = 1:batch_size
+        input = x[:, i]
+        for layer in network.layers[1:end-1]
+            input = forward_single_sample!(layer, input, i, nothing)
+        end
+
+        maybe_y_true_idxs = if !isnothing(y_true)
+            findall(>(0), y_true[:, i])
+        else
+            nothing
+        end
+
+        forward_single_sample!(last_layer, input, i, maybe_y_true_idxs)
     end
 
-    last_layer.output, last_layer.active_neurons
+    last_layer.output, last_layer.active_neuron_ids
 end
 
 function predict_class(
@@ -94,5 +49,5 @@ function predict_class(
     end
 
     topk_argmax(x) = partialsortperm(x, 1:topk, rev = true)
-    return mapslices(topk_argmax, y_pred, dims = 1)
+    mapslices(topk_argmax, y_pred, dims = 1)
 end
