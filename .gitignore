@@ -29,4 +29,4 @@ examples/datasets/*
 !examples/datasets/.gitkeep
 examples/logs/*
 examples/configs/*
-src/tf/__pycache__
+**/__pycache__
