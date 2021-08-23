@@ -6,16 +6,16 @@ using Base: @kwdef
 using Random: default_rng
 using FLoops: ThreadedEx
 
-using Slide: Float, Id, LshBatch
+using Slide: Float, Id, LshBatch, FloatVector
 using Slide.LSH: Lsh, AbstractHasher, add_batch!
 using Slide.Hash: AbstractLshParams, init_lsh!
 
 
-const SlideLsh{Hasher} = Lsh{SubArray{Float},Id,Hasher}
+const SlideLsh{Hasher} = Lsh{FloatVector,Id,Hasher}
 
 @kwdef mutable struct SlideHashTables{
     A<:AbstractLshParams,
-    Hasher<:AbstractHasher{SubArray{Float}},
+    Hasher<:AbstractHasher{FloatVector},
 }
     lsh::SlideLsh{Hasher}
     lsh_params::A
@@ -27,7 +27,7 @@ end
 @inline function init_and_populate_lsh(
     lsh_params::A,
     neurons::LshBatch,
-)::SlideLsh{<:AbstractHasher{SubArray{Float}}} where {A<:AbstractLshParams}
+)::SlideLsh{<:AbstractHasher{FloatVector}} where {A<:AbstractLshParams}
     lsh = init_lsh!(lsh_params, default_rng(), Id)
     add_batch!(lsh, neurons; executor = ThreadedEx())
 
@@ -37,7 +37,7 @@ end
 function SlideHashTables(
     lsh_params::A,
     neurons::LshBatch,
-)::SlideHashTables{A,<:AbstractHasher{SubArray{Float}}} where {A<:AbstractLshParams}
+)::SlideHashTables{A,<:AbstractHasher{FloatVector}} where {A<:AbstractLshParams}
     SlideHashTables(
         lsh = init_and_populate_lsh(lsh_params, neurons),
         lsh_params = lsh_params,
@@ -53,7 +53,7 @@ Recompute the hashtables for the `neurons`.
 function update!(
     hash_tables::SlideHashTables{A,Hasher},
     neurons::LshBatch,
-) where {A<:AbstractLshParams,Hasher<:AbstractHasher{SubArray{Float}}}
+) where {A<:AbstractLshParams,Hasher<:AbstractHasher{FloatVector}}
     hash_tables.lsh = init_and_populate_lsh(hash_tables.lsh_params, neurons)
 end
 

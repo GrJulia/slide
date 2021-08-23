@@ -1,7 +1,7 @@
 using Test
 using Random: default_rng
 
-using Slide: Float
+using Slide: Float, SubVector
 using Slide.Hash: LshParams, init_lsh!
 using Slide.LshSimHashWrapper: LshSimHashParams
 using Slide.LSH: add!, add_batch!, retrieve
@@ -23,7 +23,7 @@ using Slide.LSH: add!, add_batch!, retrieve
             add!(lsh_with_simhash, zeros(Float, 10)[:], 10)
             add_batch!(
                 lsh_with_simhash,
-                convert(Vector{Tuple{SubArray{Float},Int}}, [(zeros(Float, 10)[:], 1)]),
+                [(zeros(Float, 10)[:], 1)],
             )
 
             retrieve(lsh_with_simhash, zeros(Float, 10)[:]) == Set{Int}([10, 1])

@@ -2,7 +2,7 @@ using Base: @kwdef
 using Random: default_rng
 using FLoops: ThreadedEx, @floop
 
-using Slide: Float, Id, LshBatch
+using Slide: Float, Id, LshBatch, FloatVector
 using Slide.Hash: AbstractLshParams, init_lsh!
 using Slide.LSH: Lsh, AbstractHasher, add_batch!
 using Slide.Network.HashTables: SlideHashTables
@@ -12,7 +12,7 @@ using Slide.Network.Optimizers: AbstractOptimizerAttributes
 @kwdef mutable struct SlideLayer{
     A<:AbstractLshParams,
     F<:Function,
-    Hasher<:AbstractHasher{SubArray{Float}},
+    Hasher<:AbstractHasher{FloatVector},
     Opt<:AbstractOptimizerAttributes,
 } <: AbstractLayer
     id::Id

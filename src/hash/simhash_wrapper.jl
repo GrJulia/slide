@@ -5,7 +5,7 @@ export LshSimHashParams, get_simhash_params
 using Base.Iterators: partition
 using Random: AbstractRNG
 
-using Slide: Float
+using Slide: Float, FloatVector
 using Slide.LSH: AbstractHasher, Lsh
 using Slide.SimHash: SimHasher, Signature, initialize!, signature, signature_len
 using Slide.Hash: LshParams, AbstractLshParams
@@ -13,20 +13,18 @@ using Slide.Hash: LshParams, AbstractLshParams
 import Slide.Hash
 import Slide.LSH
 
-
-struct SimhasherWrapper{K<:AbstractArray{Float}} <: AbstractHasher{K}
+struct SimhasherWrapper <: AbstractHasher{FloatVector}
     signature_len::UInt8
     hasher::SimHasher
 
     function SimhasherWrapper(
         signature_len::UInt8,
         hasher::SimHasher,
-        ::Type{K},
-    ) where {K<:AbstractArray{Float}}
+    )
         signature_len >= 8 * sizeof(Int) && error(
             "Signature length can't be greater than $(8 * sizeof(Int)), got $signature_len",
         )
-        new{K}(signature_len, hasher)
+        new(signature_len, hasher)
     end
 end
 
@@ -43,8 +41,7 @@ function LSH.compute_signatures!(
     signatures::T,
     h::SimhasherWrapper,
     elem::K,
-) where {T<:AbstractArray{Int},K<:AbstractArray{Float}}
-
+) where {T<:AbstractVector{Int},K<:FloatVector}
     raw_signature = signature(h.hasher, elem)
     raw_signature_chunks = partition(raw_signature, h.signature_len)
 
@@ -56,7 +53,7 @@ end
 function LSH.compute_signatures(
     h::SimhasherWrapper,
     elem::K,
-)::Vector{Int} where {K<:AbstractArray{Float}}
+)::Vector{Int} where {K<:FloatVector}
     n_signatures = signature_len(h.hasher) ÷ h.signature_len
     signatures = Vector{Int}(undef, n_signatures)
 
@@ -68,7 +65,7 @@ end
 @inline function LSH.compute_query_signatures(
     h::SimhasherWrapper,
     elem::K,
-)::Vector{Int} where {K<:AbstractArray{Float}}
+)::Vector{Int} where {K<:FloatVector}
     LSH.compute_signatures(h, elem)
 end
 
@@ -76,12 +73,12 @@ end
     signatures::T,
     h::SimhasherWrapper,
     elem::K,
-) where {T<:AbstractArray{Int},K<:AbstractArray{Float}}
+) where {T<:AbstractVector{Int},K<:FloatVector}
     LSH.compute_signatures!(signatures, h, elem)
 end
 
 
-const LshSimHash{Id} = Lsh{SubArray{Float},Id,SimhasherWrapper{SubArray{Float}}}
+const LshSimHash{Id} = Lsh{FloatVector,Id,SimhasherWrapper}
 
 struct LshSimHashParams <: AbstractLshParams
     lsh_params::LshParams
@@ -102,8 +99,7 @@ of signatures produced by SimHash will match the number of hash tables in the LS
 function LSH.init_hasher(
     sim_params::LshSimHashParams,
     rng::Rand,
-    ::Type{K},
-)::SimhasherWrapper where {Rand<:AbstractRNG,K<:AbstractArray{Float}}
+)::SimhasherWrapper where {Rand<:AbstractRNG}
     lsh_params = sim_params.lsh_params
     hasher = initialize!(
         rng,
@@ -111,7 +107,7 @@ function LSH.init_hasher(
         sim_params.sample_size,
         sim_params.vector_len,
     )
-    SimhasherWrapper(UInt8(sim_params.signature_len), hasher, K)
+    SimhasherWrapper(UInt8(sim_params.signature_len), hasher)
 end
 
 function Hash.init_lsh!(
@@ -124,8 +120,8 @@ function Hash.init_lsh!(
         lsh_params.n_tables,
         lsh_params.n_buckets,
         lsh_params.max_bucket_len,
-        LSH.init_hasher(sim_params, rng, SubArray{Float}),
-        SubArray{Float},
+        LSH.init_hasher(sim_params, rng),
+        FloatVector,
         Id,
     )
 end

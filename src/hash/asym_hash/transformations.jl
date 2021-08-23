@@ -1,6 +1,6 @@
 using LinearAlgebra: norm
 
-using Slide: Float
+using Slide: Float, SubVector, FloatVector
 using Slide.LshSimHashWrapper: LshSimHashParams
 
 
@@ -45,7 +45,7 @@ end
 Implementations based on the section 3 of the paper "Asymmetric LSH (ALSH) for Sublinear Time Maximum Inner Product Search (MIPS)".
 Link: https://papers.nips.cc/paper/2014/file/310ce61c90f3a46e340ee8257bc70e93-Paper.pdf
 """
-function transform_data(t::MipsToNnsTransformation, data::SubArray{Float})::Vector{Float}
+function transform_data(t::MipsToNnsTransformation, data::K)::Vector{Float} where {K<:FloatVector}
     data_len = length(data)
     out = Vector{Float}(undef, data_len + 2 * t.m)
 
@@ -64,7 +64,7 @@ function transform_data(t::MipsToNnsTransformation, data::SubArray{Float})::Vect
     out
 end
 
-function transform_query(t::MipsToNnsTransformation, data::SubArray{Float})::Vector{Float}
+function transform_query(t::MipsToNnsTransformation, data::SubVector{Float})::Vector{Float}
     data_len = length(data)
     out = Vector{Float}(undef, data_len + 2 * t.m)
 
@@ -87,7 +87,7 @@ end
 Implementations based on the sections 4 and 5 of the paper "Improved Asymmetric Locality Sensitive Hashing (ALSH) for Maximum Inner Product Search (MIPS)".
 Link: https://arxiv.org/pdf/1410.5410.pdf
 """
-function transform_data(t::MipsToCosineTransformation, data::SubArray{Float})::Vector{Float}
+function transform_data(t::MipsToCosineTransformation, data::SubVector{Float})::Vector{Float}
     data_len = length(data)
     out = zeros(Float, data_len + 2 * t.m)
 
@@ -106,7 +106,7 @@ end
 
 function transform_query(
     t::MipsToCosineTransformation,
-    data::SubArray{Float},
+    data::SubVector{Float},
 )::Vector{Float}
     data_len = length(data)
     out = zeros(Float, data_len + 2 * t.m)

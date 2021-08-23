@@ -52,8 +52,7 @@ end
 function init_hasher(
     params,
     rng::Rand,
-    ::Type{K},
-)::AbstractHasher where {Rand<:AbstractRNG,K<:AbstractArray{Float}} # TODO: move AbstractLshParams to Lsh?
+)::AbstractHasher where {Rand<:AbstractRNG} # TODO: move AbstractLshParams to Lsh?
     error("unimplemented")
 end
 
@@ -110,7 +109,6 @@ insert element into the table to the bucket selected by signature.
 """
 function add!(lsh::Lsh{K,V,Hasher}, key::K, elem::V) where {K,V,Hasher<:AbstractHasher{K}}
     signatures = compute_signatures(lsh.hash, key)
-
     for (signature, ht) in zip(signatures, lsh.hash_tables)
         add!(ht, signature, elem)
     end
@@ -145,9 +143,9 @@ Ith column of this matrix contains computed `signatures` of the ith element from
 """
 function add_batch!(
     lsh::Lsh{K,V,Hasher},
-    batch::Vector{Tuple{K,V}};
+    batch::Vector{Tuple{L,V}};
     executor = SequentialEx(),
-)::Matrix{Int} where {K,V,Hasher<:AbstractHasher{K}}
+)::Matrix{Int} where {K,L<:K,V,Hasher<:AbstractHasher{K}}
     n_tables = length(lsh.hash_tables)
     b_len = length(batch)
 

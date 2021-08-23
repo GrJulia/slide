@@ -3,9 +3,9 @@ using LinearAlgebra
 using Flux
 using Flux.Losses: logitcrossentropy
 using FLoops: @floop, ThreadedEx
+using Slide: FloatVector
 using Slide.Network: SlideNetwork
 
-const FloatVector = AbstractVector{Float}
 const LayerTrainableParams = Vector{Tuple{Matrix{Float}, Vector{Float}}}
 
 function slide_loss(y_true::T, output::U)::Float where {T<:FloatVector,U<:FloatVector}

@@ -1,7 +1,7 @@
 using Test
 using Random: default_rng
 
-using Slide: Float
+using Slide: Float, SubVector
 using Slide.Hash: LshParams, init_lsh!
 using Slide.LshDwtaWrapper: LshDwtaParams
 using Slide.LSH: compute_signatures, add!, add_batch!, retrieve
@@ -23,7 +23,7 @@ using Slide.LSH: compute_signatures, add!, add_batch!, retrieve
             add!(lsh, zeros(Float, 10)[:], 10)
             add_batch!(
                 lsh,
-                convert(Vector{Tuple{SubArray{Float},Int}}, [(zeros(Float, 10)[:], 2)]),
+                convert(Vector{Tuple{SubVector{Float},Int}}, [(zeros(Float, 10)[:], 2)]),
             )
 
             retrieve(lsh, zeros(Float, 10)[:]) == Set{Int}([10, 2])
