@@ -5,7 +5,7 @@ export LshDwtaParams, get_dwta_params
 using Base.Iterators: partition
 using Random: AbstractRNG
 
-using Slide: Float, SubVector, FloatVector
+using Slide: Float, FloatVector
 using Slide.LSH: AbstractHasher, Lsh
 using Slide.DWTA: DwtaHasher, initialize!, signature
 using Slide.Hash: LshParams, AbstractLshParams

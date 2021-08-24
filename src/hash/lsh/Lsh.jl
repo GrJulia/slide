@@ -109,6 +109,7 @@ insert element into the table to the bucket selected by signature.
 """
 function add!(lsh::Lsh{K,V,Hasher}, key::K, elem::V) where {K,V,Hasher<:AbstractHasher{K}}
     signatures = compute_signatures(lsh.hash, key)
+
     for (signature, ht) in zip(signatures, lsh.hash_tables)
         add!(ht, signature, elem)
     end
