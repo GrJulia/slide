@@ -89,11 +89,8 @@ function train!(
                 loss += batch_loss
 
                 if use_zygote
-                    backward_stats = @timed backward_zygote!(
-                    x_batch,
-                    y_batch_activated,
-                    network,
-                )
+                    backward_stats =
+                        @timed backward_zygote!(x_batch, y_batch_activated, network)
                 else
                     backward_stats = @timed backward!(
                         x_batch,
@@ -103,7 +100,7 @@ function train!(
                         saved_softmax,
                     )
                 end
-                
+
                 log_scalar!(logger, "backward_time", backward_stats.time)
                 println("Backward time $(backward_stats.time)")
 
