@@ -39,7 +39,7 @@ function predict_class(
     topk::Int = 1;
     executor = ThreadedEx(),
 )
-    y_active_pred, active_ids = forward!(x, network; y_true)
+    y_active_pred, active_ids = forward!(x, network; y_true = y_true .+ eps(Float))
 
     y_pred = zeros(Float, size(y_true))
 
