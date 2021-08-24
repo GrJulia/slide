@@ -3,10 +3,11 @@ using LinearAlgebra
 using Flux
 using Flux.Losses: logitcrossentropy
 using FLoops: @floop, ThreadedEx
-using Slide: FloatVector
-using Slide.Network: SlideNetwork
 
-const LayerTrainableParams = Vector{Tuple{Matrix{Float}, Vector{Float}}}
+using Slide.Network: SlideNetwork
+using Slide: FloatVector
+
+const LayerTrainableParams = Vector{Tuple{Matrix{Float},Vector{Float}}}
 
 function slide_loss(y_true::T, output::U)::Float where {T<:FloatVector,U<:FloatVector}
     logitcrossentropy(y_true, softmax(output))
@@ -31,10 +32,14 @@ function handle_batch_backward_zygote!(
     prev_active_neuron_ids = (:)
     @views for layer in network.layers
         active_neuron_ids = layer.active_neuron_ids[i]
-        push!(parameters, (layer.weights[prev_active_neuron_ids,  active_neuron_ids],
-         layer.biases[active_neuron_ids])
+        push!(
+            parameters,
+            (
+                layer.weights[prev_active_neuron_ids, active_neuron_ids],
+                layer.biases[active_neuron_ids],
+            ),
         )
-        
+
         prev_active_neuron_ids = layer.active_neuron_ids[i]
     end
     slide_gradients =
