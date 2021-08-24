@@ -1,6 +1,6 @@
 module FluxTraining
 
-export get_dataloaders, SparseDataset
+export SparseDataset, get_obs!, get_dataloaders
 
 include("data.jl")
 
