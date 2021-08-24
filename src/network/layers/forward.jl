@@ -86,7 +86,12 @@ function _forward!(
     # evaluated iff config["log_train_metrics"] == true
     @debug begin
         if threadid() == 1
-            log_dot_product_metrics(layer.id, sparse_input, layer.weights[activated_neuron_ids, :], current_active_neuron_ids)
+            log_dot_product_metrics(
+                layer.id,
+                sparse_input,
+                layer.weights[activated_neuron_ids, :],
+                current_active_neuron_ids,
+            )
         end
     end
 
