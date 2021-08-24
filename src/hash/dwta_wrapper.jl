@@ -5,7 +5,7 @@ export LshDwtaParams, get_dwta_params
 using Base.Iterators: partition
 using Random: AbstractRNG
 
-using Slide: Float
+using Slide: Float, FloatVector
 using Slide.LSH: AbstractHasher, Lsh
 using Slide.DWTA: DwtaHasher, initialize!, signature
 using Slide.Hash: LshParams, AbstractLshParams
@@ -14,7 +14,7 @@ import Slide.Hash
 import Slide.LSH
 
 
-struct DwtaHasherWrapper <: AbstractHasher{SubArray{Float}}
+struct DwtaHasherWrapper <: AbstractHasher{FloatVector}
     hasher::DwtaHasher
     n_tables::UInt8
     n_bins::UInt8
@@ -34,8 +34,8 @@ end
 function LSH.compute_signatures!(
     signatures::T,
     h::DwtaHasherWrapper,
-    elem::SubArray{Float},
-) where {T<:AbstractArray{Int}}
+    elem::K,
+) where {T<:AbstractArray{Int},K<:FloatVector}
     raw_signature = signature(h.hasher, elem, h.densification)
     raw_signature_chunks = partition(raw_signature, h.n_bins)
 
@@ -44,7 +44,7 @@ function LSH.compute_signatures!(
     end
 end
 
-function LSH.compute_signatures(h::DwtaHasherWrapper, elem::SubArray{Float})::Vector{Int}
+function LSH.compute_signatures(h::DwtaHasherWrapper, elem::K)::Vector{Int} where {K<:FloatVector}
     signatures = Vector{Int}(undef, h.n_tables)
 
     LSH.compute_signatures!(signatures, h, elem)
@@ -54,20 +54,20 @@ end
 
 @inline function LSH.compute_query_signatures(
     h::DwtaHasherWrapper,
-    elem::SubArray{Float},
-)::Vector{Int}
+    elem::K,
+)::Vector{Int} where {K<:FloatVector}
     LSH.compute_signatures(h, elem)
 end
 
 @inline function LSH.compute_query_signatures!(
     signatures::T,
     h::DwtaHasherWrapper,
-    elem::SubArray{Float},
-) where {T<:AbstractArray{Int}}
+    elem::K,
+) where {T<:AbstractArray{Int},K<:FloatVector}
     LSH.compute_signatures!(signatures, h, elem)
 end
 
-const LshDwta{Id} = Lsh{SubArray{Float},Id,DwtaHasherWrapper}
+const LshDwta{Id} = Lsh{FloatVector,Id,DwtaHasherWrapper}
 
 struct LshDwtaParams <: AbstractLshParams
     lsh_params::LshParams
@@ -103,7 +103,7 @@ function Hash.init_lsh!(
             log_bin_size,
             dwta_params.densification,
         ),
-        SubArray{Float},
+        AbstractVector{Float},
         Id,
     )
 end

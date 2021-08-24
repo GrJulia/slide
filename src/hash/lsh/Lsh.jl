@@ -4,6 +4,9 @@ export AbstractHasher, Lsh, add!, retrieve
 
 using DataStructures: CircularBuffer
 using FLoops: @floop, SequentialEx
+using Random: AbstractRNG
+
+using Slide: Float
 
 """ AbstractHasher Interface/Trait """
 
@@ -46,6 +49,12 @@ function compute_query_signatures!(
     error("unimplemented")
 end
 
+function init_hasher(
+    params,
+    rng::Rand,
+)::AbstractHasher where {Rand<:AbstractRNG} # TODO: move AbstractLshParams to Lsh?
+    error("unimplemented")
+end
 
 """ LSH implementation """
 
@@ -135,9 +144,9 @@ Ith column of this matrix contains computed `signatures` of the ith element from
 """
 function add_batch!(
     lsh::Lsh{K,V,Hasher},
-    batch::Vector{Tuple{K,V}};
+    batch::Vector{Tuple{L,V}};
     executor = SequentialEx(),
-)::Matrix{Int} where {K,V,Hasher<:AbstractHasher{K}}
+)::Matrix{Int} where {K,L<:K,V,Hasher<:AbstractHasher{K}}
     n_tables = length(lsh.hash_tables)
     b_len = length(batch)
 
