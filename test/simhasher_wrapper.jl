@@ -21,10 +21,7 @@ using Slide.LSH: add!, add_batch!, retrieve
     @testset "LSH can handle vectors" begin
         @test @views begin
             add!(lsh_with_simhash, zeros(Float, 10)[:], 10)
-            add_batch!(
-                lsh_with_simhash,
-                [(zeros(Float, 10)[:], 1)],
-            )
+            add_batch!(lsh_with_simhash, [(zeros(Float, 10)[:], 1)])
 
             retrieve(lsh_with_simhash, zeros(Float, 10)[:]) == Set{Int}([10, 1])
         end
