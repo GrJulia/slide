@@ -69,7 +69,7 @@ function compute_elemes_above_quantiles(
     )
 
     for (ratio, p) in elems_above_quantiles
-        @info "% active in top $(convert(Int, 100*p))%_$id" ratio
+        @info "active neurons in top $(convert(Int, 100*(1-p)))%_$id" ratio
     end
 end
 
