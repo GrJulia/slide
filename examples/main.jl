@@ -6,6 +6,7 @@ using Slide.Network
 using Slide.LshSimHashWrapper: LshSimHashParams, get_simhash_params
 using Slide.Hash: LshParams
 using Slide.FluxTraining
+using Slide.Logging
 using Slide.Network.Optimizers: AdamOptimizer
 
 Random.seed!(1);

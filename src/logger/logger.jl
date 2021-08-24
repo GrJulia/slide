@@ -3,7 +3,8 @@ using Logging
 using DataStructures
 using JSON
 
-mutable struct Logger
+
+mutable struct Logger <: AbstractLogger
     curr_it::Int
     logs::DefaultDict
     tb_logger::TBLogger

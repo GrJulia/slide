@@ -1,7 +1,7 @@
 using Slide.Network: Batch, Float
 using Slide.Network.HashTables: update!
 using Slide.Hash: AbstractLshParams
-using Slide.FluxTraining: Logger, log_scalar!, step!
+using Slide.Logging: Logger, log_scalar!, step!
 using Slide.Network.Layers: SlideLayer, extract_weights_and_ids
 using Slide.Network.Optimizers: AbstractOptimizer, AdamAttributes, optimizer_end_epoch_step!
 

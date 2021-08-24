@@ -9,6 +9,7 @@ using NNlib
 using CUDA
 
 using Slide.FluxTraining
+using Slide.Logging
 
 """
 Usage:
