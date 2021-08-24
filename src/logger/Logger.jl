@@ -1,7 +1,8 @@
-module Logging
+module SlideLogger
 
-export get_logger, step!, log_scalar!, get_obs!, Logger, save, log_dot_product_metrics
+export get_logger, Logger, step!, save, log_dot_product_metrics
 
 include("logger.jl")
+include("utils.jl")
 
 end

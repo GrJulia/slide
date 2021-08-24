@@ -1,7 +1,7 @@
 using Slide.Network: Batch, Float
 using Slide.Network.HashTables: update!
 using Slide.Hash: AbstractLshParams
-using Slide.Logging: Logger, log_scalar!, step!
+using Slide.SlideLogger: Logger, step!
 using Slide.Network.Layers: SlideLayer, extract_weights_and_ids
 using Slide.Network.Optimizers: AbstractOptimizer, AdamAttributes, optimizer_end_epoch_step!
 
@@ -75,7 +75,7 @@ function train!(
                 forward_stats =
                     @timed forward!(x_batch, network; y_true = y_batch_or_nothing)
                 y_batch_pred, last_layer_activated_neuron_ids = forward_stats.value
-                log_scalar!(logger, "forward_time", forward_stats.time)
+                @info "forward_time" forward_stats.time
 
                 println("Forward time $(forward_stats.time)")
 
@@ -101,18 +101,17 @@ function train!(
                     )
                 end
 
-                log_scalar!(logger, "backward_time", backward_stats.time)
+                @info "backward_time" backward_stats.time
                 println("Backward time $(backward_stats.time)")
 
                 update_stats = @timed update_weight!(network, optimizer)
 
-
-                log_scalar!(logger, "update_time", update_stats.time)
+                @info "update_time" update_stats.time
                 println("Update time $(update_stats.time)")
             end
 
             println("Training step done in $(time_stats.time)")
-            log_scalar!(logger, "train_step time", time_stats.time)
+            @info "train_step time" time_stats.time
 
             if n % test_parameters["test_frequency"] == 0
                 test_accuracy = compute_accuracy(
@@ -121,7 +120,7 @@ function train!(
                     test_parameters["n_test_batches"],
                     test_parameters["topk"],
                 )
-                log_scalar!(logger, "test_acc", test_accuracy)
+                @info "test_acc" test_accuracy
             end
 
             scheduler(n) do
@@ -132,13 +131,13 @@ function train!(
                     )
 
                     println("Hashtable $(layer.id) updated in $(htable_update_stats.time)")
-                    log_scalar!(logger, "hashtable_$(layer.id)", htable_update_stats.time)
+                    @info "hashtable_$(layer.id)" htable_update_stats.time
                 end
                 optimizer_end_epoch_step!(optimizer)
             end
         end
 
         println("Iteration $i, Loss $(loss / length(training_batches))")
-        log_scalar!(logger, "train_loss", loss / length(training_batches))
+        @info "train_loss" loss / length(training_batches)
     end
 end

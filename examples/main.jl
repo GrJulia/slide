@@ -1,12 +1,13 @@
 using JSON
 using Random
+using Logging: global_logger
 
 using Slide
 using Slide.Network
 using Slide.LshSimHashWrapper: LshSimHashParams, get_simhash_params
 using Slide.Hash: LshParams
 using Slide.FluxTraining
-using Slide.Logging
+using Slide.SlideLogger: get_logger, save
 using Slide.Network.Optimizers: AdamOptimizer
 
 Random.seed!(1);
@@ -98,6 +99,8 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
     optimizer = AdamOptimizer(eta = learning_rate)
 
     logger = get_logger(dataset_config)
+
+    global_logger(logger)
 
     train!(
         train_loader,

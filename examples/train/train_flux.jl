@@ -9,7 +9,7 @@ using NNlib
 using CUDA
 
 using Slide.FluxTraining
-using Slide.Logging
+using Slide.SlideLogger: get_logger, step!
 
 """
 Usage:
@@ -51,13 +51,13 @@ function train_epoch!(model, train_loader, test_set, opt, device, config, logger
         end
 
         t1 = time_ns()
-        log_scalar!(logger, "train_step + data loading time", (t1 - t0) / 1.0e9)
+        @info "train_step + data loading time" (t1 - t0) / 1.0e9
 
         loss = train_stats[1]
         total_loss += loss
 
-        log_scalar!(logger, "train_step time", train_stats[2])
-        log_scalar!(logger, "train_loss", loss, true)
+        @info "train_step time" train_stats[2]
+        @info "train_loss" loss log_to_tb = true
 
         if it % config["testing"]["test_freq"] == 0
             test_acc = test_epoch(model, test_set, logger, config["testing"])
@@ -89,8 +89,8 @@ function test_epoch(model, test_set, logger, config)
     test_loss = total_loss / n_batches
     test_acc = acc / n_batches
 
-    log_scalar!(logger, "test_loss", test_loss, true)
-    log_scalar!(logger, "test_acc", test_acc, true)
+    @info "test_loss" test_loss log_to_tb = true
+    @info "test_acc" test_acc log_to_tb = true
 
     return test_acc
 end
@@ -107,6 +107,8 @@ else
 end
 
 logger = get_logger(config)
+global_logger(logger)
+
 train_loader, test_set = get_dataloaders(config)
 
 model =
