@@ -3,7 +3,6 @@ using Statistics: mean, quantile
 using Random: shuffle
 
 using Slide: Float, Id, FloatVector
-using Slide.SlideLogger: log_scalar!
 
 
 function compute_avg_dot_product(
