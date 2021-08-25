@@ -46,7 +46,7 @@ function precision_at_k(
     weights::Matrix{Float},
     active_neuron_ids::Vector{Id},
 ) where {K<:FloatVector}
-    top_ks, targets = [0.2, 0.2], [0.2, 0.1]
+    top_ks, targets = [0.2, 0.2, 0.2], [0.2, 0.1, 0.05]
 
     active_neurons_weights = @view(weights[:, active_neuron_ids])
     active_neurons_dot_products = sort(
