@@ -7,7 +7,7 @@ using JSON
 mutable struct Logger <: Logging.AbstractLogger
     curr_it::Int
     logs::DefaultDict
-    tb_logger::TBLogger
+    tb_logger::Union{TBLogger,Nothing}
     log_path::String
     incr_tb::Bool
     log_train_metrics::Bool
@@ -28,7 +28,7 @@ Logging.handle_message(
     message::Nothing,
     args...;
     kwargs...,
-) = return
+) = nothing
 
 function Logging.handle_message(
     logger::Logger,
@@ -72,28 +72,31 @@ end
 
 function log_scalar!(logger::Logger, key::String, val::Any, log_to_tb = false)
     push!(logger.logs[key], (logger.curr_it, val))
-    if log_to_tb
-        Logging.with_logger(logger.tb_logger) do
-            if !logger.incr_tb
-                @info key key = val
-                logger.incr_tb = true
-            else
-                @info key key = val log_step_increment = 0
-            end
+
+    !log_to_tb && return nothing
+    logger.tb_logger == nothing && error("Logging to tb is disabled")
+
+    Logging.with_logger(logger.tb_logger) do
+        if !logger.incr_tb
+            @info key key = val
+            logger.incr_tb = true
+        else
+            @info key key = val log_step_increment = 0
         end
     end
 end
 
 function save(logger::Logger)
+    display(logger.logs)
     logs_string = JSON.json(logger.logs)
     open(logger.log_path, "w") do f
         JSON.print(f, logs_string, 4)
     end
 end
 
-function get_logger(config)
-    log_dir = config["logging_path"] * "/" * config["name"]
-    tb_logger = TBLogger(log_dir)
+function get_logger(config, name)
+    log_dir = config["logging_path"] * "/" * name
+    tb_logger = config["use_tensorboard"] ? TBLogger(log_dir) : nothing
 
     logger = Logger(tb_logger, log_dir, config["log_train_metrics"])
     return logger

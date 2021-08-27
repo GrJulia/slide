@@ -84,7 +84,7 @@ function _forward!(
     layer_output = layer.biases[current_active_neuron_ids]
 
     # evaluated iff config["log_train_metrics"] == true
-    @debug begin
+    # @debug begin
         if threadid() == 1
             log_dot_product_metrics(
                 layer.id,
@@ -93,7 +93,7 @@ function _forward!(
                 current_active_neuron_ids,
             )
         end
-    end
+    # end
 
     @views for (i, id) in enumerate(current_active_neuron_ids)
         layer_output[i] += dot(sparse_input, layer.weights[activated_neuron_ids, id])

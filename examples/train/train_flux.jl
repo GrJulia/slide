@@ -106,7 +106,7 @@ else
     cpu
 end
 
-logger = get_logger(config)
+logger = get_logger(config["logger"], config["name"])
 global_logger(logger)
 
 train_loader, test_set = get_dataloaders(config)

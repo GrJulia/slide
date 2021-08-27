@@ -148,7 +148,7 @@ def train(config, train_f, test_f):
     test_set = (tf.data.Dataset.from_generator(test_gen_with_args, (tf.int64, tf.float32, tf.int64, tf.float32))
                 .map(lambda i, v, s, y: (tf.SparseTensor(i, v, s), y)))
 
-    log_dir = os.path.join(config["logging_path"], config["name"])
+    log_dir = os.path.join(config["logger"]["logging_path"], config["name"])
 
     tensorboard_cb = keras.callbacks.TensorBoard(log_dir=log_dir)
     test_cb = TestAccCallback(test_set, config["testing"], config["batch_size"])

@@ -98,7 +98,7 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
     learning_rate = 0.001
     optimizer = AdamOptimizer(eta = learning_rate)
 
-    logger = get_logger(dataset_config)
+    logger = get_logger(dataset_config["logger"], dataset_config["name"])
 
     global_logger(logger)
 
