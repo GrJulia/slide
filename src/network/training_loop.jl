@@ -88,6 +88,8 @@ function train!(
                     negative_sparse_logit_cross_entropy(y_batch_pred, y_batch_activated)
                 loss += batch_loss
 
+                @info "train_loss" batch_loss
+
                 if use_zygote
                     backward_stats =
                         @timed backward_zygote!(x_batch, y_batch_activated, network)
@@ -138,6 +140,5 @@ function train!(
         end
 
         println("Iteration $i, Loss $(loss / length(training_batches))")
-        @info "train_loss" loss / length(training_batches)
     end
 end
