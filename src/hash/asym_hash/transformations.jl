@@ -22,13 +22,15 @@ end
 
 struct MipsToNnsTransformation <: AbstractTransformation
     m::Int
+    max_norm::Int
 end
 
 struct MipsToCosineTransformation <: AbstractTransformation
     m::Int
+    max_norm::Int
 end
 
-get_transformation(::Type{LshSimHashParams}, m::Int) = MipsToCosineTransformation(m)
+get_transformation(::Type{LshSimHashParams}, m::Int, max_norm::Int) = MipsToCosineTransformation(m, max_norm)
 
 # function get_transformation(::Type{LshL2LshHashParams}, m::Int)
 #     return MipsToNnsTransformation(m)
@@ -37,8 +39,7 @@ get_transformation(::Type{LshSimHashParams}, m::Int) = MipsToCosineTransformatio
 @inline function divide_into_parts(data_len, m)
     base = 1:data_len
     first_tail = data_len+1:data_len+m
-    second_tail = data_len+m+1:data_len+2*m
-    base, first_tail, second_tail
+    base, first_tail
 end
 
 """
@@ -89,16 +90,19 @@ Link: https://arxiv.org/pdf/1410.5410.pdf
 """
 function transform_data(t::MipsToCosineTransformation, data::K)::Vector{Float} where {K<:FloatVector}
     data_len = length(data)
-    out = zeros(Float, data_len + 2 * t.m)
+    out = zeros(Float, data_len + t.m)
 
-    base, first_tail, _ = divide_into_parts(data_len, t.m)
+    base, first_tail = divide_into_parts(data_len, t.m)
 
-    out[base] = data
+    norm_data = data / t.max_norm
 
-    curr_norm_pow = norm(data)
+    out[base] = norm_data
+    out[first_tail] .= 0.5
+
+    curr_norm_pow = norm(norm_data)
     for i in first_tail
         curr_norm_pow ^= 2
-        out[i] = 0.5 - curr_norm_pow
+        out[i] -= curr_norm_pow
     end
 
     out
@@ -109,17 +113,11 @@ function transform_query(
     data::K,
 )::Vector{Float} where {K<:FloatVector}
     data_len = length(data)
-    out = zeros(Float, data_len + 2 * t.m)
+    out = zeros(Float, data_len + t.m)
 
-    base, _, second_tail = divide_into_parts(data_len, t.m)
+    base, _ = divide_into_parts(data_len, t.m)
 
-    out[base] = data
-
-    curr_norm_pow = norm(data)
-    for i in second_tail
-        curr_norm_pow ^= 2
-        out[i] = 0.5 - curr_norm_pow
-    end
+    out[base] = data ./ norm(data)
 
     out
 end

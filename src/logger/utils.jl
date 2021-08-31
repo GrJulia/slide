@@ -46,7 +46,7 @@ function precision_at_k(
     weights::Matrix{Float},
     active_neuron_ids::Vector{Id},
 ) where {K<:FloatVector}
-    top_active_products_ratio, relevant_products_ratio = [0.2, 0.2, 0.2], [0.2, 0.1, 0.05]
+    top_active_products_ratio, relevant_products_ratio = [1], [0.03]
     logs = []
     for (top_active, relevance) in zip(top_active_products_ratio, relevant_products_ratio)
         # Find the largest dot products
@@ -58,12 +58,15 @@ function precision_at_k(
         top_dot_products = active_neuron_dot_products[1:n_top_active_neurons_used]
 
         # Compute precision for the most relevant neurons
-        all_dot_products = weights' * query
-        relevance_threshold = quantile(all_dot_products, 1 - relevance)
+        all_dot_products = sort(weights' * query, rev = true)
+        idx = floor(Int, relevance * length(all_dot_products))
+        relevance_threshold = all_dot_products[idx]
 
         n_top_products = length(top_dot_products)
+        top_dot_products = reverse(top_dot_products)
+
         n_relevant_products =
-            n_top_products - searchsortedfirst(top_dot_products, relevance_threshold)
+            n_top_products - searchsortedfirst(top_dot_products, relevance_threshold) + 1
         precision = n_relevant_products / n_top_products
 
         push!(logs, ("precision at top $(top_active) for relevance=$(relevance)", precision))
@@ -84,7 +87,7 @@ function log_dot_product_metrics(
 
     precision = precision_at_k(query, weights, active_neuron_ids)
 
-    for (key, val) in cat(res, precision)
+    for (key, val) in cat(res, precision, dims=1)
         @info "$(key)_$id" val
     end
 end
