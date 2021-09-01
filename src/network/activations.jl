@@ -2,7 +2,7 @@ using Slide: FloatVector
 
 @inline sigmoid(x::Vector{Float})::Vector{Float} = 1 ./ (1 .+ exp.(.-x))
 
-@inline relu(x::Vector{Float})::Vector{Float} = max.(0, x)
+@inline relu(x::T where {T<:FloatVector})::Vector{Float} = max.(0, x)
 
 @inline relu(x::Float)::Float = max(0, x)
 

@@ -128,7 +128,7 @@ function get_simhash_params(
     layer_sizes::Vector{Int};
     input_size::Int,
     signature_len::Int,
-    sample_ratio::Int,
+    sample_ratio::Float,
 )::Vector{LshSimHashParams}
     lsh_params = Vector{LshSimHashParams}()
 
@@ -138,7 +138,7 @@ function get_simhash_params(
             params,
             prev_n_neurons,
             signature_len,
-            prev_n_neurons ÷ sample_ratio,
+            floor(Int, prev_n_neurons ÷ sample_ratio),
         )
         push!(lsh_params, simparams)
         prev_n_neurons = n_neurons

@@ -99,7 +99,7 @@ function _forward!(
     end
 
     layer.active_neuron_ids[x_index] = current_active_neuron_ids
-    layer.output[x_index] = layer.layer_activation(layer_output)
+    layer.output[x_index] = layer.activation(layer_output)
 
     layer.output[x_index], layer.active_neuron_ids[x_index]
 end

@@ -17,7 +17,6 @@ seed!(0)
         Float32(1e-1), Float32(1e-4)
     end
 
-    n_layers = 2
     n_buckets = 10
     batch_size = 1
     input_dim = 16
@@ -27,12 +26,15 @@ seed!(0)
     lsh_params = [
         LshSimHashParams(common_lsh, input_dim, 2, input_dim ÷ 2),
         LshSimHashParams(common_lsh, 32, 2, 16),
+        LshSimHashParams(common_lsh, 32, 2, 16),
+        LshSimHashParams(common_lsh, 32, 2, 16),
     ]
 
     network_params = Dict(
-        "n_layers" => n_layers,
-        "n_neurons_per_layer" => [32, output_dim],
-        "layer_activations" => ["relu", "identity"],
+        "n_layers" => 4,
+        "n_neurons_per_layer" => [32, 32, 32, output_dim],
+        "layer_activations" => ["relu", "relu", "relu", "identity"],
+        "layer_types" => [:dense, :slide, :dense, :slide],
         "input_dim" => input_dim,
         "lsh_params" => lsh_params,
     )
@@ -43,25 +45,23 @@ seed!(0)
     y_cat = one_hot(y, output_dim)
     y_cat ./= sum(y_cat, dims = 1)
 
-    for layer in network.layers
-        for neuron_id = 1:size(layer.weights, 2)
-            for weight_index = 1:size(layer.weights, 1)
-                @test numerical_gradient_weights(
-                    network,
-                    layer.id,
-                    neuron_id,
-                    weight_index,
-                    x,
-                    y_cat,
-                    epsilon,
-                ) < threshold
-            end
-        end
+    for layer in network.layers,
+        neuron_id = 1:size(layer.weights, 2),
+        weight_index = 1:size(layer.weights, 1)
+
+        @test numerical_gradient_weights(
+            network,
+            layer.id,
+            neuron_id,
+            weight_index,
+            x,
+            y_cat,
+            epsilon,
+        ) < threshold
     end
-    for layer in network.layers
-        for neuron_id = 1:size(layer.weights, 2)
-            @test numerical_gradient_bias(network, layer.id, neuron_id, x, y_cat, epsilon) <
-                  threshold
-        end
+
+    for layer in network.layers, neuron_id = 1:size(layer.weights, 2)
+        @test numerical_gradient_bias(network, layer.id, neuron_id, x, y_cat, epsilon) <
+              threshold
     end
 end

@@ -63,14 +63,7 @@ function numerical_gradient_weights(
     y_check_active = select_by_ids(y_check, activated_neurons)
     _, probs = negative_sparse_logit_cross_entropy(y_check_pred, y_check_active)
 
-    backward!(
-        x_check,
-        y_check_pred,
-        y_check_active,
-        network,
-        probs;
-        executor = SequentialEx(),
-    )
+    backward!(x_check, y_check_active, network, probs; executor = SequentialEx())
     backprop_gradient = copy(network.layers[layer_id].weight_gradients[:, neuron_id])
 
     # Computing numerical weight gradient
@@ -107,14 +100,7 @@ function numerical_gradient_bias(
     y_check_active = select_by_ids(y_check, activated_neurons)
     _, probs = negative_sparse_logit_cross_entropy(y_check_pred, y_check_active)
 
-    backward!(
-        x_check,
-        y_check_pred,
-        y_check_active,
-        network,
-        probs;
-        executor = SequentialEx(),
-    )
+    backward!(x_check, y_check_active, network, probs; executor = SequentialEx())
     backprop_gradient = mean(network.layers[layer_id].bias_gradients[neuron_id, :])
 
     # Computing numerical bias gradient

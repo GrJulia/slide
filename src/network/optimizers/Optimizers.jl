@@ -1,7 +1,6 @@
 module Optimizers
 
-export AbstractOptimizerAttributes,
-    AbstractOptimizer, AdamOptimizer, optimizer_step!, optimizer_end_epoch_step!
+export AbstractOptimizerAttributes, AbstractOptimizer, AdamOptimizer, optimizer_step!
 
 abstract type AbstractOptimizer end
 abstract type AbstractOptimizerAttributes end

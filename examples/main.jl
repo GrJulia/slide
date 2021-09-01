@@ -80,7 +80,7 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
         common_lsh,
         convert(Vector{Int}, n_neurons_per_layer);
         signature_len = config.simhash["signature_len"],
-        sample_ratio = config.simhash["sample_ratio"],
+        sample_ratio = Float(config.simhash["sample_ratio"]),
         input_size = input_dim,
     )
 
@@ -88,6 +88,7 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
         "n_layers" => 2,
         "n_neurons_per_layer" => n_neurons_per_layer,
         "layer_activations" => Vector{String}(config.layer_activations),
+        "layer_types" => map(Symbol, config.layer_types),
         "input_dim" => input_dim,
         "lsh_params" => lsh_params,
     )
@@ -98,7 +99,7 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
     network = build_network(network_params)
 
-    learning_rate = 0.001
+    learning_rate = 0.0001
     optimizer = AdamOptimizer(eta = learning_rate)
 
     logger = get_logger(dataset_config["logger"], dataset_config["name"])
@@ -112,7 +113,7 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
         optimizer,
         logger;
         n_iters = 3,
-        scheduler = PeriodicScheduler(5),
+        scheduler = PeriodicScheduler(50),
         use_all_true_labels = true,
         test_parameters = test_parameters,
         use_zygote = use_zygote,
