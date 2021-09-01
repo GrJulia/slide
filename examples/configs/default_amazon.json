@@ -7,7 +7,6 @@
     },
     "logger": {
         "logging_path": "/home/jrun/data/code/slide/examples/logs",
-        "log_train_metrics": true,
         "use_tensorboard": false
     },
     "n_features": 135909,

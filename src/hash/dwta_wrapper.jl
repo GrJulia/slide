@@ -44,7 +44,10 @@ function LSH.compute_signatures!(
     end
 end
 
-function LSH.compute_signatures(h::DwtaHasherWrapper, elem::K)::Vector{Int} where {K<:FloatVector}
+function LSH.compute_signatures(
+    h::DwtaHasherWrapper,
+    elem::K,
+)::Vector{Int} where {K<:FloatVector}
     signatures = Vector{Int}(undef, h.n_tables)
 
     LSH.compute_signatures!(signatures, h, elem)

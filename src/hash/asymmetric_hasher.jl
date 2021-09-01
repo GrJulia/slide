@@ -33,7 +33,10 @@ function LSH.compute_signatures!(
     LSH.compute_signatures!(signatures, h.hasher, elem)
 end
 
-function LSH.compute_signatures(h::AsymHasher, raw_elem::K)::Vector{Int} where {K<:FloatVector}
+function LSH.compute_signatures(
+    h::AsymHasher,
+    raw_elem::K,
+)::Vector{Int} where {K<:FloatVector}
     signatures = Vector{Int}(undef, h.n_tables)
 
     LSH.compute_signatures!(signatures, h, raw_elem)
@@ -78,7 +81,11 @@ function Hash.init_lsh!(
     hasher_params = asym_hasher_params.hasher_params
     lsh_params = hasher_params.lsh_params
 
-    transformation = get_transformation(typeof(hasher_params), asym_hasher_params.m, asym_hasher_params.max_norm)
+    transformation = get_transformation(
+        typeof(hasher_params),
+        asym_hasher_params.m,
+        asym_hasher_params.max_norm,
+    )
 
     hasher = LSH.init_hasher(hasher_params, rng)
     Lsh(

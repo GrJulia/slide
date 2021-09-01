@@ -9,7 +9,7 @@ using NNlib
 using CUDA
 
 using Slide.FluxTraining
-using Slide.SlideLogger: get_logger, step!
+using Slide.Logger: get_logger, step!
 
 """
 Usage:

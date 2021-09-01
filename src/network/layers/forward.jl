@@ -2,7 +2,7 @@ using LinearAlgebra: dot
 using Base.Threads: threadid
 
 using Slide.LSH: retrieve
-using Slide.SlideLogger: log_dot_product_metrics
+using Slide.Logger: log_dot_product_metrics
 
 
 const SlideOutput = Tuple{Vector{Float},Vector{Id}}
@@ -83,9 +83,9 @@ function _forward!(
 )
     layer_output = layer.biases[current_active_neuron_ids]
 
-    # evaluated iff config["log_train_metrics"] == true
+    # evaluated if ENV["JULIA_DEBUG"] = Slide
     @debug begin
-        if threadid() == 1
+        if x_index == 1
             log_dot_product_metrics(
                 layer.id,
                 sparse_input,

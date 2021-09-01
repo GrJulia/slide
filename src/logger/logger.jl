@@ -4,26 +4,19 @@ using DataStructures
 using JSON
 
 
-mutable struct Logger <: Logging.AbstractLogger
+mutable struct SlideLogger <: Logging.AbstractLogger
     curr_it::Int
     logs::DefaultDict
     tb_logger::Union{TBLogger,Nothing}
     log_path::String
     incr_tb::Bool
-    log_train_metrics::Bool
 
-    Logger(tb_logger, log_dir, log_train_metrics) = new(
-        0,
-        DefaultDict(() -> []),
-        tb_logger,
-        joinpath(log_dir, "logs.json"),
-        false,
-        log_train_metrics,
-    )
+    SlideLogger(tb_logger, log_dir) =
+        new(0, DefaultDict(() -> []), tb_logger, joinpath(log_dir, "logs.json"), false)
 end
 
 Logging.handle_message(
-    logger::Logger,
+    logger::SlideLogger,
     level::Logging.LogLevel,
     message::Nothing,
     args...;
@@ -31,7 +24,7 @@ Logging.handle_message(
 ) = nothing
 
 function Logging.handle_message(
-    logger::Logger,
+    logger::SlideLogger,
     level::Logging.LogLevel,
     message::String,
     args...;
@@ -57,12 +50,12 @@ function Logging.handle_message(
     log_scalar!(logger, log_key, log_val, log_to_tb)
 end
 
-Logging.shouldlog(logger::Logger, args...) = true
+Logging.shouldlog(::SlideLogger, args...) = true
 
-Logging.min_enabled_level(logger::Logger) =
-    logger.log_train_metrics ? Logging.Debug : Logging.Info
+Logging.min_enabled_level(::SlideLogger) =
+    Logging.min_enabled_level(Logging.current_logger())
 
-function step!(logger::Logger)
+function step!(logger::SlideLogger)
     logger.curr_it += 1
     logger.incr_tb = false
     if logger.curr_it % 20 == 0
@@ -70,7 +63,7 @@ function step!(logger::Logger)
     end
 end
 
-function log_scalar!(logger::Logger, key::String, val::Any, log_to_tb = false)
+function log_scalar!(logger::SlideLogger, key::String, val::Any, log_to_tb = false)
     push!(logger.logs[key], (logger.curr_it, val))
 
     !log_to_tb && return nothing
@@ -86,8 +79,7 @@ function log_scalar!(logger::Logger, key::String, val::Any, log_to_tb = false)
     end
 end
 
-function save(logger::Logger)
-    display(logger.logs)
+function save(logger::SlideLogger)
     logs_string = JSON.json(logger.logs)
     open(logger.log_path, "w") do f
         JSON.print(f, logs_string, 4)
@@ -96,8 +88,9 @@ end
 
 function get_logger(config, name)
     log_dir = config["logging_path"] * "/" * name
+    mkdir(log_dir)
+
     tb_logger = config["use_tensorboard"] ? TBLogger(log_dir) : nothing
 
-    logger = Logger(tb_logger, log_dir, config["log_train_metrics"])
-    return logger
+    SlideLogger(tb_logger, log_dir)
 end
