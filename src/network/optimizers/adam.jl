@@ -10,6 +10,7 @@ struct AdamAttributes <: AbstractOptimizerAttributes
     m_db::Vector{Float}
     v_dw::Matrix{Float}
     v_db::Vector{Float}
+    neurons_t::Vector{Int}
 end
 
 AdamAttributes(input_dim::Int, output_dim::Int) = AdamAttributes(
@@ -17,6 +18,7 @@ AdamAttributes(input_dim::Int, output_dim::Int) = AdamAttributes(
     zeros(output_dim),
     zeros(input_dim, output_dim),
     zeros(output_dim),
+    zeros(Int, output_dim),
 )
 
 @kwdef struct AdamOptimizer <: AbstractOptimizer
@@ -24,7 +26,6 @@ AdamAttributes(input_dim::Int, output_dim::Int) = AdamAttributes(
     beta_1::Float = 0.9
     beta_2::Float = 0.999
     epsilon::Float = 1e-8
-    t::Ref{Int} = 1
 end
 
 function optimizer_step!(
@@ -38,6 +39,9 @@ function optimizer_step!(
 ) where {T<:FloatVector,P<:FloatVector,U<:FloatVector}
     dw = weight_gradients
     db = mean(bias_gradients)
+
+    adam_attributes.neurons_t[neuron_id] += 1
+    t = adam_attributes.neurons_t[neuron_id]
 
     @views begin
         @. adam_attributes.m_dw[:, neuron_id] =
@@ -53,8 +57,6 @@ function optimizer_step!(
             optimizer.beta_2 * adam_attributes.v_db[neuron_id] +
             (1 - optimizer.beta_2) * (db^2)
 
-        t = optimizer.t[]
-
         corr_momentum_db = adam_attributes.m_db[neuron_id] / (1 - optimizer.beta_1^t)
         corr_velocity_db = adam_attributes.v_db[neuron_id] / (1 - optimizer.beta_2^t)
 
@@ -69,8 +71,4 @@ function optimizer_step!(
             optimizer.eta *
             (corr_momentum_db / (sqrt(corr_velocity_db) + optimizer.epsilon))
     end
-end
-
-function optimizer_end_epoch_step!(optimizer::AdamOptimizer)
-    optimizer.t[] += 1
 end

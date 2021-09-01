@@ -3,7 +3,9 @@ using Base.Threads: nthreads, threadid
 
 using Slide: FloatVector
 using Slide.Network.Optimizers: AbstractOptimizer, optimizer_step!, AdamAttributes
-using Slide.Network.Layers: backward_single_sample!, backward_single_sample_with_output!
+using Slide.Network.Layers:
+    calculate_wgrads!, calculate_error!, get_output, get_bias_gradients
+
 
 
 function update_weight!(
@@ -30,7 +32,6 @@ end
 
 function backward!(
     x::Matrix{Float},
-    y_pred::Vector{<:FloatVector},
     y_true::Vector{<:FloatVector},
     network::SlideNetwork,
     saved_softmax::Vector{<:FloatVector};
@@ -40,33 +41,27 @@ function backward!(
 
     zero_grads!(network, batch_size)
 
-    max_size = maximum(map(l -> length(l.biases), network.layers))
-    tmp_grad_arrays = Array{Float}(undef, max_size, nthreads())
-
     @views @floop executor for i = 1:batch_size
-        tmp_grad_arrays[1:length(y_true[i]), threadid()] = gradient(
+        last_layer = network.layers[end]
+        active_neuron_ids, _ = get_output(last_layer, i)
+
+        get_bias_gradients(last_layer, i)[active_neuron_ids] .= gradient(
             typeof(negative_sparse_logit_cross_entropy),
             y_true[i],
             saved_softmax[i],
             sum(y_true[i]),
         )
-        for layer in network.layers[2:end]
-            prev_layer = network.layers[layer.id-1]
-            backward_single_sample_with_output!(
-                layer = layer,
-                grads = tmp_grad_arrays[:, threadid()],
-                layer_input = (prev_layer.output[i], prev_layer.active_neuron_ids[i]),
-                output_grads = tmp_grad_arrays[:, threadid()],
-                x_index = i,
-            )
-        end
 
-        first_layer = network.layers[1]
-        backward_single_sample!(
-            layer = first_layer,
-            grads = tmp_grad_arrays[:, threadid()],
-            layer_input = x[:, i],
-            x_index = i,
-        )
+        next_layer = last_layer
+        for layer in network.layers[end-1:-1:1]
+            calculate_error!(layer, next_layer, i)
+            next_layer = layer
+        end
+    end
+
+    input = x
+    for layer in network.layers
+        calculate_wgrads!(layer, input; executor)
+        input = get_output(layer)
     end
 end

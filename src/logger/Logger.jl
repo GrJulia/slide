@@ -8,7 +8,7 @@ export get_logger,
     precision_at_k,
     compute_avg_dot_product
 
-include("logger.jl")
+include("slide_logger.jl")
 include("utils.jl")
 
 end

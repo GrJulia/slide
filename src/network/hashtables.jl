@@ -22,7 +22,7 @@ const SlideLsh{Hasher} = Lsh{FloatVector,Id,Hasher}
     lsh::SlideLsh{Hasher}
     lsh_params::A
 
-    sampling_ratio::Float = Float(1 / 200)
+    sampling_ratio::Float = Float(0.1)
     min_threshold::Int = 90
 end
 

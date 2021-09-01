@@ -18,8 +18,8 @@ simparams = LshSimHashParams(common_lsh, 3, 1, 3)
 
     @views begin
         @testset "forward single sample" begin
-            @test forward_single_sample!(layer, x[:, 1], 1, nothing) ==
-                  forward_single_sample!(layer, (x[:, 1], collect(1:input_dim)), 1, nothing)
+            @test all(isapprox.(forward_single_sample!(layer, x[:, 1], 1, nothing) ==
+                  forward_single_sample!(layer, (x[:, 1], collect(1:input_dim)), 1, nothing), atol=1e-5))
         end
         @test retrieve(layer.hash_tables.lsh, x[:, 1]) == Set{Int}([1, 2])
     end
