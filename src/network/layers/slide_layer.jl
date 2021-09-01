@@ -1,6 +1,7 @@
 using Base: @kwdef
 using Random: default_rng
 using FLoops: ThreadedEx, @floop
+using Distributions: Normal
 
 using Slide: Float, Id, LshBatch, FloatVector
 using Slide.Hash: AbstractLshParams, init_lsh!
@@ -40,13 +41,16 @@ function SlideLayer(
     layer_activation::F,
     opt_attr::Opt,
 ) where {A<:AbstractLshParams,F<:Function,Opt<:AbstractOptimizerAttributes}
-    weights = rand(Float, input_dim, output_dim)
+    stddev = sqrt(2 / (input_dim + output_dim))
+    d = Normal(zero(Float), Float(stddev))
+
+    weights = rand(d, input_dim, output_dim)
     hash_tables = SlideHashTables(lsh_params, extract_weights_and_ids(weights))
 
     SlideLayer(
         id = id,
         weights = weights,
-        biases = rand(Float, output_dim),
+        biases = rand(d, output_dim),
         hash_tables = hash_tables,
         layer_activation = layer_activation,
         active_neuron_ids = Vector{Vector{Id}}(),
