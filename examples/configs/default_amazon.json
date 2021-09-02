@@ -5,7 +5,10 @@
         "test_path": "amazon_test",
         "shuffle": true
     },
-    "logging_path": "/home/jrun/data/code/slide/examples/logs",
+    "logger": {
+        "logging_path": "/home/jrun/data/code/slide/examples/logs",
+        "use_tensorboard": false
+    },
     "n_features": 135909,
     "hidden_dim": 128,
     "n_classes": 670091,

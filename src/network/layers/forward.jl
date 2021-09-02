@@ -1,6 +1,8 @@
 using LinearAlgebra: dot
+using Base.Threads: threadid
 
 using Slide.LSH: retrieve
+using Slide.Logger: log_dot_product_metrics
 
 
 const SlideOutput = Tuple{Vector{Float},Vector{Id}}
@@ -80,6 +82,17 @@ function _forward!(
     x_index,
 )
     layer_output = layer.biases[current_active_neuron_ids]
+
+    @debug begin
+        if x_index == 1
+            log_dot_product_metrics(
+                layer.id,
+                sparse_input,
+                layer.weights[activated_neuron_ids, :],
+                current_active_neuron_ids,
+            )
+        end
+    end
 
     @views for (i, id) in enumerate(current_active_neuron_ids)
         layer_output[i] += dot(sparse_input, layer.weights[activated_neuron_ids, id])

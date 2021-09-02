@@ -5,10 +5,12 @@ export SlideHashTables, update!
 using Base: @kwdef
 using Random: default_rng
 using FLoops: ThreadedEx
+using LinearAlgebra: norm
 
 using Slide: Float, Id, LshBatch, FloatVector
 using Slide.LSH: Lsh, AbstractHasher, add_batch!
 using Slide.Hash: AbstractLshParams, init_lsh!
+using Slide.LshAsymmetricHasher: LshAsymHasherParams
 
 
 const SlideLsh{Hasher} = Lsh{FloatVector,Id,Hasher}
@@ -22,6 +24,18 @@ const SlideLsh{Hasher} = Lsh{FloatVector,Id,Hasher}
 
     sampling_ratio::Float = Float(1 / 200)
     min_threshold::Int = 90
+end
+
+@inline function init_and_populate_lsh(
+    lsh_params::LshAsymHasherParams,
+    neurons::LshBatch,
+)::SlideLsh{<:AbstractHasher{FloatVector}} where {A<:AbstractLshParams}
+    lsh_params.max_norm = maximum(map(weights -> norm(weights), first.(neurons)))
+
+    lsh = init_lsh!(lsh_params, default_rng(), Id)
+    add_batch!(lsh, neurons; executor = ThreadedEx())
+
+    lsh
 end
 
 @inline function init_and_populate_lsh(

@@ -17,10 +17,7 @@ struct SimhasherWrapper <: AbstractHasher{FloatVector}
     signature_len::UInt8
     hasher::SimHasher
 
-    function SimhasherWrapper(
-        signature_len::UInt8,
-        hasher::SimHasher,
-    )
+    function SimhasherWrapper(signature_len::UInt8, hasher::SimHasher)
         signature_len >= 8 * sizeof(Int) && error(
             "Signature length can't be greater than $(8 * sizeof(Int)), got $signature_len",
         )

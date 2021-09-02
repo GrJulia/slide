@@ -137,7 +137,7 @@ def train(config, train_f, test_f):
     train_set = SparseDataset(train_f, config["batch_size"], config["n_features"], config["n_classes"])
     test_set = SparseDataset(test_f, config["batch_size"], config["n_features"], config["n_classes"])
 
-    log_dir = os.path.join(config["logging_path"], config["name"])
+    log_dir = os.path.join(config["logger"]["logging_path"], config["name"])
 
     tensorboard_cb = keras.callbacks.TensorBoard(log_dir=log_dir)
     test_cb = TestAccCallback(test_set, config["testing"])

@@ -2,12 +2,12 @@ module LshAsymmetricHasher
 
 include("./asym_hash/transformations.jl")
 
-export AsymHasherParams
+export LshAsymHasherParams
 
 using Base.Iterators: partition
 using Random: AbstractRNG
 
-using Slide: Float, FloatVector
+using Slide: Float, FloatVector, LshBatch
 using Slide.LSH: AbstractHasher, Lsh
 using Slide.Hash: LshParams, AbstractLshParams, init_lsh!
 using Slide.LshSimHashWrapper: LshSimHashParams
@@ -17,8 +17,8 @@ import Slide.LSH
 
 
 # Wrapper applying transformations and then calling hasher
-struct AsymHasher <: AbstractHasher{FloatVector}
-    hasher::AbstractHasher{Vector{Float}}
+mutable struct AsymHasher <: AbstractHasher{FloatVector}
+    hasher::AbstractHasher{FloatVector}
     transformation::AbstractTransformation
     n_tables::Int
 end
@@ -33,7 +33,10 @@ function LSH.compute_signatures!(
     LSH.compute_signatures!(signatures, h.hasher, elem)
 end
 
-function LSH.compute_signatures(h::AsymHasher, raw_elem::K)::Vector{Int} where {K<:FloatVector}
+function LSH.compute_signatures(
+    h::AsymHasher,
+    raw_elem::K,
+)::Vector{Int} where {K<:FloatVector}
     signatures = Vector{Int}(undef, h.n_tables)
 
     LSH.compute_signatures!(signatures, h, raw_elem)
@@ -64,9 +67,10 @@ end
 
 const LshAsymHasher{Id} = Lsh{FloatVector,Id,AsymHasher}
 
-struct LshAsymHasherParams <: AbstractLshParams
+mutable struct LshAsymHasherParams <: AbstractLshParams
     hasher_params::AbstractLshParams
     m::Int
+    max_norm::Int
 end
 
 function Hash.init_lsh!(
@@ -77,7 +81,11 @@ function Hash.init_lsh!(
     hasher_params = asym_hasher_params.hasher_params
     lsh_params = hasher_params.lsh_params
 
-    transformation = get_transformation(typeof(hasher_params), asym_hasher_params.m)
+    transformation = get_transformation(
+        typeof(hasher_params),
+        asym_hasher_params.m,
+        asym_hasher_params.max_norm,
+    )
 
     hasher = LSH.init_hasher(hasher_params, rng)
     Lsh(
@@ -89,7 +97,5 @@ function Hash.init_lsh!(
         Id,
     )
 end
-
-function get_asym_hasher_params()::Vector{AsymHasherParams} end
 
 end # LshAsymmetricHasher

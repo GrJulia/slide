@@ -1,14 +1,17 @@
 using JSON
 using Random
+using Logging: global_logger
 
 using Slide
 using Slide.Network
 using Slide.LshSimHashWrapper: LshSimHashParams, get_simhash_params
 using Slide.Hash: LshParams
 using Slide.FluxTraining
+using Slide.Logger: get_logger, save
 using Slide.Network.Optimizers: AdamOptimizer
 
 Random.seed!(1);
+
 
 if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
@@ -39,6 +42,8 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
         )
 
     else
+        dataset_config["name"] *= "_test_" * randstring(8)
+
         input_dim = config.input_dim
         output_dim = config.n_neurons_per_layer[end]
         batch_size = 128
@@ -96,7 +101,9 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
     learning_rate = 0.001
     optimizer = AdamOptimizer(eta = learning_rate)
 
-    logger = get_logger(dataset_config)
+    logger = get_logger(dataset_config["logger"], dataset_config["name"])
+
+    global_logger(logger)
 
     train!(
         train_loader,
