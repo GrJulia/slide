@@ -83,7 +83,6 @@ function _forward!(
 )
     layer_output = layer.biases[current_active_neuron_ids]
 
-    # evaluated if ENV["JULIA_DEBUG"] = Slide
     @debug begin
         if x_index == 1
             log_dot_product_metrics(

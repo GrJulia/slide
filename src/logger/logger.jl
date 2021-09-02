@@ -88,7 +88,7 @@ end
 
 function get_logger(config, name)
     log_dir = config["logging_path"] * "/" * name
-    mkdir(log_dir)
+    mkpath(log_dir)
 
     tb_logger = config["use_tensorboard"] ? TBLogger(log_dir) : nothing
 
