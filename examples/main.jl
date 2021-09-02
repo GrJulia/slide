@@ -94,7 +94,7 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
 
     # Data processing and training loop
-    println("Data loaded, building network..........")
+    println("Building network..........")
 
     network = build_network(network_params)
 

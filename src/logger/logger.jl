@@ -47,7 +47,7 @@ function Logging.handle_message(
         end
     end
 
-    log_scalar!(logger, log_key, log_val, log_to_tb)
+    log_val!(logger, log_key, log_val, log_to_tb)
 end
 
 Logging.shouldlog(::SlideLogger, args...) = true
@@ -63,11 +63,11 @@ function step!(logger::SlideLogger)
     end
 end
 
-function log_scalar!(logger::SlideLogger, key::String, val::Any, log_to_tb = false)
+function log_val!(logger::SlideLogger, key::String, val::Any, log_to_tb = false)
     push!(logger.logs[key], (logger.curr_it, val))
 
     !log_to_tb && return nothing
-    logger.tb_logger == nothing && error("Logging to tb is disabled")
+    isnothing(logger.tb_logger) && error("Logging to tb is disabled")
 
     Logging.with_logger(logger.tb_logger) do
         if !logger.incr_tb
@@ -88,7 +88,9 @@ end
 
 function get_logger(config, name)
     log_dir = config["logging_path"] * "/" * name
-    mkpath(log_dir)
+    if !config["use_tensorboard"]
+        mkpath(log_dir)
+    end
 
     tb_logger = config["use_tensorboard"] ? TBLogger(log_dir) : nothing
 

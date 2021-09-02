@@ -2,12 +2,11 @@
     "name": "delicious",
     "dataset": {
         "train_path": "delicious_train",
-        "test_path": "delicious_test",
-        "shuffle": true
+        "test_path": "delicious_test"
     },
     "logger": {
         "logging_path": "/home/jrun/data/code/slide/examples/logs",
-        "use_tensorboard": false
+        "use_tensorboard": true
     },
     "n_features": 782585,
     "hidden_dim": 128,

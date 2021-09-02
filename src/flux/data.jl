@@ -3,141 +3,84 @@ using Random
 using DataLoaders
 using LearnBase
 using DataSets
+using SparseArrays: sparsevec, sparse
 
-using Slide
+using Slide: Float, SparseArray
 
 
-struct SparseDataset
-    xs::Tuple{Vector{Vector{Int}},Vector{Vector{Float}}}
-    ys::Vector{Vector{Int}}
-    batch_size::Int
-    n_features::Int
-    n_classes::Int
-    keep_last::Bool
-    smooth_labels::Bool
+function parse_line(line)
+    line_split = split(line)
+    x = map(
+        ftr -> (parse(Int, split(ftr, ':')[1]) + 1, parse(Float, split(ftr, ':')[2])),
+        line_split[2:end],
+    )
+    x_indices, x_vals = first.(x), last.(x)
+    y = parse.(Int, split(line_split[1], ',')) .+ 1
+    x_indices, x_vals, y
 end
 
-LearnBase.getobs!(
-    buffer::Tuple{Matrix{Float},Matrix{Float}},
-    ds::SparseDataset,
-    raw_batch_idx,
-) = LearnBase.getobs!(
-    buffer::Tuple{Matrix{Float},Matrix{Float}},
-    ds,
-    convert(Int, raw_batch_idx),
-)
-
-function LearnBase.getobs!(
-    buffer::Tuple{Matrix{Float},Matrix{Float}},
-    ds::SparseDataset,
-    batch_idx::Int,
-)
-    batch = ds.batch_size
-    if ds.keep_last
-        batch = min(batch, length(ds.ys) - batch * (batch_idx - 1))
-    end
-
-    xs_indices, xs_vals = ds.xs
-    x, y = buffer
-    x .= zero(Float)
-    y .= zero(Float)
-
-    for b = 1:batch
-        idx = (batch_idx - 1) * batch + b
-        x[xs_indices[idx], b] = xs_vals[idx]
-        y[ds.ys[idx], b] .= one(Float)
-    end
-    if ds.smooth_labels
-        y ./= sum(y, dims = 1)
-    end
-    return buffer
-end
-
-LearnBase.getobs(ds::SparseDataset, raw_batch_idx) =
-    LearnBase.getobs(ds, convert(Int, raw_batch_idx))
-
-function LearnBase.getobs(ds::SparseDataset, batch_idx::Int)
-    batch = ds.batch_size
-    if ds.keep_last
-        batch = min(batch, length(ds.ys) - batch * (batch_idx - 1))
-    end
-
-    xs_indices, xs_vals = ds.xs
-    x = zeros(Float, ds.n_features, batch)
-    y = zeros(Float, ds.n_classes, batch)
-
-    for b = 1:batch
-        idx = (batch_idx - 1) * batch + b
-        x[xs_indices[idx], b] = xs_vals[idx]
-        y[ds.ys[idx], b] .= one(Float)
-    end
-    if ds.smooth_labels
-        y ./= sum(y, dims = 1)
-    end
-    return x, y
-end
-
-function LearnBase.nobs(ds::SparseDataset)
-    n_of_batches = length(ds.ys) / ds.batch_size
-    round_fn = if ds.keep_last
-        ceil
-    else
-        floor
-    end
-    convert(Int, round_fn(n_of_batches))
-end
-
-function preprocess_dataset(dataset_path, shuffle)
+function preprocess_dataset(
+    dataset_path,
+    n_features,
+    n_classes,
+    batch_size,
+    shuffle,
+)::Vector{Tuple{SparseArray,SparseArray}}
     f = open(String, dataset(dataset_path))
-    lines = split(f, '\n')
-    x_indices, x_vals, ys = [], [], []
-    for line in lines[2:end-1]
-        line_split = split(line)
-        x = map(
-            ftr ->
-                (parse(Int, split(ftr, ':')[1]) + 1, parse(Float, split(ftr, ':')[2])),
-            line_split[2:end],
-        )
-        y = parse.(Int, split(line_split[1], ',')) .+ 1
-        push!(x_indices, first.(x))
-        push!(x_vals, last.(x))
-        push!(ys, y)
-    end
+    lines = split(f, '\n')[2:end-1]
 
+    n_samples = length(lines)
     perm = if shuffle
-        randperm(length(ys))
+        randperm(n_samples)
     else
-        1:length(ys)
+        1:n_samples
     end
-    data, labels = (x_indices[perm], x_vals[perm]), ys[perm]
+    lines = lines[perm]
 
-    return data, labels
+    batches = []
+    batched_lines = Iterators.partition(lines, batch_size)
+    for raw_batch in batched_lines
+        curr_batch_size = length(raw_batch)
+        x_Is, x_Js, x_Vs = [], [], []
+        y_Is, y_Js, y_Vs = [], [], []
+        for (i, raw_line) in enumerate(raw_batch)
+            x_indices, x_vals, y = parse_line(raw_line)
+
+            x_Is = vcat(x_Is, x_indices)
+            x_Js = vcat(x_Js, fill(i, length(x_indices)))
+            x_Vs = vcat(x_Vs, x_vals)
+
+            y_Is = vcat(y_Is, y)
+            y_Js = vcat(y_Js, fill(i, length(y)))
+            y_Vs = vcat(y_Vs, ones(Float, length(y)))
+        end
+        x_sparse = sparse(x_Is, x_Js, x_Vs, n_features, curr_batch_size)
+        y_sparse = sparse(y_Is, y_Js, y_Vs, n_classes, curr_batch_size)
+        push!(batches, (x_sparse, y_sparse))
+    end
+
+    return batches
 end
 
 function get_dataloaders(config::Dict{String,Any})
-    train_data, train_labels = preprocess_dataset(config["dataset"]["train_path"], true)
-    test_data, test_labels =
-        preprocess_dataset(config["dataset"]["test_path"], config["dataset"]["shuffle"])
-
-    train_set = SparseDataset(
-        train_data,
-        train_labels,
-        config["batch_size"],
+    train_set = preprocess_dataset(
+        config["dataset"]["train_path"],
         config["n_features"],
         config["n_classes"],
+        config["batch_size"],
         true,
-        config["smooth_labels"],
     )
-    test_set = SparseDataset(
-        test_data,
-        test_labels,
-        config["batch_size"],
+    test_set = preprocess_dataset(
+        config["dataset"]["test_path"],
         config["n_features"],
         config["n_classes"],
-        false,
-        config["smooth_labels"],
+        config["batch_size"],
+        true,
     )
 
-    train_loader = eachobsparallel(train_set)
+    train_loader = DataLoader(train_set, nothing)
+
+    println("Data loaded!")
+
     return train_loader, test_set
 end

@@ -4,20 +4,22 @@ using Flux.Losses: logitcrossentropy
 using JSON
 using Statistics
 using Random
-using LearnBase
 using NNlib
 using CUDA
+using Logging: global_logger
 
+using Slide: Float, SparseArray
 using Slide.FluxTraining
 using Slide.Logger: get_logger, step!
 
 """
 Usage:
-julia --project=. -t <n_of_threads> examples/train_flux.jl examples/configs/<config_name>
+julia --project=. -t <n_of_threads> examples/train/train_flux.jl examples/configs/<config_name>
 """
 
-function accuracy(out::Matrix{Float32}, labels::Matrix{Float32}, top_k::Int)
-    batch_size, acc = size(out, 2), zero(Float32)
+function accuracy(out::Matrix{Float}, sparse_labels::SparseArray, top_k::Int)
+    labels = Matrix(sparse_labels)
+    batch_size, acc = size(out, 2), zero(Float)
     for b = 1:batch_size
         top_k_classes = partialsortperm((@view out[:, b]), 1:top_k, rev = true)
         acc += sum(labels[top_k_classes, b]) / top_k
@@ -25,8 +27,8 @@ function accuracy(out::Matrix{Float32}, labels::Matrix{Float32}, top_k::Int)
     return acc / batch_size
 end
 
-function train_step!(model, params, opt, device, x::Matrix{Float32}, y::Matrix{Float32})
-    loss = zero(Float32)
+function train_step!(model, params, opt, device, x::SparseArray, y::SparseArray)
+    loss = zero(Float)
     x = device(x)
     y = device(y)
     grads = gradient(params) do
@@ -40,9 +42,9 @@ end
 
 function train_epoch!(model, train_loader, test_set, opt, device, config, logger)
     n_iters, total_loss, t0, params =
-        convert(Int, length(train_loader)), zero(Float32), time_ns(), Flux.params(model)
+        convert(Int, length(train_loader)), zero(Float), time_ns(), Flux.params(model)
     for (it, (x, y)) in enumerate(train_loader)
-        FluxTraining.step!(logger)
+        step!(logger)
 
         train_stats = if device == gpu
             @timed CUDA.@sync train_step!(model, params, opt, device, x, y)
@@ -60,25 +62,24 @@ function train_epoch!(model, train_loader, test_set, opt, device, config, logger
         @info "train_loss" loss log_to_tb = true
 
         if it % config["testing"]["test_freq"] == 0
-            test_acc = test_epoch(model, test_set, logger, config["testing"])
-            @info "Iteration $it/$n_iters, test_acc=$test_acc"
+            test_acc = test_epoch(model, test_set, config["testing"])
+            println("Iteration $it/$n_iters, test_acc=$test_acc")
         end
 
         t0 = time_ns()
     end
 end
 
-function test_epoch(model, test_set, logger, config)
-    n_batches = min(config["n_batches"], LearnBase.nobs(test_set))
+function test_epoch(model, test_set, config)
+    n_batches = min(config["n_batches"], length(test_set))
     if config["use_random_indices"]
-        rand_indices = rand(1:LearnBase.nobs(test_set), n_batches)
+        test_indices = rand(1:length(test_set), n_batches)
     else
-        rand_indices = 1:n_batches
+        test_indices = 1:n_batches
     end
 
-    total_loss, acc = zero(Float32), zero(Float32)
-    for idx in rand_indices
-        x, y = LearnBase.getobs(test_set, idx)
+    total_loss, acc = zero(Float), zero(Float)
+    for (x, y) in test_set[test_indices]
         x = device(x)
         out = model(x) |> cpu
         loss = logitcrossentropy(out, y)
