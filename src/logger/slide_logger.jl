@@ -94,11 +94,11 @@ function save(logger::SlideLogger)
     end
 end
 
-function get_logger(config, name)
+function get_logger(config, name, log_level = Info)
     log_dir = config["logging_path"] * "/" * name
     mkpath(log_dir)
 
     tb_logger = config["use_tensorboard"] ? TBLogger(log_dir) : nothing
 
-    SlideLogger(tb_logger, log_dir)
+    SlideLogger(tb_logger, log_dir, log_level)
 end
