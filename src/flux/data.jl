@@ -1,7 +1,7 @@
 using Flux
 using Random
 using DataLoaders
-using LearnBase
+import LearnBase
 using DataSets
 
 using Slide
@@ -18,74 +18,46 @@ struct SparseDataset
 end
 
 LearnBase.getobs!(
-    buffer::Tuple{Matrix{Float},Matrix{Float}},
+    buffer::Tuple{Vector{Float},Vector{Float}},
     ds::SparseDataset,
     raw_batch_idx,
 ) = LearnBase.getobs!(
-    buffer::Tuple{Matrix{Float},Matrix{Float}},
+    buffer,
     ds,
     convert(Int, raw_batch_idx),
 )
 
 function LearnBase.getobs!(
-    buffer::Tuple{Matrix{Float},Matrix{Float}},
+    buffer::Tuple{Vector{Float},Vector{Float}},
     ds::SparseDataset,
     batch_idx::Int,
 )
-    batch = ds.batch_size
-    if ds.keep_last
-        batch = min(batch, length(ds.ys) - batch * (batch_idx - 1))
-    end
-
     xs_indices, xs_vals = ds.xs
     x, y = buffer
     x .= zero(Float)
     y .= zero(Float)
 
-    for b = 1:batch
-        idx = (batch_idx - 1) * batch + b
-        x[xs_indices[idx], b] = xs_vals[idx]
-        y[ds.ys[idx], b] .= one(Float)
-    end
+    x[xs_indices[batch_idx]] .= xs_vals[batch_idx]
+    y[ds.ys[batch_idx]] .= one(Float)
+
     if ds.smooth_labels
-        y ./= sum(y, dims = 1)
+        y ./= sum(y)
     end
-    return buffer
+
+    buffer
 end
 
 LearnBase.getobs(ds::SparseDataset, raw_batch_idx) =
     LearnBase.getobs(ds, convert(Int, raw_batch_idx))
 
 function LearnBase.getobs(ds::SparseDataset, batch_idx::Int)
-    batch = ds.batch_size
-    if ds.keep_last
-        batch = min(batch, length(ds.ys) - batch * (batch_idx - 1))
-    end
+    x = zeros(Float, ds.n_features)
+    y = zeros(Float, ds.n_classes)
 
-    xs_indices, xs_vals = ds.xs
-    x = zeros(Float, ds.n_features, batch)
-    y = zeros(Float, ds.n_classes, batch)
-
-    for b = 1:batch
-        idx = (batch_idx - 1) * batch + b
-        x[xs_indices[idx], b] = xs_vals[idx]
-        y[ds.ys[idx], b] .= one(Float)
-    end
-    if ds.smooth_labels
-        y ./= sum(y, dims = 1)
-    end
-    return x, y
+    LearnBase.getobs!((x, y), ds, batch_idx)
 end
 
-function LearnBase.nobs(ds::SparseDataset)
-    n_of_batches = length(ds.ys) / ds.batch_size
-    round_fn = if ds.keep_last
-        ceil
-    else
-        floor
-    end
-    convert(Int, round_fn(n_of_batches))
-end
+LearnBase.nobs(ds::SparseDataset) = length(ds.ys)
 
 function preprocess_dataset(dataset_path, shuffle)
     f = open(String, dataset(dataset_path))
@@ -138,6 +110,8 @@ function get_dataloaders(config::Dict{String,Any})
         config["smooth_labels"],
     )
 
-    train_loader = DataLoader(train_set, nothing)
-    return train_loader, test_set
+    train_loader = DataLoader(train_set, config["batch_size"], buffered=true)
+    test_loader = DataLoader(test_set, config["batch_size"], buffered=true)
+
+    train_loader, test_loader
 end
