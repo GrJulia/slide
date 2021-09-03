@@ -138,6 +138,6 @@ function get_dataloaders(config::Dict{String,Any})
         config["smooth_labels"],
     )
 
-    train_loader = eachobsparallel(train_set)
+    train_loader = DataLoader(train_set, nothing)
     return train_loader, test_set
 end
