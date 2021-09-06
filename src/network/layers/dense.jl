@@ -2,10 +2,9 @@ using Base: @kwdef
 using Distributions: Normal
 
 using Slide: Float, Id, FloatVector
-using Slide.Network.Optimizers: AbstractOptimizerAttributes
+using Slide.Network.Optimizers: AbstractOptimizerAttributes, AdamAttributes
 
 @kwdef mutable struct Dense{F<:Function,Opt<:AbstractOptimizerAttributes} <: AbstractLayer
-    id::Id
     biases::Vector{Float}
     weights::Matrix{Float}
 
@@ -20,7 +19,19 @@ using Slide.Network.Optimizers: AbstractOptimizerAttributes
 end
 
 function Dense(
-    id::Id,
+    input_dim::Int,
+    output_dim::Int,
+    layer_activation::F
+) where {F}
+    Dense(
+        input_dim,
+        output_dim,
+        layer_activation,
+        AdamAttributes(input_dim, output_dim),
+    )
+end
+
+function Dense(
     input_dim::Int,
     output_dim::Int,
     layer_activation::F,
@@ -30,7 +41,6 @@ function Dense(
     d = Normal(zero(Float), Float(stddev))
 
     Dense(
-        id = id,
         biases = rand(d, output_dim),
         weights = rand(d, input_dim, output_dim),
         activation = layer_activation,

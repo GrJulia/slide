@@ -30,28 +30,43 @@ seed!(0)
         LshSimHashParams(common_lsh, 32, 2, 16),
     ]
 
-    network_params = Dict(
-        "n_layers" => 4,
-        "n_neurons_per_layer" => [32, 32, 32, output_dim],
-        "layer_activations" => ["relu", "relu", "relu", "identity"],
-        "layer_types" => [:dense, :slide, :dense, :slide],
-        "input_dim" => input_dim,
-        "lsh_params" => lsh_params,
-    )
-
     x = rand(Float, input_dim, batch_size)
     y = Vector{Float}(rand(1:output_dim, batch_size))
-    network = build_network(network_params)
+    network = SlideNetwork(
+        Dense(
+            16,
+            32,
+            relu,
+        ),
+        SlideLayer(
+            32,
+            32,
+            lsh_params[2],
+            relu
+        ),
+        Dense(
+            32,
+            32,
+            relu,
+        ),
+        SlideLayer(
+            32,
+            output_dim,
+            lsh_params[4],
+            identity
+        ),
+    )
+
     y_cat = one_hot(y, output_dim)
     y_cat ./= sum(y_cat, dims = 1)
 
-    for layer in network.layers,
+    for (id, layer) in enumerate(network.layers),
         neuron_id = 1:size(layer.weights, 2),
         weight_index = 1:size(layer.weights, 1)
 
         @test numerical_gradient_weights(
             network,
-            layer.id,
+            id,
             neuron_id,
             weight_index,
             x,
@@ -60,8 +75,8 @@ seed!(0)
         ) < threshold
     end
 
-    for layer in network.layers, neuron_id = 1:size(layer.weights, 2)
-        @test numerical_gradient_bias(network, layer.id, neuron_id, x, y_cat, epsilon) <
+    for (id, layer) in enumerate(network.layers), neuron_id = 1:size(layer.weights, 2)
+        @test numerical_gradient_bias(network, id, neuron_id, x, y_cat, epsilon) <
               threshold
     end
 end

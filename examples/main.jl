@@ -4,6 +4,7 @@ using Logging: global_logger
 
 using Slide
 using Slide.Network
+using Slide.Network.Layers: Dense, SlideLayer
 using Slide.LshSimHashWrapper: LshSimHashParams, get_simhash_params
 using Slide.Hash: LshParams
 using Slide.FluxTraining
@@ -84,20 +85,22 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
         input_size = input_dim,
     )
 
-    network_params = Dict(
-        "n_layers" => 2,
-        "n_neurons_per_layer" => n_neurons_per_layer,
-        "layer_activations" => Vector{String}(config.layer_activations),
-        "layer_types" => map(Symbol, config.layer_types),
-        "input_dim" => input_dim,
-        "lsh_params" => lsh_params,
-    )
-
-
     # Data processing and training loop
     println("Data loaded, building network..........")
 
-    network = build_network(network_params)
+    network = SlideNetwork(
+        Dense(
+            input_dim,
+            n_neurons_per_layer[1],
+            relu,
+        ),
+        SlideLayer(
+            n_neurons_per_layer[1],
+            n_neurons_per_layer[2],
+            lsh_params[2],
+            identity
+        ),
+    )
 
     learning_rate = 0.0001
     optimizer = AdamOptimizer(eta = learning_rate)

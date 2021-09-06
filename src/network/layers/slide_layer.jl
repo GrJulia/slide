@@ -7,7 +7,7 @@ using Slide: Float, Id, FloatVector
 using Slide.Hash: AbstractLshParams, init_lsh!
 using Slide.LSH: Lsh, AbstractHasher, add_batch!
 using Slide.Network.HashTables: SlideHashTables, update!
-using Slide.Network.Optimizers: AbstractOptimizerAttributes
+using Slide.Network.Optimizers: AbstractOptimizerAttributes, AdamAttributes
 
 
 @kwdef mutable struct SlideLayer{
@@ -16,7 +16,6 @@ using Slide.Network.Optimizers: AbstractOptimizerAttributes
     Hasher<:AbstractHasher{FloatVector},
     Opt<:AbstractOptimizerAttributes,
 } <: AbstractLayer
-    id::Id
     biases::Vector{Float}
     weights::Matrix{Float}
 
@@ -34,7 +33,21 @@ using Slide.Network.Optimizers: AbstractOptimizerAttributes
 end
 
 function SlideLayer(
-    id::Id,
+    input_dim::Int,
+    output_dim::Int,
+    lsh_params::A,
+    layer_activation::F
+) where {F,A}
+    SlideLayer(
+        input_dim,
+        output_dim,
+        lsh_params,
+        layer_activation,
+        AdamAttributes(input_dim, output_dim),
+    )
+end
+
+function SlideLayer(
     input_dim::Int,
     output_dim::Int,
     lsh_params::A,
@@ -48,7 +61,6 @@ function SlideLayer(
     hash_tables = SlideHashTables(lsh_params, extract_weights_and_ids(weights))
 
     SlideLayer(
-        id = id,
         weights = weights,
         biases = rand(d, output_dim),
         hash_tables = hash_tables,

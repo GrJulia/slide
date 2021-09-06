@@ -1,71 +1,8 @@
 using Slide.Network: Batch, Float
-using Slide.Hash: AbstractLshParams
 using Slide.Logger: SlideLogger, step!
-using Slide.Network.Layers:
-    AbstractLayer, SlideLayer, extract_weights_and_ids, Dense, update_htable!
-using Slide.Network.Optimizers: AbstractOptimizer, AdamAttributes
+using Slide.Network.Layers: extract_weights_and_ids, update_htable!
+using Slide.Network.Optimizers: AbstractOptimizer
 
-
-function build_network(network_params::Dict)::SlideNetwork
-    network_layers = Vector{AbstractLayer}()
-
-    for layer_id = 1:network_params["n_layers"]
-        if layer_id == 1
-            layer_input_dim = network_params["input_dim"]
-        else
-            layer_input_dim = network_params["n_neurons_per_layer"][layer_id-1]
-        end
-        layer_output_dim = network_params["n_neurons_per_layer"][layer_id]
-        layer_type = network_params["layer_types"][layer_id]
-
-        layer = if layer_type == :slide
-            build_layer(
-                layer_input_dim,
-                layer_output_dim,
-                layer_id,
-                network_params["layer_activations"][layer_id],
-                network_params["lsh_params"][layer_id],
-            )
-        else
-            build_layer(
-                layer_input_dim,
-                layer_output_dim,
-                layer_id,
-                network_params["layer_activations"][layer_id],
-            )
-        end
-        push!(network_layers, layer)
-    end
-
-    SlideNetwork(network_layers)
-end
-
-function build_layer(
-    input_dim,
-    output_dim,
-    layer_id,
-    layer_activation,
-    lsh_params::T,
-) where {T<:AbstractLshParams}
-    SlideLayer(
-        layer_id,
-        input_dim,
-        output_dim,
-        lsh_params,
-        activation_name_to_function[layer_activation],
-        AdamAttributes(input_dim, output_dim),
-    )
-end
-
-function build_layer(input_dim, output_dim, layer_id, layer_activation)
-    Dense(
-        layer_id,
-        input_dim,
-        output_dim,
-        activation_name_to_function[layer_activation],
-        AdamAttributes(input_dim, output_dim),
-    )
-end
 
 function train!(
     training_batches,
