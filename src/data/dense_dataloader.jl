@@ -3,7 +3,8 @@ using DataLoaders
 using LearnBase
 using DataSets
 
-using Slide
+using Slide: Float
+using Slide.DataLoading: read_dataset
 
 
 struct DenseDataset
@@ -52,31 +53,9 @@ function LearnBase.nobs(ds::DenseDataset)
     convert(Int, round_fn(n_of_batches))
 end
 
-function preprocess_dataset(dataset_path)
-    f = open(String, dataset(dataset_path))
-    lines = split(f, '\n')
-    x_indices, x_vals, ys = [], [], []
-    for line in lines[2:end-1]
-        line_split = split(line)
-        x = map(
-            ftr ->
-                (parse(Int, split(ftr, ':')[1]) + 1, parse(Float, split(ftr, ':')[2])),
-            line_split[2:end],
-        )
-        y = parse.(Int, split(line_split[1], ',')) .+ 1
-        push!(x_indices, first.(x))
-        push!(x_vals, last.(x))
-        push!(ys, y)
-    end
-
-    perm = randperm(length(ys))
-
-    (x_indices[perm], x_vals[perm]), ys[perm]
-end
-
 function get_dense_dataloaders(config::Dict{String,Any})
-    train_data, train_labels = preprocess_dataset(config["dataset"]["train_path"])
-    test_data, test_labels = preprocess_dataset(config["dataset"]["test_path"])
+    train_data, train_labels = read_dataset(config["dataset"]["train_path"])
+    test_data, test_labels = read_dataset(config["dataset"]["test_path"])
 
     train_set = DenseDataset(
         train_data,
