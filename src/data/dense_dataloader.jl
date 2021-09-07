@@ -6,7 +6,7 @@ using DataSets
 using Slide
 
 
-struct SparseDataset
+struct DenseDataset
     xs::Tuple{Vector{Vector{Int}},Vector{Vector{Float}}}
     ys::Vector{Vector{Int}}
     batch_size::Int
@@ -16,48 +16,10 @@ struct SparseDataset
     smooth_labels::Bool
 end
 
-LearnBase.getobs!(
-    buffer::Tuple{Matrix{Float},Matrix{Float}},
-    ds::SparseDataset,
-    raw_batch_idx,
-) = LearnBase.getobs!(
-    buffer::Tuple{Matrix{Float},Matrix{Float}},
-    ds,
-    convert(Int, raw_batch_idx),
-)
-
-function LearnBase.getobs!(
-    buffer::Tuple{Matrix{Float},Matrix{Float}},
-    ds::SparseDataset,
-    batch_idx::Int,
-)
-    batch = ds.batch_size
-    if ds.keep_last
-        batch = min(batch, length(ds.ys) - batch * (batch_idx - 1))
-    end
-
-    xs_indices, xs_vals = ds.xs
-    x, y = buffer
-    x .= zero(Float)
-    y .= zero(Float)
-
-    for b = 1:batch
-        idx = (batch_idx - 1) * batch + b
-        x[xs_indices[idx], b] = xs_vals[idx]
-        y[ds.ys[idx], b] .= one(Float)
-    end
-
-    if ds.smooth_labels
-        y ./= sum(y, dims = 1)
-    end
-    
-    return buffer
-end
-
-LearnBase.getobs(ds::SparseDataset, raw_batch_idx) =
+LearnBase.getobs(ds::DenseDataset, raw_batch_idx) =
     LearnBase.getobs(ds, convert(Int, raw_batch_idx))
 
-function LearnBase.getobs(ds::SparseDataset, batch_idx::Int)
+function LearnBase.getobs(ds::DenseDataset, batch_idx::Int)
     batch = ds.batch_size
     if ds.keep_last
         batch = min(batch, length(ds.ys) - batch * (batch_idx - 1))
@@ -80,7 +42,7 @@ function LearnBase.getobs(ds::SparseDataset, batch_idx::Int)
     return x, y
 end
 
-function LearnBase.nobs(ds::SparseDataset)
+function LearnBase.nobs(ds::DenseDataset)
     n_of_batches = length(ds.ys) / ds.batch_size
     round_fn = if ds.keep_last
         ceil
@@ -90,7 +52,7 @@ function LearnBase.nobs(ds::SparseDataset)
     convert(Int, round_fn(n_of_batches))
 end
 
-function preprocess_dataset(dataset_path, shuffle)
+function preprocess_dataset(dataset_path)
     f = open(String, dataset(dataset_path))
     lines = split(f, '\n')
     x_indices, x_vals, ys = [], [], []
@@ -107,22 +69,16 @@ function preprocess_dataset(dataset_path, shuffle)
         push!(ys, y)
     end
 
-    perm = if shuffle
-        randperm(length(ys))
-    else
-        1:length(ys)
-    end
-    data, labels = (x_indices[perm], x_vals[perm]), ys[perm]
+    perm = randperm(length(ys))
 
-    return data, labels
+    (x_indices[perm], x_vals[perm]), ys[perm]
 end
 
 function get_dense_dataloaders(config::Dict{String,Any})
-    train_data, train_labels = preprocess_dataset(config["dataset"]["train_path"], true)
-    test_data, test_labels =
-        preprocess_dataset(config["dataset"]["test_path"], config["dataset"]["shuffle"])
+    train_data, train_labels = preprocess_dataset(config["dataset"]["train_path"])
+    test_data, test_labels = preprocess_dataset(config["dataset"]["test_path"])
 
-    train_set = SparseDataset(
+    train_set = DenseDataset(
         train_data,
         train_labels,
         config["batch_size"],
@@ -131,7 +87,7 @@ function get_dense_dataloaders(config::Dict{String,Any})
         true,
         config["smooth_labels"],
     )
-    test_set = SparseDataset(
+    test_set = DenseDataset(
         test_data,
         test_labels,
         config["batch_size"],
@@ -142,5 +98,5 @@ function get_dense_dataloaders(config::Dict{String,Any})
     )
 
     train_loader = DataLoader(train_set, nothing)
-    return train_loader, test_set
+    train_loader, test_set
 end

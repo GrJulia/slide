@@ -143,8 +143,7 @@ function compute_accuracy(
     topk::Int,
 )::Float
     accuracy = zero(Float)
-    for batch_id = 1:n_batch_test
-        x_test, y_test = test_set[batch_id]
+    for (x_test, y_test) in first(test_set, n_batch_test)
         class_predictions = predict_class(x_test, y_test, network, topk)
         accuracy += batch_accuracy(y_test, class_predictions, topk)
     end
