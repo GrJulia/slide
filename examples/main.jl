@@ -6,7 +6,7 @@ using Slide
 using Slide.Network
 using Slide.LshSimHashWrapper: LshSimHashParams, get_simhash_params
 using Slide.Hash: LshParams
-using Slide.DataLoading
+using Slide.DataLoading: get_dense_dataloaders
 using Slide.Logger: get_logger, save
 using Slide.Network.Optimizers: AdamOptimizer
 
@@ -33,7 +33,7 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
         batch_size = dataset_config["batch_size"]
         n_neurons_per_layer = [128, output_dim]
 
-        train_loader, test_set = get_dataloaders(dataset_config)
+        train_loader, test_set = get_dense_dataloaders(dataset_config)
 
         test_parameters = Dict(
             "test_frequency" => dataset_config["testing"]["test_freq"],
@@ -94,7 +94,7 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
 
     # Data processing and training loop
-    println("Building network..........")
+    println("Data loaded, building network..........")
 
     network = build_network(network_params)
 

@@ -27,6 +27,7 @@ function preprocess_dataset(
     n_classes,
     batch_size,
     shuffle,
+    smooth_labels,
 )::Vector{Tuple{SparseFloatArray,SparseFloatArray}}
     f = open(String, dataset(dataset_path))
     lines = split(f, '\n')[2:end-1]
@@ -54,7 +55,12 @@ function preprocess_dataset(
 
             y_row_indices = vcat(y_row_indices, y)
             y_col_indices = vcat(y_col_indices, fill(i, length(y)))
-            y_values = vcat(y_values, ones(Float, length(y)))
+
+            y_vals = ones(Float, length(y))
+            if smooth_labels
+                y_vals ./= length(y)
+            end
+            y_values = vcat(y_values, y_vals)
         end
         x_sparse = sparse(x_row_indices, x_col_indices, x_values, n_features, curr_batch_size)
         y_sparse = sparse(y_row_indices, y_col_indices, y_values, n_classes, curr_batch_size)
@@ -64,13 +70,14 @@ function preprocess_dataset(
     batches
 end
 
-function get_dataloaders(config::Dict{String,Any})
+function get_sparse_dataloaders(config::Dict{String,Any})
     train_set = preprocess_dataset(
         config["dataset"]["train_path"],
         config["n_features"],
         config["n_classes"],
         config["batch_size"],
         true,
+        config["smooth_labels"],
     )
     test_set = preprocess_dataset(
         config["dataset"]["test_path"],
@@ -78,6 +85,7 @@ function get_dataloaders(config::Dict{String,Any})
         config["n_classes"],
         config["batch_size"],
         true,
+        config["smooth_labels"],
     )
 
     train_loader = DataLoader(train_set, nothing)
