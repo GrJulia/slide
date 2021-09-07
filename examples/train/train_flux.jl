@@ -8,8 +8,8 @@ using NNlib
 using CUDA
 using Logging: global_logger
 
-using Slide: Float, SparseArray
-using Slide.FluxTraining
+using Slide: Float, SparseFloatArray
+using Slide.DataLoading
 using Slide.Logger: get_logger, step!
 
 """
@@ -17,7 +17,7 @@ Usage:
 julia --project=. -t <n_of_threads> examples/train/train_flux.jl examples/configs/<config_name>
 """
 
-function accuracy(out::Matrix{Float}, sparse_labels::SparseArray, top_k::Int)
+function accuracy(out::Matrix{Float}, sparse_labels::SparseFloatArray, top_k::Int)
     labels = Matrix(sparse_labels)
     batch_size, acc = size(out, 2), zero(Float)
     for b = 1:batch_size
@@ -27,7 +27,7 @@ function accuracy(out::Matrix{Float}, sparse_labels::SparseArray, top_k::Int)
     return acc / batch_size
 end
 
-function train_step!(model, params, opt, device, x::SparseArray, y::SparseArray)
+function train_step!(model, params, opt, device, x::SparseFloatArray, y::SparseFloatArray)
     loss = zero(Float)
     x = device(x)
     y = device(y)

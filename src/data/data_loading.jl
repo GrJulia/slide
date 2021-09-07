@@ -1,4 +1,4 @@
-module FluxTraining
+module DataLoading
 
 export get_dataloaders
 
