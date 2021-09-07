@@ -117,17 +117,18 @@ function get_dwta_params(
     input_size::Int,
     n_bins::UInt8,
     n_indices_per_bin::UInt8,
+    densification::Bool = false,
 )::Vector{LshDwtaParams}
     lsh_params = Vector{LshDwtaParams}()
 
     prev_n_neurons = input_size
     for n_neurons in layer_sizes
-        dwtaparams = LshDWTAParams(
+        dwtaparams = LshDwtaParams(
             params,
             n_bins,
             n_indices_per_bin,
             prev_n_neurons,
-            dwta_params.densification,
+            densification,
         )
         push!(lsh_params, dwtaparams)
         prev_n_neurons = n_neurons
