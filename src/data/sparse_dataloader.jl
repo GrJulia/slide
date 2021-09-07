@@ -71,7 +71,7 @@ function preprocess_dataset(
     batches
 end
 
-function get_sparse_dataloaders(config::Dict{String,Any})
+function get_sparse_datasets(config::Dict{String,Any})
     train_set = preprocess_dataset(
         config["dataset"]["train_path"],
         config["n_features"],

@@ -9,7 +9,7 @@ using CUDA
 using Logging: global_logger
 
 using Slide: Float, SparseFloatArray
-using Slide.DataLoading: get_sparse_dataloaders
+using Slide.DataLoading: get_sparse_datasets
 using Slide.Logger: get_logger, step!
 
 """
@@ -110,7 +110,7 @@ end
 logger = get_logger(config["logger"], config["name"])
 global_logger(logger)
 
-train_loader, test_set = get_sparse_dataloaders(config)
+train_loader, test_set = get_sparse_datasets(config)
 
 model =
     Chain(
