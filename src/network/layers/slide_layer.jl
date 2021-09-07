@@ -61,3 +61,17 @@ function SlideLayer(
         opt_attr = opt_attr,
     )
 end
+
+function to_inf(layer::SlideLayer)
+    Dense(
+        id = layer.id,
+        biases = layer.biases,
+        weights = layer.weights,
+        activation = layer.activation,
+        output = Vector{Vector{Float}}(),
+        bias_gradients = zeros(Float, 1, 1),
+        weight_gradients = zeros(Float, 1, 1),
+        is_neuron_active = ones(Bool, 1),
+        opt_attr = layer.opt_attr,
+    )
+end

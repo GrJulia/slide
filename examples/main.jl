@@ -15,14 +15,14 @@ Random.seed!(1);
 
 if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
-    use_real_dataset = false
+    use_real_dataset = true
     use_zygote = false
 
     # Building parameters configuration
 
     config_dict = JSON.parsefile("examples/slide_config.json")
     config = NamedTuple{Tuple(Symbol.(keys(config_dict)))}(values(config_dict))
-    dataset_config = JSON.parsefile("./examples/configs/default_delicious.json")
+    dataset_config = JSON.parsefile("./examples/configs/default_amazon.json")
 
     if use_real_dataset
         dataset_config["name"] *= "_" * randstring(8)
@@ -112,7 +112,7 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
         network,
         optimizer,
         logger;
-        n_iters = 3,
+        n_iters = 10,
         scheduler = PeriodicScheduler(50),
         use_all_true_labels = true,
         test_parameters = test_parameters,

@@ -82,7 +82,7 @@ Lsh(
 
 
 @inline function compute_bucket_for_signature(x::Int, max_value::Int)::Int
-    (x % max_value) + 1
+    (max_value + (x % max_value)) % max_value + 1
 end
 
 """

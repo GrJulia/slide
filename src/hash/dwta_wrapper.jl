@@ -122,12 +122,12 @@ function get_dwta_params(
 
     prev_n_neurons = input_size
     for n_neurons in layer_sizes
-        dwtaparams = LshDWTAParams(
+        dwtaparams = LshDwtaParams(
             params,
             n_bins,
             n_indices_per_bin,
             prev_n_neurons,
-            dwta_params.densification,
+            false,
         )
         push!(lsh_params, dwtaparams)
         prev_n_neurons = n_neurons

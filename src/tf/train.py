@@ -39,12 +39,12 @@ class SparseDataset(keras.utils.Sequence):
             x_indices.append(np.array([xi[0] for xi in x]))
             x_vals.append(np.array([xi[1] for xi in x]))
             ys.append(np.array(y))
-    
+
         perm = np.random.permutation(len(ys))
         p_x_indices = [x_indices[idx] for idx in perm]
         p_x_vals = [x_vals[idx] for idx in perm]
         p_ys = [ys[idx] for idx in perm]
-    
+
         self.xs = (p_x_indices, p_x_vals)
         self.ys = p_ys
 
@@ -59,9 +59,9 @@ class SparseDataset(keras.utils.Sequence):
         for i in range(self.batch_size):
             true_idx = batch_idx * self.batch_size + i
             x[i, xs_indices[true_idx]] = xs_vals[true_idx]
-            
+
             y[i, self.ys[true_idx]] = 1
-        
+
         return x, y
 
 
@@ -101,7 +101,7 @@ class TimeMeasureCallback(keras.callbacks.Callback):
         self.cnt = 0
 
     def on_train_batch_begin(self, batch, logs):
-        self.t0 = time.perf_counter()            
+        self.t0 = time.perf_counter()
 
     def on_train_batch_end(self, batch, logs):
         logs["train_step time"] = (self.cnt, time.perf_counter() - self.t0)
@@ -112,7 +112,7 @@ class LoggerCallback(keras.callbacks.Callback):
         super().__init__()
         self.log_path = os.path.join(log_dir, "logs.json")
         self.cnt = 0
-        self.logs = defaultdict(list)       
+        self.logs = defaultdict(list)
 
     def on_train_batch_end(self, batch, batch_logs):
         self.cnt += 1
@@ -146,4 +146,3 @@ def train(config, train_f, test_f):
     callbacks = [tensorboard_cb, time_measure_cb, test_cb, logger_cb]
 
     model.fit(train_set, epochs=config["n_epochs"], callbacks=callbacks)
-    

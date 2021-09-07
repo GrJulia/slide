@@ -9,7 +9,8 @@ export AbstractLayer,
     prep_backprop!,
     calculate_error!,
     calculate_wgrads!,
-    update_htable!
+    update_htable!,
+    to_inf
 
 
 abstract type AbstractLayer end

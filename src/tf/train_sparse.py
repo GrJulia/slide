@@ -107,7 +107,7 @@ class TimeMeasureCallback(keras.callbacks.Callback):
         self.cnt = 0
 
     def on_train_batch_begin(self, batch, logs):
-        self.t0 = time.perf_counter()            
+        self.t0 = time.perf_counter()
 
     def on_train_batch_end(self, batch, logs):
         logs["train_step time"] = (self.cnt, time.perf_counter() - self.t0)
@@ -118,7 +118,7 @@ class LoggerCallback(keras.callbacks.Callback):
         super().__init__()
         self.log_path = os.path.join(log_dir, "logs.json")
         self.cnt = 0
-        self.logs = defaultdict(list)       
+        self.logs = defaultdict(list)
 
     def on_train_batch_end(self, batch, batch_logs):
         self.cnt += 1
@@ -157,4 +157,3 @@ def train(config, train_f, test_f):
     callbacks = [tensorboard_cb, time_measure_cb, test_cb, logger_cb]
 
     model.fit(train_set, epochs=config["n_epochs"], callbacks=callbacks)
-    

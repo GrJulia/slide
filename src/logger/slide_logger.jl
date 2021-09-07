@@ -1,5 +1,6 @@
 using TensorBoardLogger
 import Logging
+using Logging: Info
 using DataStructures
 using JSON
 
@@ -52,8 +53,7 @@ end
 
 Logging.shouldlog(::SlideLogger, args...) = true
 
-Logging.min_enabled_level(::SlideLogger) =
-    Logging.min_enabled_level(Logging.current_logger())
+Logging.min_enabled_level(::SlideLogger) = Info
 
 function step!(logger::SlideLogger)
     logger.curr_it += 1

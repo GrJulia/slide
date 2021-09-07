@@ -1,6 +1,6 @@
 using FLoops: @floop, ThreadedEx
 
-using Slide.Network.Layers: forward_single_sample!
+using Slide.Network.Layers: forward_single_sample!, get_output
 
 
 function forward!(
@@ -8,7 +8,7 @@ function forward!(
     network::SlideNetwork;
     y_true::Union{Nothing,Array{Float}} = nothing,
     executor = ThreadedEx(),
-)::Tuple{Vector{Vector{Float}},Vector{Vector{Id}}}
+)
     batch_size = typeof(x) == Vector{Float} ? 1 : size(x)[end]
     last_layer = network.layers[end]
 
@@ -29,25 +29,22 @@ function forward!(
         forward_single_sample!(last_layer, input, i, maybe_y_true_idxs)
     end
 
-    last_layer.output, last_layer.active_neuron_ids
+    get_output(last_layer)
 end
 
 function predict_class(
     x::Array{Float},
     y_true::Array{Float},
     network::SlideNetwork,
-    topk::Int = 1;
-    executor = ThreadedEx(),
+    topk::Int = 1
 )
-    y_active_pred, active_ids = forward!(x, network; y_true = y_true .+ eps(Float))
+    interference_network = to_inference(network)
+    _, y_pred = forward!(x, interference_network; y_true = nothing)
 
-    y_pred = zeros(Float, size(y_true))
-
-    @floop executor for i = 1:length(active_ids)
-        ids = active_ids[i]
-        y_pred[ids, i] = y_active_pred[i]
+    topk_argmax(x) = if topk > 1
+        partialsortperm(x, 1:topk, rev = true)
+    else
+        findmax(x)[2]
     end
-
-    topk_argmax(x) = partialsortperm(x, 1:topk, rev = true)
-    mapslices(topk_argmax, y_pred, dims = 1)
+    map(topk_argmax, y_pred)
 end

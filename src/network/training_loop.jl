@@ -92,7 +92,7 @@ function train!(
 
             forward_stats =
                 @timed forward!(x_batch, network; y_true = y_batch_or_nothing)
-            y_batch_pred, last_layer_activated_neuron_ids = forward_stats.value
+            last_layer_activated_neuron_ids, y_batch_pred = forward_stats.value
 
             @info "forward_time" forward_stats.time
             println("Forward time $(forward_stats.time)")
@@ -129,13 +129,14 @@ function train!(
         @info "train_step time" time_stats.time
 
         if n % test_parameters["test_frequency"] == 0
-            test_accuracy = compute_accuracy(
+            test_stats = @timed compute_accuracy(
                 network,
                 test_set,
                 test_parameters["n_test_batches"],
                 test_parameters["topk"],
             )
-            @info "test_acc" test_accuracy
+            @info "test_acc" test_stats.value
+            println("Test time $(test_stats.time)")
         end
 
         scheduler(n) do

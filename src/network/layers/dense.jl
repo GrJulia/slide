@@ -41,3 +41,7 @@ function Dense(
         opt_attr = opt_attr,
     )
 end
+
+function to_inf(layer::Dense)
+    layer
+end
