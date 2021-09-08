@@ -1,6 +1,6 @@
 module DataLoading
 
-export get_sparse_datasets, get_sparse_datasets, get_dense_dataloaders
+export get_sparse_datasets, get_dense_dataloaders
 
 include("sparse_dataloader.jl")
 include("dense_dataloader.jl")
