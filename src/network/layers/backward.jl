@@ -18,11 +18,15 @@ function calculate_error!(
     active_neuron_ids, _ = get_output(next_layer, x_index)
 
     @views begin
-        grad = get_bias_gradients(next_layer, x_index)[active_neuron_ids]
+        grad = get_error(next_layer, x_index)[active_neuron_ids]
         weights = get_weights(next_layer)[current_active_neuron_ids, active_neuron_ids]
 
-        get_bias_gradients(layer, x_index)[current_active_neuron_ids] .=
-            (weights * grad) .* gradient(F, output)
+        set_error!(
+            layer,
+            x_index,
+            current_active_neuron_ids,
+            (weights * grad) .* gradient(F, output),
+        )
     end
 
 end
@@ -37,12 +41,13 @@ function _calculate_wgrads!(
     current_active_neuron_ids, _ = get_output(layer, x_index)
     set_active!(layer, current_active_neuron_ids)
 
-    @floop executor for id in current_active_neuron_ids
-        @views axpy!(
-            get_bias_gradients(layer, x_index)[id],
-            input,
-            get_weight_gradients(layer)[previous_active_ids, id],
-        )
+    @views begin
+        dzs = get_error(layer, x_index)
+        dWs = get_weight_gradients(layer)[previous_active_ids, :]
+
+        @floop executor for id in current_active_neuron_ids
+            axpy!(dzs[id], input, dWs[:, id])
+        end
     end
 end
 
@@ -60,8 +65,8 @@ function calculate_wgrads!(
     batch_executor, wgrad_executor = _get_executors(layer, executor)
 
     @views @floop batch_executor for i = 1:batch_size
-        in, active_ids = inputs[:, i], (:)
-        _calculate_wgrads!(layer, in, active_ids, i; executor = wgrad_executor)
+        input, active_ids = inputs[:, i], (:)
+        _calculate_wgrads!(layer, input, active_ids, i; executor = wgrad_executor)
     end
 end
 
@@ -70,13 +75,13 @@ function calculate_wgrads!(
     inputs::Tuple{Vector{Ids},Vector{T}};
     executor = ThreadedEx(),
 ) where {L<:AbstractLayer,Ids,T<:FloatVector}
-    ids, input = inputs
-    batch_size = length(ids)
+    batch_active_ids, batch_input = inputs
+    batch_size = length(batch_active_ids)
 
     batch_executor, wgrad_executor = _get_executors(layer, executor)
 
     @views @floop batch_executor for i = 1:batch_size
-        in, active_ids = input[i], ids[i]
-        _calculate_wgrads!(layer, in, active_ids, i; executor = wgrad_executor)
+        input, active_ids = batch_input[i], batch_active_ids[i]
+        _calculate_wgrads!(layer, input, active_ids, i; executor = wgrad_executor)
     end
 end

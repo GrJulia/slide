@@ -8,9 +8,9 @@ function forward_single_sample!(
     x_index::Int,
     ::Any,
 ) where {F,O,U<:FloatVector}
-    layer.output[x_index] = layer.activation.(layer.weights' * input + layer.biases)
+    layer.output[:, x_index] = layer.activation.(layer.weights' * input + layer.biases)
 
-    layer.output[x_index]
+    @view layer.output[:, x_index]
 end
 
 function forward_single_sample!(
@@ -19,10 +19,12 @@ function forward_single_sample!(
     x_index::Int,
     ::Any,
 ) where {F,O,U<:FloatVector,P<:AbstractVector{Id}}
-    sparse, ids = input
+    sparse_input, activated_neuron_ids = input
 
-    @views layer.output[x_index] =
-        layer.activation.(layer.weights[ids, :]' * sparse + layer.biases)
+    @views layer.output[:, x_index] =
+        layer.activation.(
+            layer.weights[activated_neuron_ids, :]' * sparse_input + layer.biases,
+        )
 
-    layer.output[x_index]
+    @view layer.output[:, x_index]
 end

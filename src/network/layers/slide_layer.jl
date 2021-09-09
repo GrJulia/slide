@@ -36,7 +36,7 @@ function SlideLayer(
     input_dim::Int,
     output_dim::Int,
     lsh_params::A,
-    layer_activation::F
+    layer_activation::F,
 ) where {F,A}
     SlideLayer(
         input_dim,

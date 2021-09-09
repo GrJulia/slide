@@ -46,6 +46,17 @@ function zero_grads!(layer::L, batch_size::Int) where {L<:AbstractLayer}
     end
 end
 
+const get_error = get_bias_gradients
+
+@inline function set_error!(
+    layer::L,
+    x_index::Int,
+    ids,
+    error::T,
+) where {L<:AbstractLayer,T<:FloatVector}
+    get_error(layer, x_index)[ids] .= error
+end
+
 """
     Slide layer specific utilities
 """
@@ -74,13 +85,13 @@ end
 end
 
 @inline function get_output(layer::Dense{F,O}, x_index::Int) where {F,O}
-    1:length(layer.output[x_index]), layer.output[x_index]
+    1:length(layer.output[:, x_index]), @view layer.output[:, x_index]
 end
 
 @inline function get_output(layer::Dense{F,O}) where {F,O}
-    [(:) for _ = 1:length(layer.output)], layer.output
+    layer.output
 end
 
 function new_batch!(layer::Dense{F,O}, batch_size::Int) where {F,O}
-    resize!(layer.output, batch_size)
+    layer.output = Matrix{Float}(undef, length(layer.biases), batch_size)
 end

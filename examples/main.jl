@@ -88,19 +88,10 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
     # Data processing and training loop
     println("Data loaded, building network..........")
 
-    network = SlideNetwork(
-        Dense(
-            input_dim,
-            n_neurons_per_layer[1],
-            relu,
-        ),
-        SlideLayer(
-            n_neurons_per_layer[1],
-            n_neurons_per_layer[2],
-            lsh_params[2],
-            identity
-        ),
-    )
+    layer_1 = Dense(input_dim, n_neurons_per_layer[1], relu)
+    layer_2 =
+        SlideLayer(n_neurons_per_layer[1], n_neurons_per_layer[2], lsh_params[2], identity)
+    network = SlideNetwork(layer_1, layer_2)
 
     learning_rate = 0.0001
     optimizer = AdamOptimizer(eta = learning_rate)

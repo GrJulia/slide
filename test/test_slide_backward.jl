@@ -33,28 +33,10 @@ seed!(0)
     x = rand(Float, input_dim, batch_size)
     y = Vector{Float}(rand(1:output_dim, batch_size))
     network = SlideNetwork(
-        Dense(
-            16,
-            32,
-            relu,
-        ),
-        SlideLayer(
-            32,
-            32,
-            lsh_params[2],
-            relu
-        ),
-        Dense(
-            32,
-            32,
-            relu,
-        ),
-        SlideLayer(
-            32,
-            output_dim,
-            lsh_params[4],
-            identity
-        ),
+        Dense(16, 32, relu),
+        SlideLayer(32, 32, lsh_params[2], relu),
+        Dense(32, 32, relu),
+        SlideLayer(32, output_dim, lsh_params[4], identity),
     )
 
     y_cat = one_hot(y, output_dim)
@@ -76,7 +58,6 @@ seed!(0)
     end
 
     for (id, layer) in enumerate(network.layers), neuron_id = 1:size(layer.weights, 2)
-        @test numerical_gradient_bias(network, id, neuron_id, x, y_cat, epsilon) <
-              threshold
+        @test numerical_gradient_bias(network, id, neuron_id, x, y_cat, epsilon) < threshold
     end
 end
