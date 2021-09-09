@@ -2,8 +2,7 @@
     "name": "amazon",
     "dataset": {
         "train_path": "amazon_train",
-        "test_path": "amazon_test",
-        "shuffle": true
+        "test_path": "amazon_test"
     },
     "logger": {
         "logging_path": "/home/jrun/data/code/slide/examples/logs",

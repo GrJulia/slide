@@ -1,10 +1,8 @@
 using Statistics
-using LearnBase: getobs
 using FLoops: SequentialEx
 
 using Slide.Network
 using Slide: Float, Id
-using Slide.FluxTraining: SparseDataset
 
 const Batch = Tuple{Matrix{Float},Matrix{Float}}
 
@@ -145,12 +143,7 @@ function compute_accuracy(
     topk::Int,
 )::Float
     accuracy = zero(Float)
-    for batch_id = 1:n_batch_test
-        if typeof(test_set) == SparseDataset
-            x_test, y_test = getobs(test_set, batch_id)
-        else
-            x_test, y_test = test_set[batch_id]
-        end
+    for (x_test, y_test) in first(test_set, n_batch_test)
         class_predictions = predict_class(x_test, y_test, network, topk)
         accuracy += batch_accuracy(y_test, class_predictions, topk)
     end
