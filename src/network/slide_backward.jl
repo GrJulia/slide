@@ -52,10 +52,9 @@ function backward!(
             sum(y_true[i]),
         )
 
-        next_layer = last_layer
-        for layer in network.layers[end-1:-1:1]
-            calculate_error!(layer, next_layer, i)
-            next_layer = layer
+        n_layers = length(network.layers)
+        for t in n_layers-1:-1:1
+            calculate_error!(network.layers[t], network.layers[t+1], i)
         end
     end
 
