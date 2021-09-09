@@ -50,8 +50,12 @@ function train!(
                     backward_stats =
                         @timed backward_zygote!(x_batch, y_batch_activated, network)
                 else
-                    backward_stats =
-                        @timed backward!(x_batch, y_batch_activated, network, saved_softmax)
+                    backward_stats = @timed backward!(
+                        x_batch,
+                        y_batch_activated,
+                        network,
+                        saved_softmax,
+                    )
                 end
 
                 @info "backward_time" backward_stats.time

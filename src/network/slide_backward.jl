@@ -3,8 +3,7 @@ using Base.Threads: nthreads, threadid
 
 using Slide: FloatVector
 using Slide.Network.Optimizers: AbstractOptimizer, optimizer_step!, AdamAttributes
-using Slide.Network.Layers:
-    calculate_wgrads!, calculate_error!, get_output, get_bias_gradients
+using Slide.Network.Layers: calculate_wgrads!, calculate_error!, get_output, set_error!
 
 
 
@@ -45,15 +44,16 @@ function backward!(
         last_layer = network.layers[end]
         active_neuron_ids, _ = get_output(last_layer, i)
 
-        get_bias_gradients(last_layer, i)[active_neuron_ids] .= gradient(
+        error = gradient(
             typeof(negative_sparse_logit_cross_entropy),
             y_true[i],
             saved_softmax[i],
             sum(y_true[i]),
         )
+        set_error!(last_layer, i, active_neuron_ids, error)
 
         n_layers = length(network.layers)
-        for t in n_layers-1:-1:1
+        for t = n_layers-1:-1:1
             calculate_error!(network.layers[t], network.layers[t+1], i)
         end
     end
