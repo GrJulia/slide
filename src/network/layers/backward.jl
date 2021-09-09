@@ -52,9 +52,9 @@ function _calculate_wgrads!(
 end
 
 """ Force sequential on neuron gradient update """
-_get_executors(::AbstractLayer, default_executor) = default_executor, SequentialEx()
+_get_executors(::SlideLayer, default_executor) = default_executor, SequentialEx()
 """ Force sequential batch gradient updates """
-_get_executors(::Dense, default_executor) = SequentialEx(), default_executor
+_get_executors(::AbstractLayer, default_executor) = SequentialEx(), default_executor
 
 function calculate_wgrads!(
     layer::L,
