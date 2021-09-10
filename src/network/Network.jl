@@ -1,8 +1,7 @@
 module Network
 
 
-export AbstractScheduler,
-    Batch,
+export Batch,
     SlideNetwork,
     backward!,
     batch_input,
@@ -15,7 +14,6 @@ export AbstractScheduler,
     numerical_gradient_bias,
     numerical_gradient_weights,
     one_hot,
-    PeriodicScheduler,
     predict_class,
     relu,
     sparse_logit_cross_entropy,
@@ -32,7 +30,6 @@ include("activations.jl")
 include("optimizers/Optimizers.jl")
 include("layers/Layers.jl")
 
-include("scheduler.jl")
 include("slide.jl")
 include("utils.jl")
 include("slide_forward.jl")

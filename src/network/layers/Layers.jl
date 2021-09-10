@@ -15,6 +15,7 @@ export AbstractLayer,
 abstract type AbstractLayer end
 
 update_htable!(::AbstractLayer) = nothing
+re_init_htable!(::AbstractLayer) = nothing
 
 include("dense.jl")
 include("slide_layer.jl")
