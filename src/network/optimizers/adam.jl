@@ -10,7 +10,7 @@ struct AdamAttributes <: AbstractOptimizerAttributes
     m_db::Vector{Float}
     v_dw::Matrix{Float}
     v_db::Vector{Float}
-    neuron_steps::Vector{Int}
+    n_weight_updates::Vector{Int}
 end
 
 AdamAttributes(input_dim::Int, output_dim::Int) = AdamAttributes(
@@ -40,8 +40,8 @@ function optimizer_step!(
     dw = weight_gradients
     db = mean(bias_gradients)
 
-    adam_attributes.neuron_steps[neuron_id] += 1
-    t = adam_attributes.neuron_steps[neuron_id]
+    adam_attributes.n_weight_updates[neuron_id] += 1
+    t = adam_attributes.n_weight_updates[neuron_id]
 
     @views begin
         @. adam_attributes.m_dw[:, neuron_id] =

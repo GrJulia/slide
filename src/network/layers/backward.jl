@@ -42,11 +42,11 @@ function _calculate_wgrads!(
     set_active!(layer, current_active_neuron_ids)
 
     @views begin
-        dzs = get_error(layer, x_index)
+        dz = get_error(layer, x_index)
         dWs = get_weight_gradients(layer)[previous_active_ids, :]
 
         @floop executor for id in current_active_neuron_ids
-            axpy!(dzs[id], input, dWs[:, id])
+            axpy!(dz[id], input, dWs[:, id])
         end
     end
 end
