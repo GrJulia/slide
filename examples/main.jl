@@ -32,8 +32,9 @@ function hashtable_re_init!(network)
 end
 
 function test_accuracy(network, test_set, n_test_batches, topk)
-    test_accuracy = compute_accuracy(network, test_set, n_test_batches, topk)
-    @info "test_acc" test_accuracy
+    test_acc = compute_accuracy(network, test_set, n_test_batches, topk)
+    println("Test accuracy: $test_acc")
+    @info "test_acc" test_acc
 end
 
 if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
@@ -148,7 +149,11 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
         optimizer,
         logger;
         n_epochs = 3,
-        callbacks = [ht_update_callback, test_accuracy_callback],
+        callbacks = [
+            ht_update_callback,
+            test_accuracy_callback,
+            (_, _) -> println("********************")
+        ],
         use_all_true_labels = true,
         use_zygote = use_zygote,
     )
