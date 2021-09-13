@@ -10,7 +10,7 @@ using LinearAlgebra: norm
 using Slide: Float, Id, LshBatch, FloatVector
 using Slide.LSH: Lsh, AbstractHasher, add_batch!, reset!
 using Slide.Hash: AbstractLshParams, init_lsh!
-using Slide.LshAsymmetricHasher: LshAsymHasherParams
+using Slide.LshAsymmetricHasher: LshAsymHasherParams, update_norm!
 
 
 const SlideLsh{Hasher} = Lsh{FloatVector,Id,Hasher}
@@ -69,6 +69,24 @@ function update!(
     neurons::LshBatch,
 ) where {A<:AbstractLshParams,Hasher<:AbstractHasher{FloatVector}}
     reset!(hash_tables.lsh)
+    add_batch!(hash_tables.lsh, neurons; executor = ThreadedEx())
+end
+
+"""
+update!(hash_tables, neurons)
+
+Recompute the hashtables for the `neurons`.
+Update norm value in the asymmetric lsh hasher.
+`neurons` is a vector of pairs of `(id, weight)`.
+"""
+function update!(
+    hash_tables::SlideHashTables{LshAsymHasherParams,Hasher},
+    neurons::LshBatch,
+) where {Hasher<:AbstractHasher{FloatVector}}
+    new_norm = maximum(map(weights -> norm(weights), first.(neurons)))
+    reset!(hash_tables.lsh)
+
+    update_norm!(hash_tables.lsh.hash, new_norm)
     add_batch!(hash_tables.lsh, neurons; executor = ThreadedEx())
 end
 

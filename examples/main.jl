@@ -125,9 +125,9 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
     global_logger(logger)
 
     function ht_update_callback(i, network)
-        if i % 2 == 0
+        if i % 1000 == 0
             hashtable_re_init!(network)
-        elseif i % 3 == 0
+        elseif i % 50 == 0
             hashtable_update!(network)
         end
     end
@@ -149,11 +149,7 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
         optimizer,
         logger;
         n_epochs = 3,
-        callbacks = [
-            ht_update_callback,
-            test_accuracy_callback,
-            (_, _) -> println("********************")
-        ],
+        callbacks = [ht_update_callback, test_accuracy_callback],
         use_all_true_labels = true,
         use_zygote = use_zygote,
     )
