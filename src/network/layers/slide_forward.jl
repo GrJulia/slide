@@ -1,11 +1,33 @@
 using LinearAlgebra: dot
-using Base.Threads: threadid
-
+using FLoops: ThreadedEx, @floop
+using SparseArrays: spzeros
+using Slide: Float, SparseFloatArray
 using Slide.LSH: retrieve
 using Slide.Logger: log_dot_product_metrics
 
 
-const SlideOutput = Tuple{Vector{Float},Vector{Id}}
+function (slide::SlideLayer{A,F,H,O})(
+    x::T;
+    true_labels::Union{Nothing,<:AbstractMatrix{Float}} = nothing,
+    executor = ThreadedEx(),
+) where {A,F,H,O,T<:AbstractMatrix{Float}}
+    batch_size = size(x, 2)
+
+    output = Vector{SlideOutput}(undef, batch_size)
+
+    true_labels = if isnothing(true_labels)
+        spzeros(Id, 1, batch_size)
+    else
+        true_labels
+    end
+
+    @views @floop executor for sample_id = 1:batch_size
+        input = x[:, sample_id]
+        output[sample_id] = forward_single_sample!(slide, input, sample_id, findall(>(0), true_labels[:, sample_id]))
+    end
+
+    output
+end
 
 function forward_single_sample!(
     layer::SlideLayer{A,F,H,O},

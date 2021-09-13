@@ -58,7 +58,7 @@ _get_executors(::AbstractLayer, default_executor) = SequentialEx(), default_exec
 
 function calculate_wgrads!(
     layer::L,
-    inputs::Matrix{Float};
+    inputs::AbstractMatrix{Float};
     executor = ThreadedEx(),
 ) where {L<:AbstractLayer}
     batch_size = size(inputs, 2)

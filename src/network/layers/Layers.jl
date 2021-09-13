@@ -12,11 +12,14 @@ export AbstractLayer,
     update_htable!,
     reinit_htable!
 
+using Slide: Float, Id
 
 abstract type AbstractLayer end
 
 update_htable!(::AbstractLayer) = nothing
 reinit_htable!(::AbstractLayer) = nothing
+
+const SlideOutput = Tuple{Vector{Float},Vector{Id}}
 
 include("dense.jl")
 include("slide_layer.jl")

@@ -1,20 +1,21 @@
 using JSON
 using Random
 using Logging: global_logger
+using SparseArrays
 
 using Slide
 using Slide.Network
 using Slide.Network.Layers: Dense, SlideLayer, update_htable!, reinit_htable!
 using Slide.LshSimHashWrapper: LshSimHashParams, get_simhash_params
 using Slide.Hash: LshParams
-using Slide.DataLoading: get_dense_dataloaders
+using Slide.DataLoading: get_dense_dataloaders, get_sparse_datasets
 using Slide.Logger: get_logger, save
 using Slide.Network.Optimizers: AdamOptimizer
 
 Random.seed!(1);
 
-const HT_UPDATE_PERIOD = 50
-const HT_REINIT_PERIOD = 1000
+const HT_UPDATE_PERIOD = 2
+const HT_REINIT_PERIOD = 3
 
 function hashtable_update!(network)
     for (id, layer) in enumerate(network.layers)
@@ -60,7 +61,7 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
         batch_size = dataset_config["batch_size"]
         n_neurons_per_layer = [128, output_dim]
 
-        train_loader, test_set = get_dense_dataloaders(dataset_config)
+        train_loader, test_set = get_sparse_datasets(dataset_config)
 
         const test_parameters = Dict(
             "test_frequency" => dataset_config["testing"]["test_freq"],
@@ -79,7 +80,7 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
         drop_last = false
         const N_ROWS = 4096
 
-        x = rand(Float, config.input_dim, N_ROWS)
+        x = sprand(Float, config.input_dim, N_ROWS, 0.5)
         y = Vector{Float}(rand(1:output_dim, N_ROWS))
 
         x_test = rand(Float, config.input_dim, N_ROWS)
@@ -153,7 +154,6 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
         logger;
         n_epochs = 3,
         callbacks = [ht_update_callback, test_accuracy_callback],
-        use_all_true_labels = true,
         use_zygote = use_zygote,
     )
 

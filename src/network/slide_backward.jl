@@ -1,5 +1,4 @@
 using FLoops: @floop, ThreadedEx
-using Base.Threads: nthreads, threadid
 
 using Slide: FloatVector
 using Slide.Network.Optimizers: AbstractOptimizer, optimizer_step!, AdamAttributes
@@ -30,9 +29,9 @@ function update_weight!(
 end
 
 function backward!(
-    x::Matrix{Float},
-    y_true::Vector{<:FloatVector},
     network::SlideNetwork,
+    x::AbstractMatrix{Float},
+    y_true::Vector{<:FloatVector},
     saved_softmax::Vector{<:FloatVector};
     executor = ThreadedEx(),
 )

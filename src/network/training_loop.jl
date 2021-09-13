@@ -10,7 +10,6 @@ function train!(
     optimizer::Opt,
     logger::SlideLogger;
     n_epochs::Int,
-    use_all_true_labels::Bool = true,
     use_zygote::Bool = false,
     callbacks = [],
 ) where {Opt<:AbstractOptimizer}
@@ -24,14 +23,9 @@ function train!(
             step!(logger)
 
             time_stats = @timed begin
-                y_batch_or_nothing = if use_all_true_labels
-                    y_batch
-                else
-                    nothing
-                end
 
                 forward_stats =
-                    @timed forward!(x_batch, network; y_true = y_batch_or_nothing)
+                    @timed forward!(network, x_batch; y_true = y_batch)
                 y_batch_pred, last_layer_activated_neuron_ids = forward_stats.value
 
                 @info "forward_time" forward_stats.time
@@ -53,9 +47,9 @@ function train!(
                         @timed backward_zygote!(x_batch, y_batch_activated, network)
                 else
                     backward_stats = @timed backward!(
+                        network,
                         x_batch,
                         y_batch_activated,
-                        network,
                         saved_softmax,
                     )
                 end
