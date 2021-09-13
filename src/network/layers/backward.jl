@@ -1,67 +1,87 @@
+using LinearAlgebra: axpy!
+using FLoops: @floop, ThreadedEx, SequentialEx
+
 using Slide: Float, Id, FloatVector
 using Slide.Network: gradient
 
-
-function backward_single_sample!(;
-    layer::SlideLayer{A,F,H,O},
-    grads::U,
-    layer_input::T,
+"""
+    Common layer backward functions
+"""
+function calculate_error!(
+    layer::L,
+    next_layer::K,
     x_index::Int,
-) where {A,F,H,O,U<:FloatVector,T<:FloatVector}
-    active_neuron_ids = layer.active_neuron_ids[x_index]
-    _grad_calculations!(layer, layer_input, active_neuron_ids, grads, :, x_index, F)
+) where {L<:AbstractLayer,K<:AbstractLayer}
+    F = typeof(activation(layer))
+
+    current_active_neuron_ids, output = get_output(layer, x_index)
+    active_neuron_ids, _ = get_output(next_layer, x_index)
+
+    @views begin
+        grad = get_error(next_layer, x_index)[active_neuron_ids]
+        weights = get_weights(next_layer)[current_active_neuron_ids, active_neuron_ids]
+
+        set_error!(
+            layer,
+            x_index,
+            current_active_neuron_ids,
+            (weights * grad) .* gradient(F, output),
+        )
+    end
+
 end
 
-function backward_single_sample_with_output!(;
-    layer::SlideLayer{A,F,H,O},
-    grads::U,
-    layer_input::Tuple{T,P},
-    output_grads::U,
-    x_index::Int,
-) where {A,F,H,O,U<:FloatVector,P<:AbstractVector{Id},T<:FloatVector}
+function _calculate_wgrads!(
+    layer,
+    input,
+    previous_active_ids,
+    x_index;
+    executor = SequentialEx(),
+)
+    current_active_neuron_ids, _ = get_output(layer, x_index)
+    set_active!(layer, current_active_neuron_ids)
+
     @views begin
-        previous_output, previous_active_ids = layer_input
-        active_neuron_ids = layer.active_neuron_ids[x_index]
+        dz = get_error(layer, x_index)
+        dWs = get_weight_gradients(layer)[previous_active_ids, :]
 
-        dz = _grad_calculations!(
-            layer,
-            previous_output,
-            active_neuron_ids,
-            grads,
-            previous_active_ids,
-            x_index,
-            F,
-        )
-
-        previous_layer_output_len = length(previous_active_ids)
-        output_grads[1:previous_layer_output_len] =
-            layer.weights[previous_active_ids, active_neuron_ids] * dz
+        @floop executor for id in current_active_neuron_ids
+            axpy!(dz[id], input, dWs[:, id])
+        end
     end
 end
 
+""" Force sequential on neuron gradient update """
+_get_executors(::SlideLayer, default_executor) = default_executor, SequentialEx()
+""" Force sequential batch gradient updates """
+_get_executors(::AbstractLayer, default_executor) = SequentialEx(), default_executor
 
-@inline function _grad_calculations!(
-    layer,
-    previous_output,
-    active_neuron_ids,
-    loss_grad,
-    previous_active_ids,
-    x_index,
-    F,
-)
-    @views begin
-        layer.is_neuron_active[active_neuron_ids] .= true
+function calculate_wgrads!(
+    layer::L,
+    inputs::Matrix{Float};
+    executor = ThreadedEx(),
+) where {L<:AbstractLayer}
+    batch_size = size(inputs, 2)
+    batch_executor, wgrad_executor = _get_executors(layer, executor)
 
-        layer_output_len = length(layer.output[x_index])
-        dz = loss_grad[1:layer_output_len] .* gradient(F, layer.output[x_index])
-        layer.bias_gradients[active_neuron_ids, x_index] .= dz
+    @views @floop batch_executor for i = 1:batch_size
+        input, active_ids = inputs[:, i], (:)
+        _calculate_wgrads!(layer, input, active_ids, i; executor = wgrad_executor)
+    end
+end
 
-        dz ./= length(layer.bias_gradients[1, :])
-        for (k, neuron_id) in enumerate(active_neuron_ids)
-            @. layer.weight_gradients[previous_active_ids, neuron_id] +=
-                dz[k] * previous_output
-        end
+function calculate_wgrads!(
+    layer::L,
+    inputs::Tuple{Vector{Ids},Vector{T}};
+    executor = ThreadedEx(),
+) where {L<:AbstractLayer,Ids,T<:FloatVector}
+    batch_active_ids, batch_input = inputs
+    batch_size = length(batch_active_ids)
 
-        dz
+    batch_executor, wgrad_executor = _get_executors(layer, executor)
+
+    @views @floop batch_executor for i = 1:batch_size
+        input, active_ids = batch_input[i], batch_active_ids[i]
+        _calculate_wgrads!(layer, input, active_ids, i; executor = wgrad_executor)
     end
 end

@@ -5,6 +5,8 @@ struct SlideNetwork
     layers::Vector{<:AbstractLayer}
 end
 
+SlideNetwork(layers...) = SlideNetwork(collect(layers))
+
 function new_batch!(network::SlideNetwork, batch_size::Int)
     for layer in network.layers
         Layers.new_batch!(layer, batch_size)

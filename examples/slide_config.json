@@ -2,13 +2,14 @@
     "n_layers": 2,
     "n_neurons_per_layer": [128, 128],
     "layer_activations": ["relu", "identity"],
+    "layer_types": ["dense", "slide"],
     "input_dim": 16,
-    "n_buckets": 128,
+    "n_buckets": 512,
     "n_tables": 50,
     "max_bucket_len": 128,
 
     "simhash": {
         "signature_len": 9,
-        "sample_ratio": 3
+        "sample_ratio": 1.5
     }
 }

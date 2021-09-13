@@ -49,7 +49,7 @@ function compute_query_signatures!(
     error("unimplemented")
 end
 
- # TODO: move AbstractLshParams to Lsh?
+# TODO: move AbstractLshParams to Lsh?
 function init_hasher(params, rng::Rand)::AbstractHasher where {Rand<:AbstractRNG}
     error("unimplemented")
 end
