@@ -6,7 +6,7 @@ using Distributions: Normal
 using Slide: Float, Id, FloatVector
 using Slide.Hash: AbstractLshParams, init_lsh!
 using Slide.LSH: Lsh, AbstractHasher, add_batch!
-using Slide.Network.HashTables: SlideHashTables, update!, re_init!
+using Slide.Network.HashTables: SlideHashTables, update!, reinit!
 using Slide.Network.Optimizers: AbstractOptimizerAttributes, AdamAttributes
 
 

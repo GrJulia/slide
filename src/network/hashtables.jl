@@ -1,6 +1,6 @@
 module HashTables
 
-export SlideHashTables, update!, re_init!
+export SlideHashTables, update!, reinit!
 
 using Base: @kwdef
 using Random: default_rng
@@ -97,7 +97,7 @@ Recompute the hashtables for the `neurons`.
 `neurons` is a vector of pairs of `(id, weight)`.
 Reinitializes `lsh` including creating new random hasher.
 """
-function re_init!(
+function reinit!(
     hash_tables::SlideHashTables{A,Hasher},
     neurons::LshBatch,
 ) where {A<:AbstractLshParams,Hasher<:AbstractHasher{FloatVector}}

@@ -4,7 +4,7 @@ using Logging: global_logger
 
 using Slide
 using Slide.Network
-using Slide.Network.Layers: Dense, SlideLayer, update_htable!, re_init_htable!
+using Slide.Network.Layers: Dense, SlideLayer, update_htable!, reinit_htable!
 using Slide.LshSimHashWrapper: LshSimHashParams, get_simhash_params
 using Slide.Hash: LshParams
 using Slide.DataLoading: get_dense_dataloaders
@@ -12,6 +12,9 @@ using Slide.Logger: get_logger, save
 using Slide.Network.Optimizers: AdamOptimizer
 
 Random.seed!(1);
+
+const HT_UPDATE_PERIOD = 50
+const HT_REINIT_PERIOD = 1000
 
 function hashtable_update!(network)
     for (id, layer) in enumerate(network.layers)
@@ -22,9 +25,9 @@ function hashtable_update!(network)
     end
 end
 
-function hashtable_re_init!(network)
+function hashtable_reinit!(network)
     for (id, layer) in enumerate(network.layers)
-        htable_update_stats = @timed re_init_htable!(layer)
+        htable_update_stats = @timed reinit_htable!(layer)
 
         println("Hashtable $id reconstructed in $(htable_update_stats.time)")
         @info "hashtable_$id-reconstructed" htable_update_stats.time
@@ -125,9 +128,9 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
     global_logger(logger)
 
     function ht_update_callback(i, network)
-        if i % 1000 == 0
-            hashtable_re_init!(network)
-        elseif i % 50 == 0
+        if i % HT_REINIT_PERIOD == 0
+            hashtable_reinit!(network)
+        elseif i % HT_UPDATE_PERIOD == 0
             hashtable_update!(network)
         end
     end

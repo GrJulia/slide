@@ -77,8 +77,8 @@ function update_htable!(layer::SlideLayer{A,F,H,O}) where {A,F,H,O}
     update!(layer.hash_tables, extract_weights_and_ids(layer.weights))
 end
 
-function re_init_htable!(layer::SlideLayer{A,F,H,O}) where {A,F,H,O}
-    re_init!(layer.hash_tables, extract_weights_and_ids(layer.weights))
+function reinit_htable!(layer::SlideLayer{A,F,H,O}) where {A,F,H,O}
+    reinit!(layer.hash_tables, extract_weights_and_ids(layer.weights))
 end
 
 """
