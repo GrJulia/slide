@@ -9,12 +9,14 @@ export AbstractLayer,
     prep_backprop!,
     calculate_error!,
     calculate_wgrads!,
-    update_htable!
+    update_htable!,
+    reinit_htable!
 
 
 abstract type AbstractLayer end
 
 update_htable!(::AbstractLayer) = nothing
+reinit_htable!(::AbstractLayer) = nothing
 
 include("dense.jl")
 include("slide_layer.jl")

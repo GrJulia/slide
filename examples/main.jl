@@ -4,7 +4,7 @@ using Logging: global_logger
 
 using Slide
 using Slide.Network
-using Slide.Network.Layers: Dense, SlideLayer
+using Slide.Network.Layers: Dense, SlideLayer, update_htable!, reinit_htable!
 using Slide.LshSimHashWrapper: LshSimHashParams, get_simhash_params
 using Slide.Hash: LshParams
 using Slide.DataLoading: get_dense_dataloaders
@@ -13,6 +13,32 @@ using Slide.Network.Optimizers: AdamOptimizer
 
 Random.seed!(1);
 
+const HT_UPDATE_PERIOD = 50
+const HT_REINIT_PERIOD = 1000
+
+function hashtable_update!(network)
+    for (id, layer) in enumerate(network.layers)
+        htable_update_stats = @timed update_htable!(layer)
+
+        println("Hashtable $id updated in $(htable_update_stats.time)")
+        @info "hashtable_$id-update" htable_update_stats.time
+    end
+end
+
+function hashtable_reinit!(network)
+    for (id, layer) in enumerate(network.layers)
+        htable_update_stats = @timed reinit_htable!(layer)
+
+        println("Hashtable $id reconstructed in $(htable_update_stats.time)")
+        @info "hashtable_$id-reconstructed" htable_update_stats.time
+    end
+end
+
+function test_accuracy(network, test_set, n_test_batches, topk)
+    test_acc = compute_accuracy(network, test_set, n_test_batches, topk)
+    println("Test accuracy: $test_acc")
+    @info "test_acc" test_acc
+end
 
 if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
@@ -36,7 +62,7 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
         train_loader, test_set = get_dense_dataloaders(dataset_config)
 
-        test_parameters = Dict(
+        const test_parameters = Dict(
             "test_frequency" => dataset_config["testing"]["test_freq"],
             "n_test_batches" => dataset_config["testing"]["n_batches"],
             "topk" => dataset_config["testing"]["top_k_classes"],
@@ -68,7 +94,8 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
         train_loader = batch_input(x, y_cat, batch_size, drop_last)
         test_set = batch_input(x_test, y_cat_test, batch_size, drop_last)
 
-        test_parameters = Dict("test_frequency" => 2, "n_test_batches" => 2, "topk" => 1)
+        const test_parameters =
+            Dict("test_frequency" => 2, "n_test_batches" => 2, "topk" => 1)
     end
 
     common_lsh = LshParams(
@@ -100,16 +127,33 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
     global_logger(logger)
 
+    function ht_update_callback(i, network)
+        if i % HT_REINIT_PERIOD == 0
+            hashtable_reinit!(network)
+        elseif i % HT_UPDATE_PERIOD == 0
+            hashtable_update!(network)
+        end
+    end
+
+    function test_accuracy_callback(i, network)
+        if i % test_parameters["test_frequency"] == 0
+            test_accuracy(
+                network,
+                test_set,
+                test_parameters["n_test_batches"],
+                test_parameters["topk"],
+            )
+        end
+    end
+
     train!(
         train_loader,
-        test_set,
         network,
         optimizer,
         logger;
-        n_iters = 3,
-        scheduler = PeriodicScheduler(50),
+        n_epochs = 3,
+        callbacks = [ht_update_callback, test_accuracy_callback],
         use_all_true_labels = true,
-        test_parameters = test_parameters,
         use_zygote = use_zygote,
     )
 

@@ -2,7 +2,7 @@ module LshAsymmetricHasher
 
 include("./asym_hash/transformations.jl")
 
-export LshAsymHasherParams
+export LshAsymHasherParams, update_norm!
 
 using Base.Iterators: partition
 using Random: AbstractRNG
@@ -70,7 +70,7 @@ const LshAsymHasher{Id} = Lsh{FloatVector,Id,AsymHasher}
 mutable struct LshAsymHasherParams <: AbstractLshParams
     hasher_params::AbstractLshParams
     m::Int
-    max_norm::Int
+    max_norm::Float
 end
 
 function Hash.init_lsh!(
@@ -96,6 +96,10 @@ function Hash.init_lsh!(
         FloatVector,
         Id,
     )
+end
+
+function update_norm!(h::AsymHasher, new_norm::Float)
+    h.transformation = get_transformation(h.transformation, new_norm)
 end
 
 end # LshAsymmetricHasher

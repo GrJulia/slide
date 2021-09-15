@@ -201,4 +201,27 @@ function retrieve(
     similar_elems
 end
 
+
+"""
+    reset!(hash_table)
+
+Reset the table.
+"""
+function reset!(table::HashTable{V}) where {V}
+    for bucket in table.buckets
+        empty!(bucket)
+    end
+end
+
+"""
+    reset!(lsh)
+
+Reset the lsh.
+"""
+function reset!(lsh::Lsh{K,V,Hasher}) where {K,V,Hasher<:AbstractHasher{K}}
+    for ht in lsh.hash_tables
+        reset!(ht)
+    end
+end
+
 end # LSH

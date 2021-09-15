@@ -27,15 +27,14 @@ end
 
 struct MipsToCosineTransformation <: AbstractTransformation
     m::Int
-    max_norm::Int
+    max_norm::Float
 end
 
-get_transformation(::Type{LshSimHashParams}, m::Int, max_norm::Int) =
+get_transformation(::Type{LshSimHashParams}, m::Int, max_norm::Float) =
     MipsToCosineTransformation(m, max_norm)
 
-# function get_transformation(::Type{LshL2LshHashParams}, m::Int)
-#     return MipsToNnsTransformation(m)
-# end
+get_transformation(transformation::MipsToCosineTransformation, new_norm::Float) =
+    MipsToCosineTransformation(transformation.m, new_norm)
 
 @inline function divide_into_parts(data_len, m)
     base = 1:data_len
