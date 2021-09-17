@@ -18,3 +18,7 @@ function zero_grads!(network::SlideNetwork, batch_size::Int)
         Layers.zero_grads!(layer, batch_size)
     end
 end
+
+function inference_mode(network::SlideNetwork)
+    SlideNetwork(map(Layers.inference_mode, network.layers))
+end
