@@ -58,11 +58,35 @@ function SlideLayer(
     d = Normal(zero(Float), Float(stddev))
 
     weights = rand(d, input_dim, output_dim)
+    biases = rand(d, output_dim)
+
+    SlideLayer(weights, biases, layer_activation, lsh_params, opt_attr)
+end
+
+
+function SlideLayer(
+    weights::Matrix{Float},
+    bias::Vector{Float},
+    layer_activation::F,
+    lsh_params::A,
+) where {F,A}
+    SlideLayer(weights, bias, layer_activation, lsh_params, AdamAttributes(input_dim, output_dim))
+end
+
+function SlideLayer(
+    weights::Matrix{Float},
+    bias::Vector{Float},
+    layer_activation::F,
+    lsh_params::A,
+    opt_attr::Opt,
+) where {F,A,Opt}
+
+    input_dim, output_dim = size(weights)
     hash_tables = SlideHashTables(lsh_params, extract_weights_and_ids(weights))
 
     SlideLayer(
         weights = weights,
-        biases = rand(d, output_dim),
+        biases = bias,
         hash_tables = hash_tables,
         activation = layer_activation,
         active_neuron_ids = Vector{Vector{Id}}(),

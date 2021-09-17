@@ -31,9 +31,31 @@ function Dense(
     stddev = 2 / sqrt(input_dim + output_dim)
     d = Normal(zero(Float), Float(stddev))
 
+    biases = rand(d, output_dim)
+    weights = rand(d, input_dim, output_dim)
+
+    Dense(weights, biases, layer_activation, opt_attr)
+end
+
+function Dense(
+    weights::Matrix{Float},
+    bias::Vector{Float},
+    layer_activation::F,
+) where {F}
+    Dense(weights, bias, layer_activation, AdamAttributes(input_dim, output_dim))
+end
+
+function Dense(
+    weights::Matrix{Float},
+    bias::Vector{Float},
+    layer_activation::F,
+    opt_attr::Opt,
+) where {F,Opt}
+    input_dim, output_dim = size(weights)
+
     Dense(
-        biases = rand(d, output_dim),
-        weights = rand(d, input_dim, output_dim),
+        biases = bias,
+        weights = weights,
         activation = layer_activation,
         output = Matrix{Float}(undef, 1, 1),
         bias_gradients = zeros(Float, output_dim, 1),
