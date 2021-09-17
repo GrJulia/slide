@@ -1,4 +1,3 @@
-
 using Slide: Float, Id, FloatVector, LshBatch
 """
     Common layer utilities

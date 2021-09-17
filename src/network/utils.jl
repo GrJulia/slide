@@ -6,12 +6,7 @@ using Slide: Float, Id
 
 const Batch = Tuple{Matrix{Float},Matrix{Float}}
 
-function batch_input(
-    x::Matrix{Float},
-    y::Matrix{Float},
-    batch_size::Int,
-    drop_last::Bool,
-)::Vector{Batch}
+function batch_input(x, y, batch_size::Int, drop_last::Bool)::Vector{Batch}
     @views batches = map(Iterators.partition(axes(x, 2), batch_size)) do columns
         x[:, columns], y[:, columns]
     end
@@ -57,23 +52,23 @@ function numerical_gradient_weights(
 
     # Computing weight gradient from backpropagation
     y_check_pred, activated_neurons =
-        forward!(x_check, network; y_true = y_check, executor = SequentialEx())
+        forward!(network, x_check; y_true = y_check, executor = SequentialEx())
     y_check_active = select_by_ids(y_check, activated_neurons)
     _, probs = negative_sparse_logit_cross_entropy(y_check_pred, y_check_active)
 
-    backward!(x_check, y_check_active, network, probs; executor = SequentialEx())
+    backward!(network, x_check, y_check_active, probs; executor = SequentialEx())
     backprop_gradient = copy(network.layers[layer_id].weight_gradients[:, neuron_id])
 
     # Computing numerical weight gradient
     network.layers[layer_id].weights[weight_index, neuron_id] += epsilon
     y_check_pred_1, activated_neurons_1 =
-        forward!(x_check, network; y_true = y_check, executor = SequentialEx())
+        forward!(network, x_check; y_true = y_check, executor = SequentialEx())
     y_check_active_1 = select_by_ids(y_check, activated_neurons_1)
     loss_1, _ = negative_sparse_logit_cross_entropy(y_check_pred_1, y_check_active_1)
 
     network.layers[layer_id].weights[weight_index, neuron_id] -= 2 * epsilon
     y_check_pred_2, activated_neurons_2 =
-        forward!(x_check, network; y_true = y_check, executor = SequentialEx())
+        forward!(network, x_check; y_true = y_check, executor = SequentialEx())
     y_check_active_2 = select_by_ids(y_check, activated_neurons_2)
     loss_2, _ = negative_sparse_logit_cross_entropy(y_check_pred_2, y_check_active_2)
 
@@ -94,23 +89,23 @@ function numerical_gradient_bias(
 )
     # Computing bias gradient from backpropagation
     y_check_pred, activated_neurons =
-        forward!(x_check, network; y_true = y_check, executor = SequentialEx())
+        forward!(network, x_check; y_true = y_check, executor = SequentialEx())
     y_check_active = select_by_ids(y_check, activated_neurons)
     _, probs = negative_sparse_logit_cross_entropy(y_check_pred, y_check_active)
 
-    backward!(x_check, y_check_active, network, probs; executor = SequentialEx())
+    backward!(network, x_check, y_check_active, probs; executor = SequentialEx())
     backprop_gradient = mean(network.layers[layer_id].bias_gradients[neuron_id, :])
 
     # Computing numerical bias gradient
     network.layers[layer_id].biases[neuron_id] += epsilon
     y_check_pred_1, activated_neurons_1 =
-        forward!(x_check, network; y_true = y_check, executor = SequentialEx())
+        forward!(network, x_check; y_true = y_check, executor = SequentialEx())
     y_check_active_1 = select_by_ids(y_check, activated_neurons_1)
     loss_1, _ = negative_sparse_logit_cross_entropy(y_check_pred_1, y_check_active_1)
 
     network.layers[layer_id].biases[neuron_id] -= 2 * epsilon
     y_check_pred_2, activated_neurons_2 =
-        forward!(x_check, network; y_true = y_check, executor = SequentialEx())
+        forward!(network, x_check; y_true = y_check, executor = SequentialEx())
     y_check_active_2 = select_by_ids(y_check, activated_neurons_2)
     loss_2, _ = negative_sparse_logit_cross_entropy(y_check_pred_2, y_check_active_2)
 
@@ -136,11 +131,7 @@ function compute_accuracy(
     return accuracy / n_batch_test
 end
 
-function batch_accuracy(
-    y_test::Array{Float},
-    class_predictions::Array{Int},
-    topk::Int,
-)::Float
+function batch_accuracy(y_test, class_predictions::Array{Int}, topk::Int)::Float
     batch_size = size(y_test)[end]
     accuracy = zero(Float)
     for i = 1:batch_size

@@ -1,30 +1,23 @@
-using Slide: Id, Float, FloatVector
-using LinearAlgebra: dot
+using SparseArrays: sparsevec
+
+using Slide: Float, Id
 
 
-function forward_single_sample!(
-    layer::Dense{F,O},
-    input::U,
-    x_index::Int,
-    ::Any,
-) where {F,O,U<:FloatVector}
-    layer.output[:, x_index] = layer.activation.(layer.weights' * input + layer.biases)
+function (dense::Dense)(x::A; args...) where {A<:AbstractMatrix{Float}}
+    dense.output .= dense.activation.(dense.weights' * x .+ dense.biases)
 
-    @view layer.output[:, x_index]
+    dense.output
 end
 
-function forward_single_sample!(
-    layer::Dense{F,O},
-    input::Tuple{U,P},
-    x_index::Int,
-    ::Any,
-) where {F,O,U<:FloatVector,P<:AbstractVector{Id}}
-    sparse_input, activated_neuron_ids = input
+function (dense::Dense)(x::Vector{SlideOutput}; args...)
+    batch_size = length(x)
+    input_size = size(dense.weights, 1)
 
-    @views layer.output[:, x_index] =
-        layer.activation.(
-            layer.weights[activated_neuron_ids, :]' * sparse_input + layer.biases,
-        )
+    sparse_input = spzeros(Float, Id, input_size, batch_size)
 
-    @view layer.output[:, x_index]
+    for (i, (vals, ids)) in enumerate(x)
+        sparse_input[:, i] = sparsevec(ids, vals, input_size)
+    end
+
+    dense(sparse_input)
 end
