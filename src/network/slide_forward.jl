@@ -28,7 +28,8 @@ function predict_class(
     topk::Int = 1;
     executor = ThreadedEx(),
 )
-    y_active_pred, active_ids = forward!(network, x; y_true = ones(Float, size(y_true)...))
+    interference_network = to_inference(network)
+    y_pred = forward!(interference_network, x; y_true = nothing)
 
     y_pred = zeros(Float, size(y_true))
 

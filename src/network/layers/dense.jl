@@ -42,3 +42,7 @@ function Dense(
         opt_attr = opt_attr,
     )
 end
+
+function inference_mode(layer::Dense)
+    layer
+end
