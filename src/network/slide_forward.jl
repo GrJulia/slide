@@ -16,7 +16,7 @@ function forward!(
     for layer in network.layers[1:end-1]
         output = layer(output; executor)
     end
-    last_layer(output; executor, true_labels=y_true)
+    last_layer(output; executor, true_labels = y_true)
 
     last_layer.output, last_layer.active_neuron_ids
 end

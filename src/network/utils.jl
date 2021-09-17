@@ -6,12 +6,7 @@ using Slide: Float, Id
 
 const Batch = Tuple{Matrix{Float},Matrix{Float}}
 
-function batch_input(
-    x,
-    y,
-    batch_size::Int,
-    drop_last::Bool,
-)::Vector{Batch}
+function batch_input(x, y, batch_size::Int, drop_last::Bool)::Vector{Batch}
     @views batches = map(Iterators.partition(axes(x, 2), batch_size)) do columns
         x[:, columns], y[:, columns]
     end
@@ -136,11 +131,7 @@ function compute_accuracy(
     return accuracy / n_batch_test
 end
 
-function batch_accuracy(
-    y_test,
-    class_predictions::Array{Int},
-    topk::Int,
-)::Float
+function batch_accuracy(y_test, class_predictions::Array{Int}, topk::Int)::Float
     batch_size = size(y_test)[end]
     accuracy = zero(Float)
     for i = 1:batch_size

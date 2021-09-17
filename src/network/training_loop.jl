@@ -24,8 +24,7 @@ function train!(
 
             time_stats = @timed begin
 
-                forward_stats =
-                    @timed forward!(network, x_batch; y_true = y_batch)
+                forward_stats = @timed forward!(network, x_batch; y_true = y_batch)
                 y_batch_pred, last_layer_activated_neuron_ids = forward_stats.value
 
                 @info "forward_time" forward_stats.time

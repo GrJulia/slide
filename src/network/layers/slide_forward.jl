@@ -23,7 +23,12 @@ function (slide::SlideLayer{A,F,H,O})(
 
     @views @floop executor for sample_id = 1:batch_size
         input = x[:, sample_id]
-        output[sample_id] = forward_single_sample!(slide, input, sample_id, findall(>(0), true_labels[:, sample_id]))
+        output[sample_id] = forward_single_sample!(
+            slide,
+            input,
+            sample_id,
+            findall(>(0), true_labels[:, sample_id]),
+        )
     end
 
     output

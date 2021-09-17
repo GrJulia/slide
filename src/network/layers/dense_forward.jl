@@ -4,7 +4,7 @@ using Slide: Float, Id
 
 
 function (dense::Dense)(x::A; args...) where {A<:AbstractMatrix{Float}}
-    dense.output .= dense.activation.(dense.weights'*x .+ dense.biases)
+    dense.output .= dense.activation.(dense.weights' * x .+ dense.biases)
 
     dense.output
 end
