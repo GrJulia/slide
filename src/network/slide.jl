@@ -22,4 +22,3 @@ end
 function inference_mode(network::SlideNetwork)
     SlideNetwork(map(Layers.inference_mode, network.layers))
 end
-
