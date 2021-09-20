@@ -63,6 +63,11 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
         train_loader, test_set = get_sparse_datasets(dataset_config)
 
+        const save_parameters = Dict(
+            "save_frequency" => dataset_config["n_samples"] ÷ dataset_config["batch_size"],
+            "model_path" => joinpath(dataset_config["logger"]["logging_path"], dataset_config["name"]),
+        )
+
         const test_parameters = Dict(
             "test_frequency" => dataset_config["testing"]["test_freq"],
             "n_test_batches" => dataset_config["testing"]["n_batches"],
@@ -70,7 +75,7 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
         )
 
     else
-        dataset_config["name"] *= "_test_" * randstring(8)
+        dataset_config["name"] *= "_toy_" * randstring(8)
 
         input_dim = config.input_dim
         output_dim = config.n_neurons_per_layer[end]
@@ -95,9 +100,17 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
         train_loader = batch_input(x, y_cat, batch_size, drop_last)
         test_set = batch_input(x_test, y_cat_test, batch_size, drop_last)
 
+        const save_parameters = Dict(
+            "save_frequency" => 4096 ÷ 128,
+            "model_path" => joinpath(dataset_config["logger"]["logging_path"], dataset_config["name"]),
+        )
+
         const test_parameters =
             Dict("test_frequency" => 2, "n_test_batches" => 2, "topk" => 1)
     end
+
+    # Data processing and training loop
+    println("Data loaded, building network..........")
 
     common_lsh = LshParams(
         n_buckets = config.n_buckets,
@@ -112,9 +125,6 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
         sample_ratio = Float(config.simhash["sample_ratio"]),
         input_size = input_dim,
     )
-
-    # Data processing and training loop
-    println("Data loaded, building network..........")
 
     layer_1 = Dense(input_dim, n_neurons_per_layer[1], relu)
     layer_2 =
@@ -147,13 +157,19 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
         end
     end
 
+    function checkpoint_callback(i, network)
+        if i % save_parameters["save_frequency"] == 0
+            Network.save(network, save_parameters["model_path"])
+        end
+    end
+
     train!(
         train_loader,
         network,
         optimizer,
         logger;
         n_epochs = 3,
-        callbacks = [ht_update_callback, test_accuracy_callback],
+        callbacks = [ht_update_callback, test_accuracy_callback, checkpoint_callback],
         use_zygote = use_zygote,
     )
 

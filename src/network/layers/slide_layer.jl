@@ -16,7 +16,7 @@ using Slide.Network.Optimizers: AbstractOptimizerAttributes, AdamAttributes
     Hasher<:AbstractHasher{FloatVector},
     Opt<:AbstractOptimizerAttributes,
 } <: AbstractLayer
-    biases::Vector{Float}
+bias::Vector{Float}
     weights::Matrix{Float}
 
     hash_tables::SlideHashTables{A,Hasher}
@@ -58,11 +58,35 @@ function SlideLayer(
     d = Normal(zero(Float), Float(stddev))
 
     weights = rand(d, input_dim, output_dim)
+    bias = rand(d, output_dim)
+
+    SlideLayer(weights, bias, layer_activation, lsh_params, opt_attr)
+end
+
+
+function SlideLayer(
+    weights::Matrix{Float},
+    bias::Vector{Float},
+    layer_activation::F,
+    lsh_params::A,
+) where {F,A}
+    SlideLayer(weights, bias, layer_activation, lsh_params, AdamAttributes(input_dim, output_dim))
+end
+
+function SlideLayer(
+    weights::Matrix{Float},
+    bias::Vector{Float},
+    layer_activation::F,
+    lsh_params::A,
+    opt_attr::Opt,
+) where {F,A,Opt}
+
+    input_dim, output_dim = size(weights)
     hash_tables = SlideHashTables(lsh_params, extract_weights_and_ids(weights))
 
     SlideLayer(
         weights = weights,
-        biases = rand(d, output_dim),
+        bias = bias,
         hash_tables = hash_tables,
         activation = layer_activation,
         active_neuron_ids = Vector{Vector{Id}}(),
@@ -76,7 +100,7 @@ end
 
 function inference_mode(layer::SlideLayer)
     Dense(
-        biases = layer.biases,
+        bias = layer.bias,
         weights = layer.weights,
         activation = layer.activation,
         output = Matrix{Float}(undef, 1, 1),

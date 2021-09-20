@@ -36,12 +36,12 @@ new_batch!(::AbstractLayer, ::Int) = nothing
 function zero_grads!(layer::L, batch_size::Int) where {L<:AbstractLayer}
     fill!(layer.weight_gradients, 0)
 
-    new_shape = (length(layer.biases), batch_size)
+    new_shape = (length(layer.bias), batch_size)
 
-    if new_shape == size(layer.biases)
+    if new_shape == size(layer.bias)
         fill!(layer.bias_gradients, 0)
     else
-        layer.bias_gradients = zeros(Float, length(layer.biases), batch_size)
+        layer.bias_gradients = zeros(Float, length(layer.bias), batch_size)
     end
 end
 
@@ -96,5 +96,5 @@ end
 end
 
 function new_batch!(layer::Dense{F,O}, batch_size::Int) where {F,O}
-    layer.output = Matrix{Float}(undef, length(layer.biases), batch_size)
+    layer.output = Matrix{Float}(undef, length(layer.bias), batch_size)
 end
