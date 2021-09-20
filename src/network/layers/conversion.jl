@@ -1,7 +1,7 @@
 import JLD2
 
 struct DenseLayerSerialization{F}
-    weigths::Matrix{Float}
+    weights::Matrix{Float}
     bias::Vector{Float}
     activation::F
 end
@@ -25,7 +25,7 @@ JLD2.wconvert(::Type{SlideLayerSerialization}, a::SlideLayer) = SlideLayerSerial
 )
 
 JLD2.rconvert(::Type{SlideLayer}, a::SlideLayerSerialization) = SlideLayer(
-    a.base.weigths,
+    a.base.weights,
     a.base.bias,
     a.base.activation,
     a.lsh_params,
@@ -40,7 +40,7 @@ JLD2.wconvert(::Type{DenseLayerSerialization}, a::Dense) =
     )
 
 JLD2.rconvert(::Type{Dense}, a::DenseLayerSerialization) = DenseLayer(
-    a.base.weigths,
+    a.base.weights,
     a.base.bias,
     a.base.activation,
 )

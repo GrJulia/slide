@@ -5,7 +5,7 @@ using Slide: Float, Id, FloatVector
 using Slide.Network.Optimizers: AbstractOptimizerAttributes, AdamAttributes
 
 @kwdef mutable struct Dense{F<:Function,Opt<:AbstractOptimizerAttributes} <: AbstractLayer
-    biases::Vector{Float}
+    bias::Vector{Float}
     weights::Matrix{Float}
 
     activation::F
@@ -31,10 +31,10 @@ function Dense(
     stddev = 2 / sqrt(input_dim + output_dim)
     d = Normal(zero(Float), Float(stddev))
 
-    biases = rand(d, output_dim)
+    bias = rand(d, output_dim)
     weights = rand(d, input_dim, output_dim)
 
-    Dense(weights, biases, layer_activation, opt_attr)
+    Dense(weights, bias, layer_activation, opt_attr)
 end
 
 function Dense(
@@ -54,7 +54,7 @@ function Dense(
     input_dim, output_dim = size(weights)
 
     Dense(
-        biases = bias,
+        bias = bias,
         weights = weights,
         activation = layer_activation,
         output = Matrix{Float}(undef, 1, 1),
