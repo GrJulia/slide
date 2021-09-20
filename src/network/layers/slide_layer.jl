@@ -100,7 +100,7 @@ end
 
 function inference_mode(layer::SlideLayer)
     Dense(
-        biases = layer.biases,
+        bias = layer.bias,
         weights = layer.weights,
         activation = layer.activation,
         output = Matrix{Float}(undef, 1, 1),
