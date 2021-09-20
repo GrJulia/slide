@@ -11,6 +11,7 @@
     "n_features": 782585,
     "hidden_dim": 128,
     "n_classes": 205443,
+    "n_samples": 196606,
     "batch_size": 128,
     "lr": 1e-4,
     "n_epochs": 10,

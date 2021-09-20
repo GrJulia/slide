@@ -21,7 +21,6 @@ function hashtable_update!(network)
     for (id, layer) in enumerate(network.layers)
         htable_update_stats = @timed update_htable!(layer)
 
-        println("Hashtable $id updated in $(htable_update_stats.time)")
         @info "hashtable_$id-update" htable_update_stats.time
     end
 end
@@ -30,20 +29,19 @@ function hashtable_reinit!(network)
     for (id, layer) in enumerate(network.layers)
         htable_update_stats = @timed reinit_htable!(layer)
 
-        println("Hashtable $id reconstructed in $(htable_update_stats.time)")
         @info "hashtable_$id-reconstructed" htable_update_stats.time
     end
 end
 
 function test_accuracy(network, test_set, n_test_batches, topk)
     test_acc = compute_accuracy(network, test_set, n_test_batches, topk)
-    println("Test accuracy: $test_acc")
     @info "test_acc" test_acc
+    return test_acc
 end
 
 if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
-    use_real_dataset = false
+    use_real_dataset = true
     use_zygote = false
 
     # Building parameters configuration
@@ -62,6 +60,8 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
         n_neurons_per_layer = [128, output_dim]
 
         train_loader, test_set = get_sparse_datasets(dataset_config)
+
+        n_iters = length(train_loader)
 
         const test_parameters = Dict(
             "test_frequency" => dataset_config["testing"]["test_freq"],
@@ -94,6 +94,8 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
         train_loader = batch_input(x, y_cat, batch_size, drop_last)
         test_set = batch_input(x_test, y_cat_test, batch_size, drop_last)
+
+        n_iters = N_ROWS ÷ 128
 
         const test_parameters =
             Dict("test_frequency" => 2, "n_test_batches" => 2, "topk" => 1)
@@ -138,12 +140,13 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
     function test_accuracy_callback(i, network)
         if i % test_parameters["test_frequency"] == 0
-            test_accuracy(
+            test_acc = test_accuracy(
                 network,
                 test_set,
                 test_parameters["n_test_batches"],
                 test_parameters["topk"],
             )
+            println("Iteration  $(i % n_iters)/$n_iters, test_acc=$test_acc")
         end
     end
 
