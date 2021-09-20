@@ -18,7 +18,7 @@ function forward!(
     end
     last_layer(output; executor, true_labels = y_true)
 
-    last_layer.output, last_layer.active_neuron_ids
+    get_output(last_layer)
 end
 
 function predict_class(
@@ -28,15 +28,15 @@ function predict_class(
     topk::Int = 1;
     executor = ThreadedEx(),
 )
-    y_active_pred, active_ids = forward!(network, x; y_true = ones(Float, size(y_true)...))
+    interference_network = inference_mode(network)
+    y_pred = forward!(interference_network, x; y_true = nothing)
 
-    y_pred = zeros(Float, size(y_true))
+    topk_argmax(x) =
+        if topk > 1
+            partialsortperm(x, 1:topk, rev = true)
+        else
+            findmax(x)[2]
+        end
 
-    @floop executor for i = 1:length(active_ids)
-        ids = active_ids[i]
-        y_pred[ids, i] = y_active_pred[i]
-    end
-
-    topk_argmax(x) = partialsortperm(x, 1:topk, rev = true)
     mapslices(topk_argmax, y_pred, dims = 1)
 end

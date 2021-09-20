@@ -57,8 +57,8 @@ function signature(
     n_hashes = dwta.n_hashes
     hashes = fill!(Signature(undef, n_hashes), EMPTY_SAMPLING)
 
-    for i = 1:n_hashes
-        hashes[i] = argmax(view(data, indices_in_bin[:, i]))
+    @views for i = 1:n_hashes
+        hashes[i] = argmax(data[indices_in_bin[:, i]])
         if densification && data[indices_in_bin[hashes[i], i]] == ZERO_VAL
             hashes[i] = EMPTY_SAMPLING
         end

@@ -14,8 +14,8 @@ using Slide.Network.Optimizers: AdamOptimizer
 
 Random.seed!(1);
 
-const HT_UPDATE_PERIOD = 2
-const HT_REINIT_PERIOD = 3
+const HT_UPDATE_PERIOD = 50
+const HT_REINIT_PERIOD = 1000
 
 function hashtable_update!(network)
     for (id, layer) in enumerate(network.layers)

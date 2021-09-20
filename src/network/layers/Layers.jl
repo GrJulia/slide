@@ -10,7 +10,8 @@ export AbstractLayer,
     calculate_error!,
     calculate_wgrads!,
     update_htable!,
-    reinit_htable!
+    reinit_htable!,
+    inference_mode
 
 using Slide: Float, Id
 
