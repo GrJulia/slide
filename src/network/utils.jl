@@ -51,7 +51,7 @@ function numerical_gradient_weights(
 )
 
     # Computing weight gradient from backpropagation
-    y_check_pred, activated_neurons =
+    activated_neurons, y_check_pred =
         forward!(network, x_check; y_true = y_check, executor = SequentialEx())
     y_check_active = select_by_ids(y_check, activated_neurons)
     _, probs = negative_sparse_logit_cross_entropy(y_check_pred, y_check_active)
@@ -61,13 +61,13 @@ function numerical_gradient_weights(
 
     # Computing numerical weight gradient
     network.layers[layer_id].weights[weight_index, neuron_id] += epsilon
-    y_check_pred_1, activated_neurons_1 =
+    activated_neurons_1, y_check_pred_1 =
         forward!(network, x_check; y_true = y_check, executor = SequentialEx())
     y_check_active_1 = select_by_ids(y_check, activated_neurons_1)
     loss_1, _ = negative_sparse_logit_cross_entropy(y_check_pred_1, y_check_active_1)
 
     network.layers[layer_id].weights[weight_index, neuron_id] -= 2 * epsilon
-    y_check_pred_2, activated_neurons_2 =
+    activated_neurons_2, y_check_pred_2 =
         forward!(network, x_check; y_true = y_check, executor = SequentialEx())
     y_check_active_2 = select_by_ids(y_check, activated_neurons_2)
     loss_2, _ = negative_sparse_logit_cross_entropy(y_check_pred_2, y_check_active_2)
@@ -88,7 +88,7 @@ function numerical_gradient_bias(
     epsilon::Float,
 )
     # Computing bias gradient from backpropagation
-    y_check_pred, activated_neurons =
+    activated_neurons, y_check_pred =
         forward!(network, x_check; y_true = y_check, executor = SequentialEx())
     y_check_active = select_by_ids(y_check, activated_neurons)
     _, probs = negative_sparse_logit_cross_entropy(y_check_pred, y_check_active)
@@ -98,7 +98,7 @@ function numerical_gradient_bias(
 
     # Computing numerical bias gradient
     network.layers[layer_id].bias[neuron_id] += epsilon
-    y_check_pred_1, activated_neurons_1 =
+    activated_neurons_1, y_check_pred_1 =
         forward!(network, x_check; y_true = y_check, executor = SequentialEx())
     y_check_active_1 = select_by_ids(y_check, activated_neurons_1)
     loss_1, _ = negative_sparse_logit_cross_entropy(y_check_pred_1, y_check_active_1)
