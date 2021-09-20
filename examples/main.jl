@@ -41,7 +41,7 @@ end
 
 if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
-    use_real_dataset = true
+    use_real_dataset = false
     use_zygote = false
 
     # Building parameters configuration
@@ -63,6 +63,11 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
         n_iters = length(train_loader)
 
+        const save_parameters = Dict(
+            "save_frequency" => n_iters,
+            "model_path" => joinpath(dataset_config["logger"]["logging_path"], dataset_config["name"]),
+        )
+
         const test_parameters = Dict(
             "test_frequency" => dataset_config["testing"]["test_freq"],
             "n_test_batches" => dataset_config["testing"]["n_batches"],
@@ -70,7 +75,7 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
         )
 
     else
-        dataset_config["name"] *= "_test_" * randstring(8)
+        dataset_config["name"] *= "_toy_" * randstring(8)
 
         input_dim = config.input_dim
         output_dim = config.n_neurons_per_layer[end]
@@ -97,9 +102,17 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
         n_iters = N_ROWS ÷ 128
 
+        const save_parameters = Dict(
+            "save_frequency" => n_iters,
+            "model_path" => joinpath(dataset_config["logger"]["logging_path"], dataset_config["name"]),
+        )
+
         const test_parameters =
             Dict("test_frequency" => 2, "n_test_batches" => 2, "topk" => 1)
     end
+
+    # Data processing and training loop
+    println("Data loaded, building network..........")
 
     common_lsh = LshParams(
         n_buckets = config.n_buckets,
@@ -114,9 +127,6 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
         sample_ratio = Float(config.simhash["sample_ratio"]),
         input_size = input_dim,
     )
-
-    # Data processing and training loop
-    println("Data loaded, building network..........")
 
     layer_1 = Dense(input_dim, n_neurons_per_layer[1], relu)
     layer_2 =
@@ -146,7 +156,13 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
                 test_parameters["n_test_batches"],
                 test_parameters["topk"],
             )
-            println("Iteration  $(i % n_iters)/$n_iters, test_acc=$test_acc")
+            println("Iteration  $((i-1) % n_iters + 1)/$n_iters, test_acc=$test_acc")
+        end
+    end
+
+    function checkpoint_callback(i, network)
+        if i % save_parameters["save_frequency"] == 0
+            Network.save(network, save_parameters["model_path"])
         end
     end
 
@@ -156,7 +172,7 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
         optimizer,
         logger;
         n_epochs = 3,
-        callbacks = [ht_update_callback, test_accuracy_callback],
+        callbacks = [ht_update_callback, test_accuracy_callback, checkpoint_callback],
         use_zygote = use_zygote,
     )
 

@@ -28,5 +28,6 @@ include("utils.jl")
 include("dense_forward.jl")
 include("slide_forward.jl")
 include("backward.jl")
+include("conversion.jl")
 
 end

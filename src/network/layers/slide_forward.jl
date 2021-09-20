@@ -108,7 +108,7 @@ function _forward!(
     activated_neuron_ids,
     x_index,
 )
-    layer_output = layer.biases[current_active_neuron_ids]
+    layer_output = layer.bias[current_active_neuron_ids]
 
     @debug begin
         if x_index == 1

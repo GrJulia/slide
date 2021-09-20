@@ -20,7 +20,7 @@ function update_weight!(
                 layer.opt_attr,
                 id,
                 layer.weights[:, id],
-                Ref(layer.biases[id]),
+                Ref(layer.bias[id]),
                 layer.weight_gradients[:, id],
                 layer.bias_gradients[id, :],
             )

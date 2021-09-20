@@ -36,7 +36,7 @@ function handle_batch_backward_zygote!(
             parameters,
             (
                 layer.weights[prev_active_neuron_ids, active_neuron_ids],
-                layer.biases[active_neuron_ids],
+                layer.bias[active_neuron_ids],
             ),
         )
 

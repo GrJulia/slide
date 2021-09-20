@@ -1,3 +1,5 @@
+using JLD2
+
 using Slide.Network: Layers
 using Slide.Network.Layers: AbstractLayer
 
@@ -17,6 +19,14 @@ function zero_grads!(network::SlideNetwork, batch_size::Int)
     for layer in network.layers
         Layers.zero_grads!(layer, batch_size)
     end
+end
+
+function save(network::SlideNetwork, model_path::String)
+    JLD2.jldsave(joinpath(model_path, "checkpoint.jld2"); network)
+end
+
+function load(model_path::String)
+    JLD2.load(joinpath(model_path, "checkpoint.jld2"))
 end
 
 function inference_mode(network::SlideNetwork)
