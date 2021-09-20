@@ -22,9 +22,9 @@ function zero_grads!(network::SlideNetwork, batch_size::Int)
 end
 
 function save(network::SlideNetwork, model_path::String)
-    JLD2.jldsave(model_path * ".jld2"; network)
+    JLD2.jldsave(joinpath(model_path, "checkpoint.jld2"); network)
 end
 
 function load(model_path::String)
-    load(model_path * ".jld2")
+    JLD2.load(joinpath(model_path, "checkpoint.jld2"))
 end
