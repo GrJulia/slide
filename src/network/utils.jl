@@ -13,7 +13,7 @@ function batch_input(x, y, batch_size::Int, drop_last::Bool)::Vector{Batch}
     if drop_last && size(batches[end])[1] < batch_size
         return batches[1:end-1]
     end
-    return batches
+    batches
 end
 
 function one_hot(y::Vector, n_labels::Int = Int(maximum(y)))
@@ -128,7 +128,7 @@ function compute_accuracy(
         class_predictions = predict_class(x_test, y_test, network, topk)
         accuracy += batch_accuracy(y_test, class_predictions, topk)
     end
-    return accuracy / n_batch_test
+    accuracy / n_batch_test
 end
 
 function batch_accuracy(y_test, class_predictions::Array{Int}, topk::Int)::Float
@@ -138,5 +138,5 @@ function batch_accuracy(y_test, class_predictions::Array{Int}, topk::Int)::Float
         accuracy +=
             count(x -> x > 0, y_test[:, i][class_predictions[i]]; init = zero(Float)) / topk
     end
-    return accuracy / batch_size
+    accuracy / batch_size
 end

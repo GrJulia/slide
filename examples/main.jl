@@ -36,7 +36,7 @@ end
 function test_accuracy(network, test_set, n_test_batches, topk)
     test_acc = compute_accuracy(network, test_set, n_test_batches, topk)
     @info "test_acc" test_acc
-    return test_acc
+    test_acc
 end
 
 if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
@@ -65,7 +65,10 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
         const save_parameters = Dict(
             "save_frequency" => n_iters,
-            "model_path" => joinpath(dataset_config["logger"]["logging_path"], dataset_config["name"]),
+            "model_path" => joinpath(
+                dataset_config["logger"]["logging_path"],
+                dataset_config["name"],
+            ),
         )
 
         const test_parameters = Dict(
@@ -100,11 +103,14 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
         train_loader = batch_input(x, y_cat, batch_size, drop_last)
         test_set = batch_input(x_test, y_cat_test, batch_size, drop_last)
 
-        n_iters = N_ROWS ÷ 128
+        n_iters = N_ROWS ÷ batch_size
 
         const save_parameters = Dict(
             "save_frequency" => n_iters,
-            "model_path" => joinpath(dataset_config["logger"]["logging_path"], dataset_config["name"]),
+            "model_path" => joinpath(
+                dataset_config["logger"]["logging_path"],
+                dataset_config["name"],
+            ),
         )
 
         const test_parameters =

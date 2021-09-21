@@ -24,7 +24,7 @@ function accuracy(out::Matrix{Float}, sparse_labels::SparseFloatArray, top_k::In
         top_k_classes = partialsortperm((@view out[:, b]), 1:top_k, rev = true)
         acc += sum(labels[top_k_classes, b]) / top_k
     end
-    return acc / batch_size
+    acc / batch_size
 end
 
 function train_step!(model, params, opt, device, x::SparseFloatArray, y::SparseFloatArray)
@@ -37,7 +37,7 @@ function train_step!(model, params, opt, device, x::SparseFloatArray, y::SparseF
         loss
     end
     update!(opt, params, grads)
-    return loss
+    loss
 end
 
 function train_epoch!(model, train_loader, test_set, opt, device, config, logger)
@@ -93,7 +93,7 @@ function test_epoch(model, test_set, config)
     @info "test_loss" test_loss log_to_tb = true
     @info "test_acc" test_acc log_to_tb = true
 
-    return test_acc
+    test_acc
 end
 
 
