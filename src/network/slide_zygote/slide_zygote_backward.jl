@@ -18,7 +18,7 @@ function full_forward(x::T, parameters::LayerTrainableParams) where {T<:FloatVec
     for (W, b) in parameters
         current_input = W' * current_input + b
     end
-    return current_input
+    current_input
 end
 
 function handle_batch_backward_zygote!(

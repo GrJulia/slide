@@ -16,7 +16,7 @@ using Slide.Network.Optimizers: AbstractOptimizerAttributes, AdamAttributes
     Hasher<:AbstractHasher{FloatVector},
     Opt<:AbstractOptimizerAttributes,
 } <: AbstractLayer
-bias::Vector{Float}
+    bias::Vector{Float}
     weights::Matrix{Float}
 
     hash_tables::SlideHashTables{A,Hasher}
@@ -70,7 +70,13 @@ function SlideLayer(
     layer_activation::F,
     lsh_params::A,
 ) where {F,A}
-    SlideLayer(weights, bias, layer_activation, lsh_params, AdamAttributes(input_dim, output_dim))
+    SlideLayer(
+        weights,
+        bias,
+        layer_activation,
+        lsh_params,
+        AdamAttributes(input_dim, output_dim),
+    )
 end
 
 function SlideLayer(

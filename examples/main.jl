@@ -21,7 +21,6 @@ function hashtable_update!(network)
     for (id, layer) in enumerate(network.layers)
         htable_update_stats = @timed update_htable!(layer)
 
-        println("Hashtable $id updated in $(htable_update_stats.time)")
         @info "hashtable_$id-update" htable_update_stats.time
     end
 end
@@ -30,15 +29,14 @@ function hashtable_reinit!(network)
     for (id, layer) in enumerate(network.layers)
         htable_update_stats = @timed reinit_htable!(layer)
 
-        println("Hashtable $id reconstructed in $(htable_update_stats.time)")
         @info "hashtable_$id-reconstructed" htable_update_stats.time
     end
 end
 
 function test_accuracy(network, test_set, n_test_batches, topk)
     test_acc = compute_accuracy(network, test_set, n_test_batches, topk)
-    println("Test accuracy: $test_acc")
     @info "test_acc" test_acc
+    test_acc
 end
 
 if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
@@ -63,9 +61,14 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
         train_loader, test_set = get_sparse_datasets(dataset_config)
 
+        n_iters = length(train_loader)
+
         const save_parameters = Dict(
-            "save_frequency" => dataset_config["n_samples"] ÷ dataset_config["batch_size"],
-            "model_path" => joinpath(dataset_config["logger"]["logging_path"], dataset_config["name"]),
+            "save_frequency" => n_iters,
+            "model_path" => joinpath(
+                dataset_config["logger"]["logging_path"],
+                dataset_config["name"],
+            ),
         )
 
         const test_parameters = Dict(
@@ -100,9 +103,14 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
         train_loader = batch_input(x, y_cat, batch_size, drop_last)
         test_set = batch_input(x_test, y_cat_test, batch_size, drop_last)
 
+        n_iters = N_ROWS ÷ batch_size
+
         const save_parameters = Dict(
-            "save_frequency" => 4096 ÷ 128,
-            "model_path" => joinpath(dataset_config["logger"]["logging_path"], dataset_config["name"]),
+            "save_frequency" => n_iters,
+            "model_path" => joinpath(
+                dataset_config["logger"]["logging_path"],
+                dataset_config["name"],
+            ),
         )
 
         const test_parameters =
@@ -148,12 +156,13 @@ if (abspath(PROGRAM_FILE) == @__FILE__) || isinteractive()
 
     function test_accuracy_callback(i, network)
         if i % test_parameters["test_frequency"] == 0
-            test_accuracy(
+            test_acc = test_accuracy(
                 network,
                 test_set,
                 test_parameters["n_test_batches"],
                 test_parameters["topk"],
             )
+            println("Iteration  $((i-1) % n_iters + 1)/$n_iters, test_acc=$test_acc")
         end
     end
 

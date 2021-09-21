@@ -73,7 +73,8 @@ function precision_at_k(
             ),
         )
     end
-    return logs
+
+    logs
 end
 
 function log_dot_product_metrics(

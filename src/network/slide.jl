@@ -27,6 +27,7 @@ end
 
 function load(model_path::String)
     JLD2.load(joinpath(model_path, "checkpoint.jld2"))
+end
 
 function inference_mode(network::SlideNetwork)
     SlideNetwork(map(Layers.inference_mode, network.layers))

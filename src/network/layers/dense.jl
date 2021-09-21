@@ -37,11 +37,7 @@ function Dense(
     Dense(weights, bias, layer_activation, opt_attr)
 end
 
-function Dense(
-    weights::Matrix{Float},
-    bias::Vector{Float},
-    layer_activation::F,
-) where {F}
+function Dense(weights::Matrix{Float}, bias::Vector{Float}, layer_activation::F) where {F}
     Dense(weights, bias, layer_activation, AdamAttributes(input_dim, output_dim))
 end
 

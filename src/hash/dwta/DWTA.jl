@@ -44,7 +44,7 @@ Link: https://en.wikipedia.org/wiki/Universal_hashing
 """
 function two_universal_hash(dwta::DwtaHasher, bin_idx::UInt32, cnt::UInt32)::UInt32
     pair_hash = (bin_idx << 6) + cnt
-    return ((13557786907 * pair_hash) >>> (32 - dwta.log_n_hashes)) % dwta.n_hashes + 1
+    ((13557786907 * pair_hash) >>> (32 - dwta.log_n_hashes)) % dwta.n_hashes + 1
 end
 
 function signature(
