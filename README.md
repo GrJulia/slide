@@ -27,7 +27,7 @@ test
 
 ## Example of usage
 Here's a toy example of how to train the SLIDE network.
-Note that following code won't print any metrics but they will be stored in a log file.
+Note that the following code won't print any metrics but they will be stored in a log file.
 ```
 using Slide, Slide.Network, Slide.LshSimHashWrapper, Slide.Hash, Slide.Network.Layers, Slide.Network.Optimizers, Slide.Logger
 
