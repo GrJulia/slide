@@ -28,25 +28,22 @@ test
 ## Example of usage
 
 ```
-using Random
-using Logging
-
 using Slide, Slide.Network, Slide.LshSimHashWrapper, Slide.Hash, Slide.Network.Layers, Slide.Network.Optimizers, Slide.Logger
 
 input_dim, hidden_dim, output_dim = 100, 20, 500
-
 n_samples = 4096
 batch_size = 128
 
+# Generate random data
 x, y = rand(Float, input_dim, n_samples), one_hot(rand(1:output_dim, n_samples))
 train_set = batch_input(x, y, batch_size, false)
 
+# Initialize SimHash
 common_lsh = LshParams(
     n_buckets = 9,
     n_tables = 50,
     max_bucket_len = 128,
 )
-
 lsh_params = get_simhash_params(
     common_lsh,
     [hidden_dim, output_dim];
@@ -55,23 +52,35 @@ lsh_params = get_simhash_params(
     input_size = input_dim,
 )
 
+# Build the network
 network = SlideNetwork(
     Dense(input_dim, hidden_dim, relu),
     SlideLayer(hidden_dim, output_dim, lsh_params[end], identity)
 )
+optimizer = AdamOptimizer(eta = 0.0001),
 
-logger = SlideLogger(Dict("logging_path" => "./logs", "use_tensorboard" => false), "toy_example")
+# Initialize the logger
+logger = get_logger(Dict("logging_path" => "./logs", "use_tensorboard" => false), "toy_example")
 global_logger(logger)
 
+# Train the network
 train!(
     train_set,
     network,
-    AdamOptimizer(eta = 0.0001),
     logger;
     n_epochs = 10,
 )
 
 ```
+
+## Reproducing SLIDE
+In order to train SLIDE on the real data, adjust paths in examples/configs/default_delicious.json and do following:
+'''
+julia -t <n_threads>
+]
+activate .
+include("examples/main.jl")
+'''
 
 
 ## Running examples
