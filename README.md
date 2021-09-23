@@ -74,14 +74,14 @@ train!(
 ```
 
 ## Reproducing SLIDE
-In order to train SLIDE on the real data, adjust paths in examples/configs/default_delicious.json and do following:
-'''
+In order to train SLIDE on the real data, adjust paths in examples/configs/default_delicious.json
+and do following:
+```
 julia -t <n_threads>
 ]
 activate .
 include("examples/main.jl")
-'''
-
+```
 
 ## Running examples
 Go into the `examples` directory and run example with julia command with added project argument like so:
